@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Room Tileset Generator</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #fff;
+    }
+    h1 { color: #4ac94a; }
+    .preview {
+      background: #2a2a2a;
+      border: 2px solid #333;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      text-align: center;
+    }
+    canvas {
+      border: 2px solid #444;
+      background: #fff;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+    button {
+      background: #4ac94a;
+      color: #000;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 16px;
+      margin: 10px 5px;
+    }
+    button:hover {
+      background: #5fd45f;
+    }
+    .info {
+      background: #2a4a2a;
+      border-left: 4px solid #4ac94a;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .tile-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 10px;
+      margin: 20px 0;
+      font-size: 12px;
+    }
+    .tile-info {
+      background: #2a2a2a;
+      padding: 10px;
+      border-radius: 4px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>🏠 Room Tileset Generator</h1>
+  
+  <div class="info">
+    <strong>Instructions:</strong>
+    <ol>
+      <li>Preview the tileset below</li>
+      <li>Click "Download Tileset" to save as PNG</li>
+      <li>Save to <code>public/sprites/tiles/room-tileset.png</code></li>
+      <li>Your bedroom will automatically use it!</li>
+    </ol>
+  </div>
+
+  <div class="preview">
+    <h2>Tileset Preview (8×2 tiles, 32×32 each)</h2>
+    <canvas id="tileset" width="256" height="64"></canvas>
+    <br>
+    <button onclick="downloadTileset()">⬇️ Download Tileset (room-tileset.png)</button>
+    <button onclick="regenerate()">🔄 Regenerate with Different Colors</button>
+  </div>
+
+  <div class="tile-grid" id="tileInfo"></div>
+
+  <script>
+    const TILE_SIZE = 32;
+    const COLUMNS = 8;
+    const ROWS = 2;
+
+    function generateTileset() {
+      const canvas = document.getElementById('tileset');
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = false;
+
+      // Tile definitions with colors
+      const tiles = [
+        { name: 'Floor', color: '#3a3a3a', detail: '#444' },
+        { name: 'Wall', color: '#555', detail: '#666' },
+        { name: 'Bed', color: '#8B4513', detail: '#D2691E' },
+        { name: 'Desk', color: '#654321', detail: '#8B7355' },
+        { name: 'Wardrobe', color: '#8B4513', detail: '#654321' },
+        { name: 'Bookshelf', color: '#654321', detail: '#8B7355' },
+        { name: 'Carpet', color: '#c94444', detail: '#a03333' },
+        { name: 'Window', color: '#87ceeb', detail: '#4a90a4' },
+        // Row 2
+        { name: 'Door', color: '#8B4513', detail: '#FFD700' },
+        { name: 'Plant', color: '#4ac94a', detail: '#2d5016' },
+        { name: 'Lamp', color: '#FFD700', detail: '#FFA500' },
+        { name: 'Rug', color: '#654321', detail: '#8B7355' },
+        { name: 'Chair', color: '#654321', detail: '#D2691E' },
+        { name: 'Table', color: '#8B7355', detail: '#654321' },
+        { name: 'Dark Floor', color: '#2a2a2a', detail: '#333' },
+        { name: 'Light Wall', color: '#777', detail: '#999' },
+      ];
+
+      // Draw each tile
+      tiles.forEach((tile, index) => {
+        const col = index % COLUMNS;
+        const row = Math.floor(index / COLUMNS);
+        const x = col * TILE_SIZE;
+        const y = row * TILE_SIZE;
+
+        // Main tile color
+        ctx.fillStyle = tile.color;
+        ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+
+        // Add detail/texture
+        ctx.fillStyle = tile.detail;
+        
+        // Different patterns for different tiles
+        if (tile.name === 'Floor' || tile.name === 'Dark Floor') {
+          // Grid pattern
+          for (let i = 0; i < 4; i++) {
+            ctx.fillRect(x + i * 8, y, 1, TILE_SIZE);
+            ctx.fillRect(x, y + i * 8, TILE_SIZE, 1);
+          }
+        } else if (tile.name === 'Wall' || tile.name === 'Light Wall') {
+          // Brick pattern
+          ctx.fillRect(x, y + 10, TILE_SIZE, 2);
+          ctx.fillRect(x, y + 22, TILE_SIZE, 2);
+          ctx.fillRect(x + 16, y, 2, TILE_SIZE);
+        } else if (tile.name === 'Bed') {
+          // Bed sheets
+          ctx.fillRect(x + 4, y + 4, TILE_SIZE - 8, TILE_SIZE - 8);
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(x + 8, y + 6, 16, 6); // Pillow
+        } else if (tile.name === 'Desk' || tile.name === 'Table') {
+          // Desktop surface
+          ctx.fillRect(x + 2, y + 2, TILE_SIZE - 4, 8);
+        } else if (tile.name === 'Wardrobe') {
+          // Door panels
+          ctx.fillRect(x + 3, y + 3, 12, TILE_SIZE - 6);
+          ctx.fillRect(x + 17, y + 3, 12, TILE_SIZE - 6);
+          // Handles
+          ctx.fillStyle = '#FFD700';
+          ctx.fillRect(x + 12, y + 14, 2, 4);
+          ctx.fillRect(x + 18, y + 14, 2, 4);
+        } else if (tile.name === 'Bookshelf') {
+          // Shelves
+          for (let i = 0; i < 3; i++) {
+            ctx.fillRect(x + 2, y + 6 + i * 10, TILE_SIZE - 4, 6);
+          }
+        } else if (tile.name === 'Window') {
+          // Window panes
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(x + 4, y + 4, 10, 10);
+          ctx.fillRect(x + 18, y + 4, 10, 10);
+          ctx.fillRect(x + 4, y + 18, 10, 10);
+          ctx.fillRect(x + 18, y + 18, 10, 10);
+          // Frame
+          ctx.fillStyle = '#654321';
+          ctx.fillRect(x + 14, y + 2, 4, TILE_SIZE - 4);
+          ctx.fillRect(x + 2, y + 14, TILE_SIZE - 4, 4);
+        } else if (tile.name === 'Plant') {
+          // Pot
+          ctx.fillStyle = '#8B4513';
+          ctx.fillRect(x + 10, y + 20, 12, 10);
+          // Leaves
+          ctx.fillStyle = tile.detail;
+          ctx.fillRect(x + 8, y + 10, 4, 12);
+          ctx.fillRect(x + 20, y + 10, 4, 12);
+          ctx.fillRect(x + 12, y + 6, 8, 12);
+        } else {
+          // Generic detail
+          ctx.fillRect(x + 4, y + 4, TILE_SIZE - 8, TILE_SIZE - 8);
+        }
+
+        // Border
+        ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x + 0.5, y + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
+      });
+
+      // Update tile info grid
+      const infoGrid = document.getElementById('tileInfo');
+      infoGrid.innerHTML = tiles.map((tile, index) => `
+        <div class="tile-info">
+          <strong>${index}</strong><br>
+          ${tile.name}
+        </div>
+      `).join('');
+    }
+
+    function downloadTileset() {
+      const canvas = document.getElementById('tileset');
+      canvas.toBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'room-tileset.png';
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    }
+
+    function regenerate() {
+      generateTileset();
+    }
+
+    // Generate on load
+    generateTileset();
+  </script>
+</body>
+</html>

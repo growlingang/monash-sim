@@ -1,0 +1,17 @@
+{
+  "name": "Monash Uni Life Sim",
+  "short_name": "MonashSim",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "description": "A small Monash university life simulation prototype.",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

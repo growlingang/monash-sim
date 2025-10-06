@@ -80,3 +80,22 @@ const buildMajorButtons = () => {
 store.subscribe((next) => renderState(next));
 buildMajorButtons();
 renderState(store.getState());
+
+// Register service worker if supported (only in production builds ideally)
+if ('serviceWorker' in navigator) {
+  // Delay registration slightly so it doesn't block startup work
+  window.addEventListener('load', () => {
+    const swUrl = '/service-worker.js';
+    navigator.serviceWorker
+      .register(swUrl)
+      .then((reg) => {
+        // Registration successful
+        // eslint-disable-next-line no-console
+        console.log('Service worker registered:', reg.scope);
+      })
+      .catch((err) => {
+        // eslint-disable-next-line no-console
+        console.warn('Service worker registration failed:', err);
+      });
+  });
+}

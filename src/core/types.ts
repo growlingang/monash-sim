@@ -58,6 +58,7 @@ export const SCENE_IDS = [
   'evening-commute',
   'evening-activity',
   'recap',
+  'tileset-test', // Test scene for tileset functionality
 ] as const;
 
 export type SceneId = (typeof SCENE_IDS)[number];
