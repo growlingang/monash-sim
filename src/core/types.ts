@@ -28,6 +28,7 @@ export const MEMORY_FLAG_IDS = [
   'strained-dm-jiun',
   'strained-dm-anika',
   'strained-dm-jiawen',
+  'doomscroll-used',
 ] as const;
 
 export type MemoryFlagId = (typeof MEMORY_FLAG_IDS)[number];
@@ -51,13 +52,8 @@ export const SCENE_IDS = [
   'bedroom',
   'phone',
   'morning-commute',
-  'campus-exploration',
-  'group-meeting',
-  'assignment-reveal',
-  'phone-tutorial',
   'evening-commute',
   'evening-activity',
-  'recap',
 ] as const;
 
 export type SceneId = (typeof SCENE_IDS)[number];
