@@ -1,7 +1,7 @@
 import type { GameStore } from '../core/store';
 import { createStatsBar } from '../ui/statsBar';
 import { loadSprite, drawSprite } from '../utils/spriteLoader';
-import { Tileset, Tilemap } from '../utils/tilesetLoader';
+import { Tileset } from '../utils/tilesetLoader';
 
 const TILE_SIZE = 32;
 const ROOM_WIDTH = 20; // tiles
@@ -54,7 +54,8 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
 
   // Load or create room tileset
   let roomTileset: Tileset;
-  let roomMap: Tilemap;
+  let hardwoodTileset: Tileset;
+  let wallTileset: Tileset;
   
   try {
     // Try to load tileset image first
@@ -104,36 +105,236 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
     console.log('✅ Procedural tileset created');
   }
 
+  // Load hardwood tileset
+  try {
+    hardwoodTileset = new Tileset({
+      imagePath: '/sprites/tiles/hardwood-tiles.png',
+      tileWidth: 32,
+      tileHeight: 32,
+      columns: 3,
+      rows: 2,
+    });
+    await hardwoodTileset.load();
+    console.log('✅ Hardwood tileset loaded successfully!');
+  } catch (error) {
+    console.warn('⚠️ Hardwood tileset not found, using fallback floor tile');
+    // Create a simple fallback hardwood tile
+    const hardwoodCanvas = document.createElement('canvas');
+    hardwoodCanvas.width = 3 * TILE_SIZE;
+    hardwoodCanvas.height = 2 * TILE_SIZE;
+    const hardwoodCtx = hardwoodCanvas.getContext('2d')!;
+    
+    // Create a simple wood pattern
+    hardwoodCtx.fillStyle = '#8B4513';
+    hardwoodCtx.fillRect(0, 0, 3 * TILE_SIZE, 2 * TILE_SIZE);
+    
+    // Add wood grain lines
+    hardwoodCtx.strokeStyle = '#654321';
+    hardwoodCtx.lineWidth = 2;
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 2; j++) {
+        const x = i * TILE_SIZE;
+        const y = j * TILE_SIZE;
+        hardwoodCtx.beginPath();
+        hardwoodCtx.moveTo(x, y + TILE_SIZE / 2);
+        hardwoodCtx.lineTo(x + TILE_SIZE, y + TILE_SIZE / 2);
+        hardwoodCtx.stroke();
+      }
+    }
+    
+    hardwoodTileset = new Tileset({
+      imagePath: hardwoodCanvas.toDataURL(),
+      tileWidth: TILE_SIZE,
+      tileHeight: TILE_SIZE,
+      columns: 3,
+      rows: 2,
+    });
+    await hardwoodTileset.load();
+    console.log('✅ Fallback hardwood tileset created');
+  }
+
+  // Load wall tileset
+  try {
+    wallTileset = new Tileset({
+      imagePath: '/sprites/tiles/basic-walls.png',
+      tileWidth: 32,
+      tileHeight: 32,
+      columns: 8, // Assuming 4 columns for different wall orientations
+      rows: 7,    // Assuming 3 rows for different wall heights/contexts
+    });
+    await wallTileset.load();
+    console.log('✅ Wall tileset loaded successfully!');
+  } catch (error) {
+    console.warn('⚠️ Wall tileset not found, using fallback wall tiles');
+    // Create a simple fallback wall tileset
+    const wallCanvas = document.createElement('canvas');
+    wallCanvas.width = 4 * TILE_SIZE;
+    wallCanvas.height = 3 * TILE_SIZE;
+    const wallCtx = wallCanvas.getContext('2d')!;
+    
+    // Create different wall tile variations
+    const wallColors = [
+      '#8B7355', '#654321', '#4a3c2a', '#2d1f0f', // Row 1: Different wall textures
+      '#8B7355', '#654321', '#4a3c2a', '#2d1f0f', // Row 2: Wall corners and edges
+      '#8B7355', '#654321', '#4a3c2a', '#2d1f0f', // Row 3: Wall tops and special cases
+    ];
+    
+    wallColors.forEach((color, i) => {
+      const col = i % 4;
+      const row = Math.floor(i / 4);
+      const x = col * TILE_SIZE;
+      const y = row * TILE_SIZE;
+      
+      wallCtx.fillStyle = color;
+      wallCtx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+      
+      // Add some texture
+      wallCtx.strokeStyle = 'rgba(0,0,0,0.3)';
+      wallCtx.lineWidth = 1;
+      wallCtx.strokeRect(x, y, TILE_SIZE, TILE_SIZE);
+      
+      // Add brick pattern for some tiles
+      if (i % 2 === 0) {
+        wallCtx.strokeStyle = 'rgba(0,0,0,0.2)';
+        wallCtx.beginPath();
+        wallCtx.moveTo(x + TILE_SIZE/2, y);
+        wallCtx.lineTo(x + TILE_SIZE/2, y + TILE_SIZE);
+        wallCtx.stroke();
+      }
+    });
+    
+    wallTileset = new Tileset({
+      imagePath: wallCanvas.toDataURL(),
+      tileWidth: TILE_SIZE,
+      tileHeight: TILE_SIZE,
+      columns: 4,
+      rows: 3,
+    });
+    await wallTileset.load();
+    console.log('✅ Fallback wall tileset created');
+  }
+
   // Define room layout using tile indices
   // Tile layout guide from your tileset:
   // Row 1: 0=Floor, 1=Wall, 2=Bed, 3=Desk, 4=Wardrobe, 5=Bookshelf, 6=Carpet, 7=Window
   // Row 2: 8=Door, 9=Plant, 10=Lamp, 11=Rug, 12=Chair, 13=Table, 14=Dark Floor, 15=Light Wall
   
   const roomData = [
-    // Top wall with windows for natural light
-    [1, 1, 1, 1, 1, 1, 7, 7, 1, 1, 1, 1, 7, 7, 1, 1, 1, 1, 1, 1],
-    // Study corner (left) with bookshelf, desk area (right) with wardrobe
-    [1, 0, 5, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 1],
-    [1, 0, 5, 5, 5, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 1],
-    [1, 0, 5, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 1],
-    // Open floor space with decorative rug in center
-    [1, 0, 0, 0, 0, 0, 0, 0, 6, 6, 6, 6, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 12, 0, 0, 0, 0, 0, 6, 6, 6, 6, 0, 0, 3, 3, 3, 0, 10, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 6, 6, 6, 6, 0, 0, 3, 3, 3, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 6, 6, 6, 6, 0, 0, 3, 3, 3, 0, 0, 1],
-    // Comfortable sleeping area with plants
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 9, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 1],
-    [1, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 13, 0, 0, 0, 1],
+    // Top 2: wall
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    // Empty room with hardwood floors
+    [1, 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 1],
+    [1, 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 1],
+    [1, 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 1],
+    [1, 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 1],
+    [1, 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 1],
+    [1, 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 1],
+    [1, 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 1],
+    [1, 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 1],
     // Bottom wall with door for exit
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 8, 8, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 'H', 'H', 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 'H', 'H', 1, 1, 1, 1, 1, 1, 1, 1, 1],
   ];
 
-  roomMap = new Tilemap({
-    tileset: roomTileset,
-    data: roomData,
-    tileSize: TILE_SIZE,
-  });
+  // Function to determine which wall tile to use based on 3D context
+  const getWallTileIndex = (x: number, y: number): number => {
+    // Check surrounding tiles to understand the wall's 3D context
+    const isLeftSideWall = x === 0;
+    const isRightSideWall = x === roomData[y].length - 1;
+    const isTopWall = y === 0;
+    const isBottomWall = y === roomData.length - 1;
+    const hasWallAbove = y > 0 && roomData[y - 1][x] === 1;
+    const hasWallBelow = y < roomData.length - 1 && roomData[y + 1][x] === 1;
+    const hasWallLeft = x > 0 && roomData[y][x - 1] === 1;
+    const hasWallRight = x < roomData[y].length - 1 && roomData[y][x + 1] === 1;
+    const hasWallDiagonalUpLeft = y > 0 && x > 0 && roomData[y - 1][x - 1] === 1;
+    const hasWallDiagonalUpRight = y > 0 && x < roomData[y].length - 1 && roomData[y - 1][x + 1] === 1;
+    const hasWallDiagonalDownLeft = y < roomData.length - 1 && x > 0 && roomData[y + 1][x - 1] === 1;
+    const hasWallDiagonalDownRight = y < roomData.length - 1 && x < roomData[y].length - 1 && roomData[y + 1][x + 1] === 1;
+    // Determine wall type based on 3D context
+    // fill corners first
+    if (!hasWallAbove && hasWallBelow && !hasWallLeft && hasWallRight) { 
+      return 9; 
+    } else if (hasWallAbove && hasWallBelow && !hasWallLeft && hasWallRight && hasWallDiagonalDownRight) { 
+      return 1; 
+    } else if (hasWallAbove && hasWallBelow && hasWallLeft && !hasWallRight && hasWallDiagonalDownLeft) { 
+      return 6; 
+    } else if (hasWallAbove && hasWallBelow && !hasWallLeft && hasWallRight && !hasWallDiagonalDownRight) { 
+      return 10;
+    } else if (hasWallAbove && hasWallBelow && hasWallLeft && !hasWallRight && !hasWallDiagonalDownLeft) { 
+      return 13;
+    } else if (!hasWallAbove && hasWallBelow && hasWallLeft && !hasWallRight) { 
+      return 14; 
+    } else if (isLeftSideWall &&hasWallAbove && hasWallBelow && !hasWallLeft && !hasWallRight) { 
+        return 18;
+    } else if (isRightSideWall &&hasWallAbove && hasWallBelow && !hasWallLeft && !hasWallRight) { 
+      return 21;
+    } else if (!hasWallAbove && hasWallBelow && hasWallLeft && hasWallRight) {
+      return 20
+    } else if (isBottomWall && !hasWallLeft && hasWallRight) {
+      return 11;
+    } else if (isBottomWall && hasWallLeft && !hasWallRight) {
+      return 12;
+    } else if (isBottomWall) { 
+      return 36;
+    } else { 
+      return 27;
+    }
+  };
+
+  // Function to determine which hardwood tile to use based on surrounding wall tiles
+  const getHardwoodTileIndex = (x: number, y: number): number => {
+    // Check surrounding tiles for wall tiles only (tile type 1)
+    const hasWallAbove = y > 0 && roomData[y - 1][x] === 1;
+    const hasWallBelow = y < roomData.length - 1 && roomData[y + 1][x] === 1;
+    const hasWallLeft = x > 0 && roomData[y][x - 1] === 1;
+    const hasWallRight = x < roomData[y].length - 1 && roomData[y][x + 1] === 1;
+    const hasWallDiagonalUpLeft = y > 0 && x > 0 && roomData[y - 1][x - 1] === 1;
+
+    // Apply shadow logic based on your requirements
+    if (hasWallAbove && hasWallLeft) {
+      // Case 4: Wall on top and left - use row 1 col 1 (index 0)
+      return 0;
+    } else if (hasWallAbove && hasWallBelow && hasWallLeft && hasWallRight) {
+      // Case 5: Walls on all sides - use row 2 col 3 (index 5)
+      return 5;
+    } else if (hasWallAbove) {
+      // Case 1: Only wall on top - use row 1 col 2 (index 1)
+      return 1;
+    } else if (hasWallDiagonalUpLeft && !hasWallLeft) {
+      // Case 2: Only wall diagonal up-left - use row 1 col 3 (index 2)
+      return 2;
+    } else if (hasWallLeft) {
+      // Case 3: Only wall to the left - use row 2 col 1 (index 3)
+      return 3;
+    } else {
+      // Default: use row 2 col 2 (index 4)
+      return 4;
+    }
+  };
+
+  // Custom render function to handle hardwood floors and smart walls
+  const renderRoomWithSmartTiles = (ctx: CanvasRenderingContext2D) => {
+    for (let y = 0; y < roomData.length; y++) {
+      for (let x = 0; x < roomData[y].length; x++) {
+        const tileValue = roomData[y][x];
+        const screenX = x * TILE_SIZE;
+        const screenY = y * TILE_SIZE;
+        
+        if (tileValue === 'H') {
+          // Determine which hardwood tile to use based on surrounding tiles
+          const hardwoodTileIndex = getHardwoodTileIndex(x, y);
+          hardwoodTileset.drawTile(ctx, hardwoodTileIndex, screenX, screenY);
+        } else if (tileValue === 1) {
+          // Determine which wall tile to use based on 3D context
+          const wallTileIndex = getWallTileIndex(x, y);
+          wallTileset.drawTile(ctx, wallTileIndex, screenX, screenY);
+        } else {
+          // Render regular tile (doors, etc.)
+          roomTileset.drawTile(ctx, tileValue as number, screenX, screenY);
+        }
+      }
+    }
+  };
 
   // Player state
   let playerX = 5 * TILE_SIZE;
@@ -173,31 +374,12 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
     const tileX = Math.floor(x / TILE_SIZE);
     const tileY = Math.floor(y / TILE_SIZE);
 
-    // Room boundaries
-    if (tileX < 1 || tileX >= ROOM_WIDTH - 1 || tileY < 1 || tileY >= ROOM_HEIGHT - 1) {
+    // Room boundaries - only walls block movement
+    if (tileX < 1 || tileX >= ROOM_WIDTH - 1 || tileY < 1 || tileY >= ROOM_HEIGHT - 2) {
       return false;
     }
 
-    // Bed (bottom left)
-    if (tileX >= 2 && tileX <= 4 && tileY >= 9 && tileY <= 11) {
-      return false;
-    }
-
-    // Desk (right side)
-    if (tileX >= 14 && tileX <= 16 && tileY >= 5 && tileY <= 7) {
-      return false;
-    }
-
-    // Wardrobe (top right)
-    if (tileX >= 16 && tileX <= 18 && tileY >= 2 && tileY <= 4) {
-      return false;
-    }
-
-    // Bookshelf (top left)
-    if (tileX >= 2 && tileX <= 4 && tileY >= 2 && tileY <= 3) {
-      return false;
-    }
-
+    // All floor tiles are walkable now
     return true;
   };
 
@@ -241,8 +423,8 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
     ctx.fillStyle = '#1a1a1a';
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-    // Render the entire room using tilemap
-    roomMap.render(ctx)
+    // Render the entire room using smart tile generation
+    renderRoomWithSmartTiles(ctx);
 
     // Draw player
     if (playerSprite) {
