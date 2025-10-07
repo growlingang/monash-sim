@@ -31,11 +31,12 @@ export const createEmptyRapport = (): RapportMap => ({
 export const createInitialGameState = (major: MajorId): GameState => {
   const majorDef = MAJOR_DEFINITIONS[major];
   return {
+    playerName: '',
     stats: { ...majorDef.startingStats },
     hunger: majorDef.startingHunger,
     money: majorDef.startingMoney,
     timeMinutes: START_OF_DAY_MINUTES,
-    currentScene: 'character-creation',
+    currentScene: 'main-menu',
     major,
     specialItem: majorDef.specialItem.name,
     rapport: createEmptyRapport(),

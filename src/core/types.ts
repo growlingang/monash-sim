@@ -48,11 +48,13 @@ export interface RapportMap {
 }
 
 export const SCENE_IDS = [
+  'main-menu',
   'character-creation',
   'bedroom',
   'phone',
   'morning-commute',
   'evening-commute',
+  'tileset-test', // Test scene for tileset functionality
 ] as const;
 
 export type SceneId = (typeof SCENE_IDS)[number];
@@ -75,6 +77,7 @@ export interface GameStateDeltas {
 }
 
 export interface GameState {
+  playerName: string;
   stats: StatBlock;
   hunger: number; // Current fullness: 0 (starving) to stats.H (completely full)
   money: number;

@@ -4,10 +4,24 @@ import type { GameState, MajorId } from './core/types';
 import { MAJOR_DEFINITIONS } from './data/majors';
 import { mountScene } from './scenes/ui/root';
 import { initPhoneOverlay } from './ui/phoneOverlay';
+import { loadGame, hasAutoSave } from './utils/saveSystem';
 
 const DEFAULT_MAJOR: MajorId = 'engineering';
 
-const store = createGameStore(DEFAULT_MAJOR);
+// Try to load autosave first, otherwise create new store
+let initialState: GameState | null = null;
+if (hasAutoSave()) {
+  initialState = loadGame(true);
+  console.log('🔄 Auto-save detected and loaded');
+}
+
+const store = initialState 
+  ? (() => {
+      const tempStore = createGameStore(initialState.major);
+      tempStore.setState(initialState);
+      return tempStore;
+    })()
+  : createGameStore(DEFAULT_MAJOR);
 
 // Initialize phone overlay
 initPhoneOverlay(store);
@@ -80,3 +94,22 @@ const buildMajorButtons = () => {
 store.subscribe((next) => renderState(next));
 buildMajorButtons();
 renderState(store.getState());
+
+// Register service worker if supported (only in production builds ideally)
+if ('serviceWorker' in navigator) {
+  // Delay registration slightly so it doesn't block startup work
+  window.addEventListener('load', () => {
+    const swUrl = '/service-worker.js';
+    navigator.serviceWorker
+      .register(swUrl)
+      .then((reg) => {
+        // Registration successful
+        // eslint-disable-next-line no-console
+        console.log('Service worker registered:', reg.scope);
+      })
+      .catch((err) => {
+        // eslint-disable-next-line no-console
+        console.warn('Service worker registration failed:', err);
+      });
+  });
+}

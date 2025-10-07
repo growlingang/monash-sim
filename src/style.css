@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
 :root {
   font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   line-height: 1.6;
@@ -122,6 +124,95 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 1rem;
+}
+
+.character-create {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.character-create__card {
+  background: rgba(14, 20, 36, 0.88);
+  border-radius: 16px;
+  border: 1px solid rgba(110, 150, 255, 0.28);
+  padding: 1.75rem;
+  box-shadow: 0 18px 38px rgba(6, 10, 22, 0.4);
+}
+
+.character-create__title {
+  margin: 0 0 0.6rem;
+  font-size: 1.35rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(230, 235, 255, 0.95);
+}
+
+.character-create__copy {
+  margin: 0;
+  color: rgba(200, 210, 240, 0.75);
+  font-size: 0.95rem;
+}
+
+.character-create__form {
+  margin: 1.35rem 0 0;
+  display: flex;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.character-create__input {
+  flex: 1 1 240px;
+  min-width: 200px;
+  border-radius: 12px;
+  border: 1px solid rgba(135, 170, 255, 0.45);
+  background: rgba(8, 12, 24, 0.9);
+  color: #f5f7ff;
+  padding: 0.85rem 1rem;
+  font-size: 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.character-create__input:focus {
+  outline: none;
+  border-color: rgba(180, 205, 255, 0.85);
+  box-shadow: 0 0 0 3px rgba(135, 170, 255, 0.2);
+}
+
+.character-create__button {
+  border-radius: 12px;
+  border: 1px solid rgba(240, 210, 150, 0.55);
+  background: rgba(52, 72, 128, 0.9);
+  color: inherit;
+  padding: 0.85rem 1.6rem;
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: transform 0.18s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.character-create__button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: rgba(72, 98, 164, 0.95);
+  border-color: rgba(245, 220, 170, 0.85);
+}
+
+.character-create__button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.character-create__helper {
+  margin: 1rem 0 0;
+  font-size: 0.8rem;
+  color: rgba(180, 195, 235, 0.6);
+}
+
+.character-create__error {
+  min-height: 1.2rem;
+  margin-top: 0.65rem;
+  font-size: 0.85rem;
+  color: #fca5a5;
 }
 
 .major-select__option {
@@ -316,5 +407,163 @@ body {
 
   .ui-shell__scene {
     min-height: 420px;
+  }
+}
+
+.main-menu {
+  position: relative;
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  box-sizing: border-box;
+  color: #fbe9cf;
+  font-family: 'Press Start 2P', 'Courier New', monospace;
+  overflow: hidden;
+}
+
+.main-menu__bg,
+.main-menu__overlay {
+  position: absolute;
+  inset: 0;
+}
+
+.main-menu__bg {
+  background-size: cover;
+  background-position: center;
+  filter: saturate(115%);
+}
+
+.main-menu__overlay {
+  background: linear-gradient(180deg, rgba(13, 28, 53, 0.55) 0%, rgba(20, 10, 5, 0.82) 78%);
+  backdrop-filter: blur(1.2px);
+}
+
+.main-menu__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2.75rem;
+  width: min(480px, 100%);
+  text-shadow: 0 6px 14px rgba(4, 5, 10, 0.85);
+}
+
+.main-menu__logo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: clamp(2.6rem, 5vw, 3.6rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffe6b8;
+  filter: drop-shadow(0 10px 18px rgba(10, 4, 0, 0.6));
+}
+
+.main-menu__logo-word:first-child {
+  color: #ffe6b8;
+}
+
+.main-menu__logo-word:last-child {
+  color: #fed18b;
+}
+
+.main-menu__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+}
+
+.main-menu__entry {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.main-menu__item {
+  appearance: none;
+  border: 2px solid rgba(244, 210, 152, 0.35);
+  border-radius: 14px;
+  background: rgba(50, 26, 12, 0.76);
+  box-shadow: 0 14px 26px rgba(6, 4, 2, 0.45);
+  color: inherit;
+  padding: 1.05rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  font-size: clamp(1rem, 2.4vw, 1.2rem);
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.main-menu__item:hover,
+.main-menu__item:focus {
+  border-color: rgba(255, 224, 170, 0.85);
+  background: rgba(80, 42, 18, 0.88);
+  box-shadow: 0 16px 30px rgba(12, 8, 4, 0.5);
+  outline: none;
+}
+
+.main-menu__item.is-selected {
+  transform: translateX(10px);
+  border-color: rgba(255, 224, 170, 0.95);
+  background: rgba(95, 52, 24, 0.92);
+}
+
+.main-menu__item-arrow {
+  display: inline-block;
+  width: 1.25rem;
+  opacity: 0;
+  transform: translateX(-12px);
+  transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+.main-menu__item:hover .main-menu__item-arrow,
+.main-menu__item.is-selected .main-menu__item-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.main-menu__item-label {
+  flex: 1;
+}
+
+.main-menu__item-subtitle {
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  color: rgba(255, 233, 196, 0.7);
+  padding-left: 2.6rem;
+}
+
+.main-menu__footer {
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 216, 170, 0.62);
+}
+
+@media (max-width: 640px) {
+  .main-menu {
+    padding: 2.2rem 1.5rem;
+  }
+
+  .main-menu__content {
+    gap: 2rem;
+  }
+
+  .main-menu__item {
+    font-size: 0.95rem;
+  }
+
+  .main-menu__item-subtitle {
+    font-size: 0.75rem;
+    padding-left: 2.2rem;
   }
 }

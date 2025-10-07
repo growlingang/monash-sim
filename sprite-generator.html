@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sprite Generator - Create Placeholder Sprites</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #fff;
+    }
+    h1 { color: #4ac94a; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+      margin: 20px 0;
+    }
+    .sprite-card {
+      background: #2a2a2a;
+      border: 2px solid #333;
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+    }
+    canvas {
+      border: 2px solid #444;
+      background: #fff;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      width: 100%;
+      max-width: 150px;
+      height: auto;
+    }
+    button {
+      background: #4ac94a;
+      color: #000;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    button:hover {
+      background: #5fd45f;
+    }
+    .info {
+      background: #2a4a2a;
+      border-left: 4px solid #4ac94a;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎨 Placeholder Sprite Generator</h1>
+  
+  <div class="info">
+    <strong>Instructions:</strong>
+    <ol>
+      <li>Click "Download" on each sprite you want</li>
+      <li>Save them to <code>public/sprites/</code> in the correct folders</li>
+      <li>These are basic placeholder sprites - replace with real art later!</li>
+    </ol>
+  </div>
+
+  <div id="sprites"></div>
+
+  <script>
+    const spriteConfigs = [
+      // Player sprites
+      {
+        name: 'player-idle.png',
+        folder: 'player',
+        width: 32,
+        height: 32,
+        draw: (ctx, w, h) => {
+          // Body
+          ctx.fillStyle = '#4a8c2a';
+          ctx.fillRect(8, 8, 16, 20);
+          
+          // Head
+          ctx.fillStyle = '#ffd4a3';
+          ctx.fillRect(10, 4, 12, 10);
+          
+          // Eyes
+          ctx.fillStyle = '#000';
+          ctx.fillRect(12, 7, 2, 2);
+          ctx.fillRect(18, 7, 2, 2);
+          
+          // Legs
+          ctx.fillStyle = '#2d5016';
+          ctx.fillRect(10, 28, 5, 4);
+          ctx.fillRect(17, 28, 5, 4);
+        }
+      },
+      {
+        name: 'player-standing.png',
+        folder: 'player',
+        width: 32,
+        height: 48,
+        draw: (ctx, w, h) => {
+          // Body
+          ctx.fillStyle = '#4a8c2a';
+          ctx.fillRect(6, 16, 20, 24);
+          
+          // Head
+          ctx.fillStyle = '#ffd4a3';
+          ctx.fillRect(8, 4, 16, 14);
+          
+          // Eyes
+          ctx.fillStyle = '#000';
+          ctx.fillRect(11, 9, 3, 3);
+          ctx.fillRect(18, 9, 3, 3);
+          
+          // Mouth
+          ctx.fillRect(12, 14, 8, 2);
+          
+          // Arms
+          ctx.fillStyle = '#4a8c2a';
+          ctx.fillRect(2, 20, 4, 12);
+          ctx.fillRect(26, 20, 4, 12);
+          
+          // Legs
+          ctx.fillStyle = '#2d5016';
+          ctx.fillRect(10, 40, 5, 8);
+          ctx.fillRect(17, 40, 5, 8);
+        }
+      },
+      // Furniture sprites
+      {
+        name: 'bed.png',
+        folder: 'furniture',
+        width: 96,
+        height: 96,
+        draw: (ctx, w, h) => {
+          // Frame
+          ctx.fillStyle = '#8B4513';
+          ctx.fillRect(0, 20, w, h - 20);
+          
+          // Mattress
+          ctx.fillStyle = '#D2691E';
+          ctx.fillRect(5, 25, w - 10, h - 30);
+          
+          // Pillow
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(10, 30, 30, 20);
+          
+          // Bedposts
+          ctx.fillStyle = '#654321';
+          ctx.fillRect(0, 0, 8, 25);
+          ctx.fillRect(w - 8, 0, 8, 25);
+        }
+      },
+      {
+        name: 'desk.png',
+        folder: 'furniture',
+        width: 96,
+        height: 96,
+        draw: (ctx, w, h) => {
+          // Desktop
+          ctx.fillStyle = '#654321';
+          ctx.fillRect(0, 30, w, 12);
+          
+          // Legs
+          ctx.fillRect(5, 42, 8, h - 42);
+          ctx.fillRect(w - 13, 42, 8, h - 42);
+          
+          // Surface
+          ctx.fillStyle = '#8B7355';
+          ctx.fillRect(0, 20, w, 10);
+          
+          // Monitor
+          ctx.fillStyle = '#333';
+          ctx.fillRect(30, 0, 36, 28);
+          ctx.fillStyle = '#4a90a4';
+          ctx.fillRect(33, 3, 30, 20);
+        }
+      },
+      {
+        name: 'wardrobe.png',
+        folder: 'furniture',
+        width: 96,
+        height: 96,
+        draw: (ctx, w, h) => {
+          // Main body
+          ctx.fillStyle = '#8B4513';
+          ctx.fillRect(0, 0, w, h);
+          
+          // Door panels
+          ctx.fillStyle = '#654321';
+          ctx.fillRect(3, 3, w / 2 - 5, h - 6);
+          ctx.fillRect(w / 2 + 2, 3, w / 2 - 5, h - 6);
+          
+          // Handles
+          ctx.fillStyle = '#FFD700';
+          ctx.fillRect(w / 2 - 8, h / 2 - 3, 3, 6);
+          ctx.fillRect(w / 2 + 5, h / 2 - 3, 3, 6);
+        }
+      },
+      {
+        name: 'bookshelf.png',
+        folder: 'furniture',
+        width: 96,
+        height: 64,
+        draw: (ctx, w, h) => {
+          // Frame
+          ctx.fillStyle = '#654321';
+          ctx.fillRect(0, 0, w, h);
+          
+          // Shelves
+          const shelfHeight = h / 3;
+          for (let i = 0; i < 3; i++) {
+            ctx.fillStyle = '#8B7355';
+            ctx.fillRect(3, 3 + i * shelfHeight, w - 6, shelfHeight - 6);
+            
+            // Books
+            const colors = ['#c94444', '#4444c9', '#4ac94a', '#FFD700', '#8B4513'];
+            for (let j = 0; j < 5; j++) {
+              ctx.fillStyle = colors[j];
+              ctx.fillRect(8 + j * 16, 8 + i * shelfHeight, 12, shelfHeight - 12);
+            }
+          }
+        }
+      },
+      // Vehicle sprites
+      {
+        name: 'car-blue.png',
+        folder: 'vehicles',
+        width: 50,
+        height: 70,
+        draw: (ctx, w, h) => {
+          // Body
+          ctx.fillStyle = '#4444c9';
+          ctx.fillRect(5, 15, w - 10, h - 30);
+          
+          // Roof
+          ctx.fillRect(10, 5, w - 20, 15);
+          
+          // Windows
+          ctx.fillStyle = '#87ceeb';
+          ctx.fillRect(12, 20, w - 24, 15);
+          ctx.fillRect(12, 45, w - 24, 15);
+          
+          // Wheels
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0, 20, 8, 12);
+          ctx.fillRect(w - 8, 20, 8, 12);
+          ctx.fillRect(0, h - 32, 8, 12);
+          ctx.fillRect(w - 8, h - 32, 8, 12);
+        }
+      },
+      {
+        name: 'car-red.png',
+        folder: 'vehicles',
+        width: 50,
+        height: 70,
+        draw: (ctx, w, h) => {
+          // Body
+          ctx.fillStyle = '#c94444';
+          ctx.fillRect(5, 15, w - 10, h - 30);
+          
+          // Roof
+          ctx.fillRect(10, 5, w - 20, 15);
+          
+          // Windows
+          ctx.fillStyle = '#87ceeb';
+          ctx.fillRect(12, 20, w - 24, 15);
+          ctx.fillRect(12, 45, w - 24, 15);
+          
+          // Wheels
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0, 20, 8, 12);
+          ctx.fillRect(w - 8, 20, 8, 12);
+          ctx.fillRect(0, h - 32, 8, 12);
+          ctx.fillRect(w - 8, h - 32, 8, 12);
+        }
+      },
+    ];
+
+    const container = document.getElementById('sprites');
+
+    spriteConfigs.forEach(config => {
+      const card = document.createElement('div');
+      card.className = 'sprite-card';
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = config.width;
+      canvas.height = config.height;
+      
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = false;
+      
+      // Draw sprite
+      config.draw(ctx, config.width, config.height);
+      
+      const title = document.createElement('h3');
+      title.textContent = config.name;
+      
+      const info = document.createElement('p');
+      info.style.fontSize = '12px';
+      info.style.color = '#999';
+      info.textContent = `${config.width}×${config.height}px`;
+      
+      const path = document.createElement('code');
+      path.style.fontSize = '11px';
+      path.style.color = '#4ac94a';
+      path.textContent = `public/sprites/${config.folder}/${config.name}`;
+      
+      const downloadBtn = document.createElement('button');
+      downloadBtn.textContent = '⬇️ Download';
+      downloadBtn.onclick = () => {
+        canvas.toBlob(blob => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = config.name;
+          a.click();
+          URL.revokeObjectURL(url);
+        });
+      };
+      
+      card.appendChild(title);
+      card.appendChild(canvas);
+      card.appendChild(info);
+      card.appendChild(document.createElement('br'));
+      card.appendChild(path);
+      card.appendChild(downloadBtn);
+      
+      container.appendChild(card);
+    });
+  </script>
+</body>
+</html>
