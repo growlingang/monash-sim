@@ -82,6 +82,7 @@ export interface GameStateDeltas {
 }
 
 export interface GameState {
+  playerName: string;
   stats: StatBlock;
   hunger: number; // Current fullness: 0 (starving) to stats.H (completely full)
   money: number;

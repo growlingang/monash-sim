@@ -558,6 +558,7 @@ const renderPhoneContent = (store: GameStore) => {
         content.innerHTML = `
           <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
             <h3 style="margin-top: 0; color: #6b7280;">👤 Player Info</h3>
+            <p style="margin: 8px 0;"><strong>Name:</strong> ${currentState.playerName || 'Unregistered'}</p>
             <p style="margin: 8px 0;"><strong>Major:</strong> ${majorName}</p>
             <p style="margin: 8px 0;"><strong>Special Item:</strong> ${currentState.specialItem}</p>
           </div>
