@@ -1,6 +1,7 @@
 import type { GameStore } from '../core/store';
+import { getSaveMetadata, saveGame } from '../utils/saveSystem';
 
-type PhoneApp = 'home' | 'maps' | 'notes' | 'messages' | 'settings';
+type PhoneApp = 'home' | 'maps' | 'notes' | 'messages' | 'save' | 'settings';
 
 let overlayContainer: HTMLElement | null = null;
 let isPhoneOpen = false;
@@ -143,6 +144,7 @@ const renderPhoneContent = (store: GameStore) => {
       { id: 'maps', name: 'Maps', icon: '🗺️', color: '#34d399' },
       { id: 'notes', name: 'Notes', icon: '📝', color: '#fbbf24' },
       { id: 'messages', name: 'WhatsApp', icon: '💬', color: '#25D366' },
+      { id: 'save', name: 'Save', icon: '💾', color: '#60a5fa' },
       { id: 'settings', name: 'Settings', icon: '⚙️', color: '#6b7280' },
       { id: 'close', name: 'Close', icon: '❌', color: '#ef4444' },
     ];
@@ -376,6 +378,178 @@ const renderPhoneContent = (store: GameStore) => {
           </div>
         `;
         break;
+
+      case 'save': {
+        appTitle.textContent = 'Save Game';
+        content.innerHTML = '';
+
+        const intro = document.createElement('p');
+        intro.style.cssText = 'margin: 0 0 16px; color: #bbb; font-size: 14px; line-height: 1.5;';
+        intro.textContent = 'Save your progress so you can continue later. Saves live in your browser on this device.';
+
+        const metadataCard = document.createElement('div');
+        metadataCard.style.cssText = `
+          background: #262626;
+          border: 1px solid #333;
+          border-radius: 10px;
+          padding: 12px 16px;
+          margin-bottom: 16px;
+          font-size: 13px;
+          color: #ddd;
+          line-height: 1.5;
+        `;
+
+        const renderMetadata = () => {
+          const metadata = getSaveMetadata();
+          if (!metadata) {
+            metadataCard.innerHTML = `
+              <strong style="color: #60a5fa;">No manual save found.</strong>
+              <div style="margin-top: 8px; color: #888;">Create a save to remember your Day 1 progress.</div>
+            `;
+            return;
+          }
+
+          const savedAt = new Date(metadata.timestamp);
+          metadataCard.innerHTML = `
+            <strong style="color: #60a5fa;">Last save:</strong>
+            <div style="margin-top: 4px;">${savedAt.toLocaleDateString()} ${savedAt.toLocaleTimeString()}</div>
+            <div style="margin-top: 4px; color: #888; font-size: 12px;">Scene: ${metadata.scene} • Major: ${metadata.major}</div>
+          `;
+        };
+
+        renderMetadata();
+
+        const saveBtn = document.createElement('button');
+        saveBtn.type = 'button';
+        saveBtn.style.cssText = `
+          width: 100%;
+          padding: 12px;
+          border: none;
+          border-radius: 8px;
+          background: #60a5fa;
+          color: #0f172a;
+          font-weight: 600;
+          font-size: 15px;
+          cursor: pointer;
+          transition: transform 0.2s;
+        `;
+        saveBtn.textContent = 'Save Progress';
+
+        saveBtn.addEventListener('mouseenter', () => {
+          if (!saveBtn.disabled) {
+            saveBtn.style.transform = 'translateY(-1px) scale(1.01)';
+          }
+        });
+
+        saveBtn.addEventListener('mouseleave', () => {
+          saveBtn.style.transform = 'translateY(0) scale(1)';
+        });
+
+        const statusMessage = document.createElement('div');
+        statusMessage.style.cssText = 'min-height: 20px; margin-top: 12px; font-size: 13px;';
+
+        const postSaveActions = document.createElement('div');
+        postSaveActions.style.cssText = `
+          margin-top: 20px;
+          display: none;
+          flex-direction: column;
+          gap: 12px;
+        `;
+
+        const quitButton = document.createElement('button');
+        quitButton.type = 'button';
+        quitButton.style.cssText = `
+          padding: 10px;
+          border: 1px solid #ef4444;
+          border-radius: 8px;
+          background: transparent;
+          color: #ef4444;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.2s, color 0.2s;
+        `;
+        quitButton.textContent = 'Quit to Main Menu';
+
+        quitButton.addEventListener('mouseenter', () => {
+          quitButton.style.background = '#ef4444';
+          quitButton.style.color = '#000';
+        });
+
+        quitButton.addEventListener('mouseleave', () => {
+          quitButton.style.background = 'transparent';
+          quitButton.style.color = '#ef4444';
+        });
+
+        quitButton.addEventListener('click', () => {
+          closePhone();
+          store.setState((prev) => ({ ...prev, currentScene: 'main-menu' as const }));
+        });
+
+        const continueButton = document.createElement('button');
+        continueButton.type = 'button';
+        continueButton.style.cssText = `
+          padding: 10px;
+          border: 1px solid #4ac94a;
+          border-radius: 8px;
+          background: transparent;
+          color: #4ac94a;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.2s, color 0.2s;
+        `;
+        continueButton.textContent = 'Continue Playing';
+
+        continueButton.addEventListener('mouseenter', () => {
+          continueButton.style.background = '#4ac94a';
+          continueButton.style.color = '#000';
+        });
+
+        continueButton.addEventListener('mouseleave', () => {
+          continueButton.style.background = 'transparent';
+          continueButton.style.color = '#4ac94a';
+        });
+
+        continueButton.addEventListener('click', () => {
+          closePhone();
+        });
+
+        postSaveActions.appendChild(quitButton);
+        postSaveActions.appendChild(continueButton);
+
+        saveBtn.addEventListener('click', () => {
+          const originalLabel = saveBtn.textContent;
+          saveBtn.disabled = true;
+          saveBtn.style.cursor = 'wait';
+          saveBtn.textContent = 'Saving...';
+          statusMessage.textContent = '';
+          statusMessage.style.color = '#ddd';
+
+          const success = saveGame(store.getState());
+
+          saveBtn.disabled = false;
+          saveBtn.style.cursor = 'pointer';
+          saveBtn.textContent = originalLabel ?? 'Save Progress';
+
+          if (success) {
+            renderMetadata();
+            const savedAt = new Date();
+            statusMessage.textContent = `Game saved at ${savedAt.toLocaleTimeString()}.`;
+            statusMessage.style.color = '#4ac94a';
+            postSaveActions.style.display = 'flex';
+          } else {
+            statusMessage.textContent = 'Something went wrong while saving. Please try again.';
+            statusMessage.style.color = '#ef4444';
+            postSaveActions.style.display = 'none';
+          }
+        });
+
+        content.appendChild(intro);
+        content.appendChild(metadataCard);
+        content.appendChild(saveBtn);
+        content.appendChild(statusMessage);
+        content.appendChild(postSaveActions);
+        break;
+      }
 
       case 'settings':
         appTitle.textContent = 'Settings';

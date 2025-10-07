@@ -4,10 +4,24 @@ import type { GameState, MajorId } from './core/types';
 import { MAJOR_DEFINITIONS } from './data/majors';
 import { mountScene } from './scenes/ui/root';
 import { initPhoneOverlay } from './ui/phoneOverlay';
+import { loadGame, hasAutoSave } from './utils/saveSystem';
 
 const DEFAULT_MAJOR: MajorId = 'engineering';
 
-const store = createGameStore(DEFAULT_MAJOR);
+// Try to load autosave first, otherwise create new store
+let initialState: GameState | null = null;
+if (hasAutoSave()) {
+  initialState = loadGame(true);
+  console.log('🔄 Auto-save detected and loaded');
+}
+
+const store = initialState 
+  ? (() => {
+      const tempStore = createGameStore(initialState.major);
+      tempStore.setState(initialState);
+      return tempStore;
+    })()
+  : createGameStore(DEFAULT_MAJOR);
 
 // Initialize phone overlay
 initPhoneOverlay(store);

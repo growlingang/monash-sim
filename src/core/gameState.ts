@@ -35,7 +35,7 @@ export const createInitialGameState = (major: MajorId): GameState => {
     hunger: majorDef.startingHunger,
     money: majorDef.startingMoney,
     timeMinutes: START_OF_DAY_MINUTES,
-    currentScene: 'character-creation',
+    currentScene: 'main-menu',
     major,
     specialItem: majorDef.specialItem.name,
     rapport: createEmptyRapport(),

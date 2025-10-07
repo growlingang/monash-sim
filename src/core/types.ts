@@ -47,6 +47,7 @@ export interface RapportMap {
 }
 
 export const SCENE_IDS = [
+  'main-menu',
   'character-creation',
   'bedroom',
   'phone',

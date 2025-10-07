@@ -1,7 +1,8 @@
 import type { GameStore } from '../core/store';
 import { transitionScene } from '../core/gameState';
+import { saveGame, hasSave, getSaveMetadata } from '../utils/saveSystem';
 
-type PhoneApp = 'home' | 'maps' | 'notes' | 'messages' | 'settings';
+type PhoneApp = 'home' | 'maps' | 'notes' | 'messages' | 'settings' | 'save';
 
 export const renderPhone = (root: HTMLElement, store: GameStore) => {
   root.innerHTML = '';
@@ -85,15 +86,17 @@ export const renderPhone = (root: HTMLElement, store: GameStore) => {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 24px;
+      gap: 20px;
       padding: 32px 16px;
       align-content: start;
+      overflow-y: auto;
     `;
 
     const apps = [
       { id: 'maps', name: 'Maps', icon: '🗺️', color: '#34d399' },
       { id: 'notes', name: 'Notes', icon: '📝', color: '#fbbf24' },
       { id: 'messages', name: 'WhatsApp', icon: '💬', color: '#25D366' },
+      { id: 'save', name: 'Save', icon: '💾', color: '#3b82f6' },
       { id: 'settings', name: 'Settings', icon: '⚙️', color: '#6b7280' },
       { id: 'close', name: 'Lock Phone', icon: '🔒', color: '#ef4444' },
     ];
@@ -114,11 +117,12 @@ export const renderPhone = (root: HTMLElement, store: GameStore) => {
         cursor: pointer;
         transition: transform 0.2s;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        min-height: 80px;
       `;
 
       appIcon.innerHTML = `
-        <div style="font-size: 32px;">${app.icon}</div>
-        <div style="font-size: 11px; color: white; font-weight: 500;">${app.name}</div>
+        <div style="font-size: 28px;">${app.icon}</div>
+        <div style="font-size: 10px; color: white; font-weight: 500; text-align: center;">${app.name}</div>
       `;
 
       appIcon.addEventListener('mouseenter', () => {
@@ -283,6 +287,107 @@ export const renderPhone = (root: HTMLElement, store: GameStore) => {
             </div>
           </div>
         `;
+        break;
+
+      case 'save':
+        appTitle.textContent = 'Save Game';
+        const saveExists = hasSave();
+        const saveMetadata = saveExists ? getSaveMetadata() : null;
+        
+        const saveContainer = document.createElement('div');
+        
+        // Current save info
+        if (saveMetadata) {
+          const saveDate = new Date(saveMetadata.timestamp);
+          const saveInfoDiv = document.createElement('div');
+          saveInfoDiv.style.cssText = `
+            background: #2a2a2a;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+          `;
+          saveInfoDiv.innerHTML = `
+            <h3 style="margin-top: 0; color: #3b82f6;">💾 Current Save</h3>
+            <div style="font-size: 14px; color: #999; margin: 8px 0;">
+              <div style="margin: 4px 0;"><strong>Date:</strong> ${saveDate.toLocaleDateString()}</div>
+              <div style="margin: 4px 0;"><strong>Time:</strong> ${saveDate.toLocaleTimeString()}</div>
+              <div style="margin: 4px 0;"><strong>Scene:</strong> ${saveMetadata.scene}</div>
+              <div style="margin: 4px 0;"><strong>Major:</strong> ${saveMetadata.major}</div>
+            </div>
+          `;
+          saveContainer.appendChild(saveInfoDiv);
+        }
+        
+        // Save button
+        const saveButton = document.createElement('button');
+        saveButton.textContent = saveExists ? '💾 Overwrite Save' : '💾 Save Game';
+        saveButton.style.cssText = `
+          width: 100%;
+          padding: 16px;
+          background: #3b82f6;
+          color: white;
+          border: none;
+          border-radius: 8px;
+          font-size: 16px;
+          font-weight: bold;
+          cursor: pointer;
+          transition: all 0.2s;
+          margin-bottom: 12px;
+        `;
+        
+        saveButton.addEventListener('mouseenter', () => {
+          saveButton.style.background = '#2563eb';
+          saveButton.style.transform = 'scale(1.02)';
+        });
+        
+        saveButton.addEventListener('mouseleave', () => {
+          saveButton.style.background = '#3b82f6';
+          saveButton.style.transform = 'scale(1)';
+        });
+        
+        saveButton.addEventListener('click', () => {
+          const success = saveGame(store.getState());
+          if (success) {
+            saveButton.textContent = '✅ Game Saved!';
+            saveButton.style.background = '#10b981';
+            setTimeout(() => {
+              // Refresh the app to show updated save info
+              renderApp('save');
+            }, 1500);
+          } else {
+            saveButton.textContent = '❌ Save Failed';
+            saveButton.style.background = '#ef4444';
+            setTimeout(() => {
+              saveButton.textContent = saveExists ? '💾 Overwrite Save' : '💾 Save Game';
+              saveButton.style.background = '#3b82f6';
+            }, 2000);
+          }
+        });
+        
+        saveContainer.appendChild(saveButton);
+        
+        // Info message
+        const infoDiv = document.createElement('div');
+        infoDiv.style.cssText = `
+          background: #1e3a5f;
+          border-radius: 8px;
+          padding: 12px;
+          border-left: 3px solid #3b82f6;
+          font-size: 13px;
+          color: #93c5fd;
+        `;
+        infoDiv.innerHTML = `
+          <p style="margin: 0 0 8px 0;"><strong>💡 Save Tips:</strong></p>
+          <ul style="margin: 0; padding-left: 20px;">
+            <li>Save regularly to preserve your progress</li>
+            <li>Only one manual save slot available</li>
+            <li>Auto-saves happen at key checkpoints</li>
+            <li>Saves are stored in your browser</li>
+          </ul>
+        `;
+        
+        saveContainer.appendChild(infoDiv);
+        content.appendChild(saveContainer);
         break;
     }
 

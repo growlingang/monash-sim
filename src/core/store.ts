@@ -1,5 +1,6 @@
 import { createInitialGameState } from './gameState';
 import type { GameState, MajorId } from './types';
+import { autoSaveOnScene } from '../utils/saveSystem';
 
 export type StateListener = (next: GameState, previous: GameState) => void;
 
@@ -31,6 +32,10 @@ export class GameStore {
     }
 
     this.state = next;
+    
+    // Auto-save when reaching bedroom scene
+    autoSaveOnScene(next);
+    
     this.listeners.forEach((listener) => listener(this.state, previous));
   }
 
