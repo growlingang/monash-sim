@@ -50,6 +50,7 @@ export interface RapportMap {
 export const SCENE_IDS = [
   'main-menu',
   'character-creation',
+  'onboarding',
   'bedroom',
   'phone',
   'morning-commute',
@@ -78,6 +79,7 @@ export interface GameStateDeltas {
 
 export interface GameState {
   playerName: string;
+  onboardingStep: number;
   stats: StatBlock;
   hunger: number; // Current fullness: 0 (starving) to stats.H (completely full)
   money: number;
