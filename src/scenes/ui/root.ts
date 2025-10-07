@@ -2,6 +2,7 @@ import type { GameStore } from '../../core/store';
 import type { SceneId } from '../../core/types';
 import { renderMainMenu } from '../mainMenu';
 import { renderCharacterCreation } from '../characterCreation';
+import { renderOnboarding } from '../onboarding';
 import { renderBedroom } from '../bedroom';
 import { renderPhone } from '../phone';
 import { renderMorningCommute } from '../morningCommute';
@@ -14,6 +15,9 @@ export const mountScene = (scene: SceneId, root: HTMLElement, store: GameStore) 
       break;
     case 'character-creation':
       renderCharacterCreation(root, store);
+      break;
+    case 'onboarding':
+      renderOnboarding(root, store);
       break;
     case 'bedroom':
       // Async call - bedroom now loads sprites

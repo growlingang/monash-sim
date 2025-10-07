@@ -109,6 +109,7 @@ export const renderCharacterCreation = (root: HTMLElement, store: GameStore) => 
             hunger: major.startingHunger,
             money: major.startingMoney,
             specialItem: major.specialItem.name,
+            onboardingStep: 0,
           } satisfies GameState;
           const stamped = logActivity(next, {
             time: formatMinutes(next.timeMinutes),
@@ -124,7 +125,7 @@ export const renderCharacterCreation = (root: HTMLElement, store: GameStore) => 
               flagsGained: [],
             },
           });
-          return transitionScene(stamped, 'bedroom');
+          return transitionScene(stamped, 'onboarding');
         });
       });
       majorList.appendChild(button);

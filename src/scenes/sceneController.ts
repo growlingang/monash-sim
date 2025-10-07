@@ -7,7 +7,8 @@ export interface SceneTransition {
 
 export const SCENE_FLOW: SceneTransition[] = [
   { scene: 'main-menu', next: 'character-creation' },
-  { scene: 'character-creation', next: 'bedroom' },
+  { scene: 'character-creation', next: 'onboarding' },
+  { scene: 'onboarding', next: 'bedroom' },
   { scene: 'bedroom', next: 'morning-commute' },
   { scene: 'phone', next: 'morning-commute' },
   { scene: 'morning-commute', next: 'campus-exploration' },

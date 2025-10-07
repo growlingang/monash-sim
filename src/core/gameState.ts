@@ -32,6 +32,7 @@ export const createInitialGameState = (major: MajorId): GameState => {
   const majorDef = MAJOR_DEFINITIONS[major];
   return {
     playerName: '',
+    onboardingStep: 0,
     stats: { ...majorDef.startingStats },
     hunger: majorDef.startingHunger,
     money: majorDef.startingMoney,
