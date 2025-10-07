@@ -3,6 +3,9 @@ import { transitionScene } from '../core/gameState';
 import type { GameState } from '../core/types';
 
 import bgIntro from '../ui/bg_1.png';
+import bg2 from '../ui/bg_2.png';
+import bg3 from '../ui/bg_3.png';
+import bgFinal from '../ui/bg_4.png';
 import sirJohnPortrait from '../ui/sirjohn_monash.png';
 import arrowButton from '../ui/arrow_button.png';
 
@@ -20,8 +23,46 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     portrait: sirJohnPortrait,
     message: (state) => {
       const name = state.playerName.trim() || 'there';
-      return `Hey ${name}, welcome to Monash Sim game!\nWe’re excited to have you here.`;
+      return `Hey ${name}, welcome to Monash Sim game!\nWe're excited to have you here.`;
     },
+  },
+  {
+    id: 'introduction',
+    background: bgIntro,
+    portrait: sirJohnPortrait,
+    message: () => {
+      return `I'm Sir John Monash, at your service! Nice to meet you.`;
+    },
+  },
+  {
+    id: 'campus-view',
+    background: bg2,
+    portrait: sirJohnPortrait,
+    message: () => `That's Monash Clayton. Beautiful, isn't it?`,
+  },
+  {
+    id: 'explore-prompt',
+    background: bg2,
+    portrait: sirJohnPortrait,
+    message: () => `You'll have the chance to explore the campus on your own!`,
+  },
+  {
+    id: 'support-location',
+    background: bg3,
+    portrait: sirJohnPortrait,
+    message: () => `Should you need me, come find me in front of the\nReligious Centre!`,
+  },
+  {
+    id: 'map-question',
+    background: bg2,
+    portrait: sirJohnPortrait,
+    message: () => `Now, where are YOU on this map...?`,
+  },
+  {
+    id: 'final-transition',
+    background: bgFinal,
+    portrait: sirJohnPortrait,
+    message: () => `Alright – time to begin your first day!`,
   },
 ];
 
