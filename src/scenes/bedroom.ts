@@ -45,11 +45,44 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
 
   // Load sprites
   let playerSprite: HTMLImageElement | null = null;
+  let plantSprite: HTMLImageElement | null = null;
+  let entrywaySprite: HTMLImageElement | null = null;
+  let openWindowSprite: HTMLImageElement | null = null;
+  let bedSprite: HTMLImageElement | null = null;
+  
   try {
     playerSprite = await loadSprite('/sprites/player/player-idle.png');
     console.log('✅ Player sprite loaded successfully!');
   } catch (error) {
     console.warn('⚠️ Failed to load player sprite, using rectangle fallback', error);
+  }
+
+  try {
+    plantSprite = await loadSprite('/sprites/tiles/plant.png');
+    console.log('✅ Plant sprite loaded successfully!');
+  } catch (error) {
+    console.warn('⚠️ Failed to load plant sprite, using rectangle fallback', error);
+  }
+
+  try {
+    bedSprite = await loadSprite('/sprites/tiles/bed.png');
+    console.log('✅ Bed sprite loaded successfully!');
+  } catch (error) {
+    console.warn('⚠️ Failed to load bed sprite, using rectangle fallback', error);
+  }
+
+  try {
+    openWindowSprite = await loadSprite('/sprites/tiles/openWindow.png');
+    console.log('✅ Window sprite loaded successfully!');
+  } catch (error) {
+    console.warn('⚠️ Failed to load window sprite, using rectangle fallback', error);
+  }
+
+  try {
+    entrywaySprite = await loadSprite('/sprites/tiles/entryway.png');
+    console.log('✅ Entryway sprite loaded successfully!');
+  } catch (error) {
+    console.warn('⚠️ Failed to load entryway sprite, using rectangle fallback', error);
   }
 
   // Load or create room tileset
@@ -232,7 +265,7 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
     [1, 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 1],
     [1, 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H', 1],
     // Bottom wall with door for exit
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 'H', 'H', 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 'H', 'H', 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
   ];
 
   // Function to determine which wall tile to use based on 3D context
@@ -426,6 +459,51 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
     // Render the entire room using smart tile generation
     renderRoomWithSmartTiles(ctx);
 
+    
+    //Draw entryway
+    if (entrywaySprite) {
+      drawSprite(ctx, entrywaySprite, {
+        x: 8 * TILE_SIZE,
+        y: 10 * TILE_SIZE,
+        width: entrywaySprite.width,
+        height: entrywaySprite.height,
+      });
+    }
+    //Draw window
+    if (openWindowSprite) {
+      drawSprite(ctx, openWindowSprite, {
+        x: 6 * TILE_SIZE,
+        y: 0.4 * TILE_SIZE,
+        width: openWindowSprite.width,
+        height: openWindowSprite.height,
+      });
+    }
+    if (openWindowSprite) {
+      drawSprite(ctx, openWindowSprite, {
+        x: 12 * TILE_SIZE,
+        y: 0.4 * TILE_SIZE,
+        width: openWindowSprite.width,
+        height: openWindowSprite.height,
+      });
+    }
+    // Draw plant as cute decor item (top-left corner) - keeping original pixel size
+    if (plantSprite) {
+      drawSprite(ctx, plantSprite, {
+        x: 5 * TILE_SIZE,
+        y: 0.7 * TILE_SIZE,
+        width: plantSprite.width,
+        height: plantSprite.height,
+      });
+    }
+
+    if (bedSprite) {
+      drawSprite(ctx, bedSprite, {
+        x: 0.9 * TILE_SIZE,
+        y: 0.9 * TILE_SIZE,
+        width: bedSprite.width,
+        height: bedSprite.height,
+      });
+    }
     // Draw player
     if (playerSprite) {
       drawSprite(ctx, playerSprite, {
