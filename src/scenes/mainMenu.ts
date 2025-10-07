@@ -2,217 +2,191 @@ import type { GameStore } from '../core/store';
 import { hasSave, loadGame, getSaveMetadata, deleteSave } from '../utils/saveSystem';
 import { createInitialGameState } from '../core/gameState';
 
+const MAIN_MENU_BG_URL = 'http://localhost:3845/assets/83620c84c4b12a561dce0aeab7a621382516f9c8.png';
+
+interface MenuItemInstance {
+  id: string;
+  button: HTMLButtonElement;
+  action: () => void;
+}
+
 export const renderMainMenu = (root: HTMLElement, store: GameStore) => {
   root.innerHTML = '';
 
-  const container = document.createElement('div');
-  container.className = 'main-menu';
-  container.style.cssText = `
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 20px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  const wrapper = document.createElement('div');
+  wrapper.className = 'main-menu';
+  wrapper.tabIndex = 0;
+
+  const background = document.createElement('div');
+  background.className = 'main-menu__bg';
+  background.style.backgroundImage = `url('${MAIN_MENU_BG_URL}')`;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'main-menu__overlay';
+
+  const content = document.createElement('div');
+  content.className = 'main-menu__content';
+
+  const logo = document.createElement('div');
+  logo.className = 'main-menu__logo';
+  logo.innerHTML = `
+    <span class="main-menu__logo-word">Monash</span>
+    <span class="main-menu__logo-word">Sim</span>
   `;
 
-  // Title section
-  const title = document.createElement('div');
-  title.className = 'main-menu__title';
-  title.style.cssText = `
-    text-align: center;
-    margin-bottom: 40px;
-    color: white;
-  `;
-  title.innerHTML = `
-    <h1 style="font-size: 48px; margin: 0 0 10px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
-      Monash Uni Life Sim
-    </h1>
-    <p style="font-size: 18px; margin: 0; opacity: 0.9;">
-      Experience University Life
-    </p>
-  `;
+  const menuList = document.createElement('ul');
+  menuList.className = 'main-menu__list';
+  menuList.setAttribute('role', 'menu');
 
-  // Menu buttons container
-  const menuContainer = document.createElement('div');
-  menuContainer.className = 'main-menu__buttons';
-  menuContainer.style.cssText = `
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    width: 100%;
-    max-width: 400px;
-  `;
+  const footer = document.createElement('div');
+  footer.className = 'main-menu__footer';
+  footer.textContent = '© 2025 Team GrowlinGang';
 
-  // Check if save exists
   const saveExists = hasSave();
   const saveMetadata = getSaveMetadata();
 
-  // New Game button
-  const newGameBtn = createMenuButton('New Game', '🎮');
-  newGameBtn.addEventListener('click', () => {
+  const menuItems: MenuItemInstance[] = [];
+  let selectedIndex = 0;
+
+  const selectIndex = (index: number, focus = false) => {
+    if (!menuItems.length) return;
+    const boundedIndex = ((index % menuItems.length) + menuItems.length) % menuItems.length;
+    selectedIndex = boundedIndex;
+    menuItems.forEach((item, idx) => {
+      if (idx === boundedIndex) {
+        item.button.classList.add('is-selected');
+        if (focus && document.activeElement !== item.button) {
+          item.button.focus();
+        }
+      } else {
+        item.button.classList.remove('is-selected');
+      }
+    });
+  };
+
+  const addMenuItem = (
+    id: string,
+    label: string,
+    onSelect: () => void,
+    options: { subtitle?: string } = {},
+  ) => {
+    const entry = document.createElement('li');
+    entry.className = 'main-menu__entry';
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'main-menu__item';
+    button.dataset.menuId = id;
+    button.setAttribute('role', 'menuitem');
+    button.innerHTML = `
+      <span class="main-menu__item-arrow">&gt;</span>
+      <span class="main-menu__item-label">${label}</span>
+    `;
+
+    button.addEventListener('mouseenter', () => {
+      selectIndex(menuItems.findIndex((item) => item.button === button));
+    });
+
+    button.addEventListener('focus', () => {
+      selectIndex(menuItems.findIndex((item) => item.button === button));
+    });
+
+    button.addEventListener('click', () => {
+      onSelect();
+    });
+
+    entry.appendChild(button);
+
+    if (options.subtitle) {
+      const subtitle = document.createElement('div');
+      subtitle.className = 'main-menu__item-subtitle';
+      subtitle.textContent = options.subtitle;
+      entry.appendChild(subtitle);
+    }
+
+    menuList.appendChild(entry);
+    menuItems.push({ id, button, action: onSelect });
+  };
+
+  addMenuItem('new-game', 'Story Mode', () => {
     if (saveExists && !confirm('Starting a new game will overwrite your current save. Continue?')) {
       return;
     }
-    // Delete old save and start fresh
+
     deleteSave();
-    // Reset to initial state and start character creation
     const currentState = store.getState();
     const newState = createInitialGameState(currentState.major);
-    // Set scene to character-creation instead of main-menu
     store.setState({ ...newState, currentScene: 'character-creation' });
+  }, {
+    subtitle: 'Begin a new day one adventure',
   });
 
-  // Continue button (only if save exists)
-  let continueBtn: HTMLButtonElement | null = null;
   if (saveExists && saveMetadata) {
-    continueBtn = createMenuButton('Continue', '▶️');
-    const saveInfo = document.createElement('div');
-    saveInfo.style.cssText = `
-      font-size: 12px;
-      color: rgba(255,255,255,0.7);
-      margin-top: -10px;
-      margin-bottom: 5px;
-      text-align: center;
-    `;
     const saveDate = new Date(saveMetadata.timestamp);
-    saveInfo.textContent = `Last played: ${saveDate.toLocaleDateString()} ${saveDate.toLocaleTimeString()}`;
-    
-    continueBtn.addEventListener('click', () => {
+    addMenuItem('continue', 'Continue', () => {
       const loadedState = loadGame();
       if (loadedState) {
         store.setState(loadedState);
       } else {
         alert('Failed to load save game. Please start a new game.');
       }
+    }, {
+      subtitle: `${saveMetadata.scene} • ${saveDate.toLocaleDateString()} ${saveDate.toLocaleTimeString()}`,
     });
   }
 
-  // Multiplayer button (coming soon)
-  const multiplayerBtn = createMenuButton('Multiplayer', '👥', true);
-  multiplayerBtn.addEventListener('click', () => {
+  addMenuItem('multiplayer', 'Multiplayer', () => {
     alert('Multiplayer mode is under development! Stay tuned for future updates.');
+  }, {
+    subtitle: 'Connect with friends (coming soon)',
   });
 
-  // Settings button (coming soon)
-  const settingsBtn = createMenuButton('Settings', '⚙️', true);
-  settingsBtn.addEventListener('click', () => {
+  addMenuItem('settings', 'Settings', () => {
     alert('Settings menu is under development! Stay tuned for future updates.');
+  }, {
+    subtitle: 'Adjust audio, gameplay and more',
   });
 
-  // Quit button (for web, this just shows a message)
-  const quitBtn = createMenuButton('Quit', '🚪');
-  quitBtn.addEventListener('click', () => {
+  addMenuItem('quit', 'Exit', () => {
     if (confirm('Are you sure you want to quit?')) {
       window.close();
-      // For browsers that don't allow window.close()
       setTimeout(() => {
         alert('Please close the browser tab to exit the game.');
       }, 100);
     }
+  }, {
+    subtitle: 'Leave the sim and return later',
   });
 
-  // Append buttons
-  menuContainer.appendChild(newGameBtn);
-  if (continueBtn && saveMetadata) {
-    const saveInfoDiv = document.createElement('div');
-    saveInfoDiv.appendChild(continueBtn);
-    const saveInfo = document.createElement('div');
-    saveInfo.style.cssText = `
-      font-size: 11px;
-      color: rgba(255,255,255,0.6);
-      text-align: center;
-      margin-top: 5px;
-    `;
-    const saveDate = new Date(saveMetadata.timestamp);
-    saveInfo.textContent = `${saveMetadata.scene} • ${saveDate.toLocaleDateString()}`;
-    saveInfoDiv.appendChild(saveInfo);
-    menuContainer.appendChild(saveInfoDiv);
-  }
-  menuContainer.appendChild(multiplayerBtn);
-  menuContainer.appendChild(settingsBtn);
-  menuContainer.appendChild(quitBtn);
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (!menuItems.length) return;
 
-  // Footer
-  const footer = document.createElement('div');
-  footer.className = 'main-menu__footer';
-  footer.style.cssText = `
-    position: absolute;
-    bottom: 20px;
-    text-align: center;
-    color: rgba(255,255,255,0.6);
-    font-size: 12px;
-  `;
-  footer.textContent = '© 2025 Team GrowlinGang';
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      selectIndex(selectedIndex + 1, true);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      selectIndex(selectedIndex - 1, true);
+    } else if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      menuItems[selectedIndex].action();
+    }
+  };
 
-  container.appendChild(title);
-  container.appendChild(menuContainer);
-  container.appendChild(footer);
-  root.appendChild(container);
-};
+  wrapper.addEventListener('keydown', handleKeyDown);
 
-/**
- * Helper function to create styled menu buttons
- */
-const createMenuButton = (text: string, icon: string, disabled = false): HTMLButtonElement => {
-  const button = document.createElement('button');
-  button.className = 'main-menu__button';
-  button.type = 'button';
-  
-  const baseStyle = `
-    padding: 15px 30px;
-    font-size: 18px;
-    font-weight: 600;
-    border: none;
-    border-radius: 8px;
-    cursor: ${disabled ? 'not-allowed' : 'pointer'};
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    width: 100%;
-  `;
+  content.appendChild(logo);
+  content.appendChild(menuList);
+  content.appendChild(footer);
 
-  if (disabled) {
-    button.style.cssText = baseStyle + `
-      background: rgba(255,255,255,0.2);
-      color: rgba(255,255,255,0.5);
-    `;
-    button.innerHTML = `
-      <span>${icon}</span>
-      <span>${text}</span>
-      <span style="font-size: 11px; opacity: 0.7;">(Coming Soon)</span>
-    `;
-  } else {
-    button.style.cssText = baseStyle + `
-      background: white;
-      color: #667eea;
-    `;
-    button.innerHTML = `
-      <span>${icon}</span>
-      <span>${text}</span>
-    `;
+  wrapper.appendChild(background);
+  wrapper.appendChild(overlay);
+  wrapper.appendChild(content);
 
-    // Hover effects
-    button.addEventListener('mouseenter', () => {
-      button.style.transform = 'translateY(-2px)';
-      button.style.boxShadow = '0 6px 12px rgba(0,0,0,0.3)';
-    });
-    button.addEventListener('mouseleave', () => {
-      button.style.transform = 'translateY(0)';
-      button.style.boxShadow = '0 4px 6px rgba(0,0,0,0.2)';
-    });
-    button.addEventListener('mousedown', () => {
-      button.style.transform = 'translateY(1px)';
-    });
-    button.addEventListener('mouseup', () => {
-      button.style.transform = 'translateY(-2px)';
-    });
-  }
+  root.appendChild(wrapper);
 
-  return button;
+  requestAnimationFrame(() => {
+    selectIndex(0, true);
+    wrapper.focus();
+  });
 };
