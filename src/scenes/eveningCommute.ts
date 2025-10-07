@@ -8,7 +8,6 @@ import {
 } from '../core/gameState';
 import type { CommuteDefinition, CommuteOutcome } from '../data/commute';
 import type { GameState, GameStateDeltas } from '../core/types';
-import { getNextScene } from './sceneController';
 import { createStatsBar } from '../ui/statsBar';
 import { walkMinigame, busMinigame, driveMinigame, type MinigameConfig } from '../minigames';
 
@@ -17,12 +16,6 @@ const BUS_BAY_WIDTH = 24; // tiles - wider to fill more screen
 const BUS_BAY_HEIGHT = 16; // tiles - taller to fill more screen
 const CANVAS_WIDTH = BUS_BAY_WIDTH * TILE_SIZE;
 const CANVAS_HEIGHT = BUS_BAY_HEIGHT * TILE_SIZE;
-
-const canAfford = (state: GameState, option: CommuteDefinition): boolean => {
-  const moneyDelta = option.successOutcome.moneyDelta;
-  const projected = state.money + moneyDelta;
-  return projected >= 0;
-};
 
 type CommuteResultKind = 'success' | 'failure' | 'auto';
 
@@ -237,21 +230,11 @@ export const renderEveningCommute = (root: HTMLElement, store: GameStore) => {
 
   const handleKeyDown = (e: KeyboardEvent) => {
     keys[e.key.toLowerCase()] = true;
-    
-    // Phone shortcut
-    if (e.key.toLowerCase() === 'p') {
-      e.preventDefault();
-      openPhone();
-    }
+    // Phone shortcut (P key) is handled globally by phoneOverlay.ts
   };
 
   const handleKeyUp = (e: KeyboardEvent) => {
     keys[e.key.toLowerCase()] = false;
-  };
-
-  const openPhone = () => {
-    // Store current scene state and switch to phone
-    store.setState((prev) => transitionScene(prev, 'phone'));
   };
 
   // Game loop

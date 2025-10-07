@@ -239,104 +239,200 @@ const renderPhoneContent = (store: GameStore) => {
 
     switch (app) {
       case 'maps':
-        appTitle.textContent = 'Maps - Transport';
-        content.innerHTML = `
-          <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-            <h3 style="margin-top: 0; color: #4ac94a;">🚶 Walk</h3>
-            <p style="margin: 8px 0; color: #999;">Free • ~45 min • Medium difficulty</p>
-            <p style="margin: 0 0 12px 0; font-size: 14px;">Crossy-road style minigame. Your mobility stat affects traffic density.</p>
-            <button id="walk-btn" style="
-              width: 100%;
-              padding: 12px;
-              background: #4ac94a;
-              border: none;
-              border-radius: 6px;
-              color: #000;
-              font-weight: bold;
-              cursor: pointer;
-              font-size: 14px;
-            ">Start Walking Commute</button>
-          </div>
-          
-          <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-            <h3 style="margin-top: 0; color: #4ac94a;">🚌 Bus/Tram</h3>
-            <p style="margin: 8px 0; color: #999;">$5 • ~35 min • Easy</p>
-            <p style="margin: 0 0 12px 0; font-size: 14px;">Balance minigame. Your aura stat affects stability. Bus may arrive late (random).</p>
-            <button id="bus-btn" style="
-              width: 100%;
-              padding: 12px;
-              background: ${currentState.money >= 5 ? '#4ac94a' : '#666'};
-              border: none;
-              border-radius: 6px;
-              color: ${currentState.money >= 5 ? '#000' : '#999'};
-              font-weight: bold;
-              cursor: ${currentState.money >= 5 ? 'pointer' : 'not-allowed'};
-              font-size: 14px;
-            ">${currentState.money >= 5 ? 'Start Bus Commute' : 'Insufficient Funds ($5)'}</button>
-          </div>
-          
-          <div style="background: #2a2a2a; border-radius: 8px; padding: 16px;">
-            <h3 style="margin-top: 0; color: #4ac94a;">🚗 Drive</h3>
-            <p style="margin: 8px 0; color: #999;">$12 • ~30 min • Hard</p>
-            <p style="margin: 0 0 12px 0; font-size: 14px;">Two-phase: traffic dodging + parking. Organisation/Aura affects difficulty.</p>
-            <button id="drive-btn" style="
-              width: 100%;
-              padding: 12px;
-              background: ${currentState.money >= 12 ? '#4ac94a' : '#666'};
-              border: none;
-              border-radius: 6px;
-              color: ${currentState.money >= 12 ? '#000' : '#999'};
-              font-weight: bold;
-              cursor: ${currentState.money >= 12 ? 'pointer' : 'not-allowed'};
-              font-size: 14px;
-            ">${currentState.money >= 12 ? 'Start Driving Commute' : 'Insufficient Funds ($12)'}</button>
-          </div>
-          
-          <div style="background: #3a2a1a; border-radius: 8px; padding: 12px; margin-top: 16px; border-left: 3px solid #fbbf24;">
-            <p style="margin: 0; font-size: 13px; color: #fbbf24;">💡 Tip: Choose your transport to begin your morning commute!</p>
-          </div>
-        `;
+        const isEveningCommute = currentState.currentScene === 'evening-commute';
+        appTitle.textContent = isEveningCommute ? 'Maps - Evening Transport' : 'Maps - Morning Transport';
         
-        // Add event listeners for transport buttons
-        setTimeout(() => {
-          const walkBtn = document.getElementById('walk-btn');
-          const busBtn = document.getElementById('bus-btn');
-          const driveBtn = document.getElementById('drive-btn');
+        if (isEveningCommute) {
+          // Evening commute - show transport options
+          content.innerHTML = `
+            <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+              <h3 style="margin-top: 0; color: #4ac94a;">🚶 Walk Home</h3>
+              <p style="margin: 8px 0; color: #999;">Free • ~45 min • Medium difficulty</p>
+              <p style="margin: 0 0 12px 0; font-size: 14px;">Crossy-road style minigame. Your mobility stat affects traffic density.</p>
+              <button id="walk-btn" style="
+                width: 100%;
+                padding: 12px;
+                background: #4ac94a;
+                border: none;
+                border-radius: 6px;
+                color: #000;
+                font-weight: bold;
+                cursor: pointer;
+                font-size: 14px;
+              ">Choose Walk</button>
+            </div>
+            
+            <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+              <h3 style="margin-top: 0; color: #4ac94a;">🚌 Bus/Tram Home</h3>
+              <p style="margin: 8px 0; color: #999;">$5 • ~35 min • Easy</p>
+              <p style="margin: 0 0 12px 0; font-size: 14px;">Balance minigame. Your aura stat affects stability.</p>
+              <button id="bus-btn" style="
+                width: 100%;
+                padding: 12px;
+                background: ${currentState.money >= 5 ? '#4ac94a' : '#666'};
+                border: none;
+                border-radius: 6px;
+                color: ${currentState.money >= 5 ? '#000' : '#999'};
+                font-weight: bold;
+                cursor: ${currentState.money >= 5 ? 'pointer' : 'not-allowed'};
+                font-size: 14px;
+              ">${currentState.money >= 5 ? 'Choose Bus' : 'Insufficient Funds ($5)'}</button>
+            </div>
+            
+            <div style="background: #2a2a2a; border-radius: 8px; padding: 16px;">
+              <h3 style="margin-top: 0; color: #4ac94a;">🚗 Drive Home</h3>
+              <p style="margin: 8px 0; color: #999;">$12 • ~30 min • Hard</p>
+              <p style="margin: 0 0 12px 0; font-size: 14px;">Two-phase: traffic dodging + parking. Organisation/Aura affects difficulty.</p>
+              <button id="drive-btn" style="
+                width: 100%;
+                padding: 12px;
+                background: ${currentState.money >= 12 ? '#4ac94a' : '#666'};
+                border: none;
+                border-radius: 6px;
+                color: ${currentState.money >= 12 ? '#000' : '#999'};
+                font-weight: bold;
+                cursor: ${currentState.money >= 12 ? 'pointer' : 'not-allowed'};
+                font-size: 14px;
+              ">${currentState.money >= 12 ? 'Choose Drive' : 'Insufficient Funds ($12)'}</button>
+            </div>
+            
+            <div style="background: #3a2a1a; border-radius: 8px; padding: 12px; margin-top: 16px; border-left: 3px solid #fbbf24;">
+              <p style="margin: 0; font-size: 13px; color: #fbbf24;">💡 Tip: Select your transport, then close the phone to begin!</p>
+            </div>
+          `;
           
-          if (walkBtn) {
-            walkBtn.addEventListener('click', () => {
-              closePhone();
-              store.setState((prev) => {
-                const next = { ...prev, currentScene: 'morning-commute' as const };
-                // Store which transport was selected
+          // Add event listeners for evening transport buttons
+          setTimeout(() => {
+            const walkBtn = document.getElementById('walk-btn');
+            const busBtn = document.getElementById('bus-btn');
+            const driveBtn = document.getElementById('drive-btn');
+            
+            if (walkBtn) {
+              walkBtn.addEventListener('click', () => {
                 (window as any).__selectedTransport = 'walk';
-                return next;
+                closePhone();
+                // Trigger scene refresh to launch minigame
+                store.setState((prev) => ({ ...prev }));
               });
-            });
-          }
-          
-          if (busBtn && currentState.money >= 5) {
-            busBtn.addEventListener('click', () => {
-              closePhone();
-              store.setState((prev) => {
-                const next = { ...prev, currentScene: 'morning-commute' as const };
+            }
+            
+            if (busBtn && currentState.money >= 5) {
+              busBtn.addEventListener('click', () => {
                 (window as any).__selectedTransport = 'bus';
-                return next;
+                closePhone();
+                // Trigger scene refresh to launch minigame
+                store.setState((prev) => ({ ...prev }));
               });
-            });
-          }
-          
-          if (driveBtn && currentState.money >= 12) {
-            driveBtn.addEventListener('click', () => {
-              closePhone();
-              store.setState((prev) => {
-                const next = { ...prev, currentScene: 'morning-commute' as const };
+            }
+            
+            if (driveBtn && currentState.money >= 12) {
+              driveBtn.addEventListener('click', () => {
                 (window as any).__selectedTransport = 'drive';
-                return next;
+                closePhone();
+                // Trigger scene refresh to launch minigame
+                store.setState((prev) => ({ ...prev }));
               });
-            });
-          }
-        }, 0);
+            }
+          }, 0);
+        } else {
+          // Morning commute - show transport options
+          content.innerHTML = `
+            <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+              <h3 style="margin-top: 0; color: #4ac94a;">🚶 Walk</h3>
+              <p style="margin: 8px 0; color: #999;">Free • ~45 min • Medium difficulty</p>
+              <p style="margin: 0 0 12px 0; font-size: 14px;">Crossy-road style minigame. Your mobility stat affects traffic density.</p>
+              <button id="walk-btn" style="
+                width: 100%;
+                padding: 12px;
+                background: #4ac94a;
+                border: none;
+                border-radius: 6px;
+                color: #000;
+                font-weight: bold;
+                cursor: pointer;
+                font-size: 14px;
+              ">Start Walking Commute</button>
+            </div>
+            
+            <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+              <h3 style="margin-top: 0; color: #4ac94a;">🚌 Bus/Tram</h3>
+              <p style="margin: 8px 0; color: #999;">$5 • ~35 min • Easy</p>
+              <p style="margin: 0 0 12px 0; font-size: 14px;">Balance minigame. Your aura stat affects stability. Bus may arrive late (random).</p>
+              <button id="bus-btn" style="
+                width: 100%;
+                padding: 12px;
+                background: ${currentState.money >= 5 ? '#4ac94a' : '#666'};
+                border: none;
+                border-radius: 6px;
+                color: ${currentState.money >= 5 ? '#000' : '#999'};
+                font-weight: bold;
+                cursor: ${currentState.money >= 5 ? 'pointer' : 'not-allowed'};
+                font-size: 14px;
+              ">${currentState.money >= 5 ? 'Start Bus Commute' : 'Insufficient Funds ($5)'}</button>
+            </div>
+            
+            <div style="background: #2a2a2a; border-radius: 8px; padding: 16px;">
+              <h3 style="margin-top: 0; color: #4ac94a;">🚗 Drive</h3>
+              <p style="margin: 8px 0; color: #999;">$12 • ~30 min • Hard</p>
+              <p style="margin: 0 0 12px 0; font-size: 14px;">Two-phase: traffic dodging + parking. Organisation/Aura affects difficulty.</p>
+              <button id="drive-btn" style="
+                width: 100%;
+                padding: 12px;
+                background: ${currentState.money >= 12 ? '#4ac94a' : '#666'};
+                border: none;
+                border-radius: 6px;
+                color: ${currentState.money >= 12 ? '#000' : '#999'};
+                font-weight: bold;
+                cursor: ${currentState.money >= 12 ? 'pointer' : 'not-allowed'};
+                font-size: 14px;
+              ">${currentState.money >= 12 ? 'Start Driving Commute' : 'Insufficient Funds ($12)'}</button>
+            </div>
+            
+            <div style="background: #3a2a1a; border-radius: 8px; padding: 12px; margin-top: 16px; border-left: 3px solid #fbbf24;">
+              <p style="margin: 0; font-size: 13px; color: #fbbf24;">💡 Tip: Choose your transport to begin your morning commute!</p>
+            </div>
+          `;
+          
+          // Add event listeners for morning transport buttons
+          setTimeout(() => {
+            const walkBtn = document.getElementById('walk-btn');
+            const busBtn = document.getElementById('bus-btn');
+            const driveBtn = document.getElementById('drive-btn');
+            
+            if (walkBtn) {
+              walkBtn.addEventListener('click', () => {
+                closePhone();
+                store.setState((prev) => {
+                  const next = { ...prev, currentScene: 'morning-commute' as const };
+                  (window as any).__selectedTransport = 'walk';
+                  return next;
+                });
+              });
+            }
+            
+            if (busBtn && currentState.money >= 5) {
+              busBtn.addEventListener('click', () => {
+                closePhone();
+                store.setState((prev) => {
+                  const next = { ...prev, currentScene: 'morning-commute' as const };
+                  (window as any).__selectedTransport = 'bus';
+                  return next;
+                });
+              });
+            }
+            
+            if (driveBtn && currentState.money >= 12) {
+              driveBtn.addEventListener('click', () => {
+                closePhone();
+                store.setState((prev) => {
+                  const next = { ...prev, currentScene: 'morning-commute' as const };
+                  (window as any).__selectedTransport = 'drive';
+                  return next;
+                });
+              });
+            }
+          }, 0);
+        }
         break;
 
       case 'notes':
