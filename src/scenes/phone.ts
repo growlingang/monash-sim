@@ -186,30 +186,66 @@ export const renderPhone = (root: HTMLElement, store: GameStore) => {
 
     switch (app) {
       case 'maps':
-        appTitle.textContent = 'Maps - Transport';
-        content.innerHTML = `
-          <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-            <h3 style="margin-top: 0; color: #4ac94a;">🚶 Walk</h3>
-            <p style="margin: 8px 0; color: #999;">Free • ~45 min • Medium difficulty</p>
-            <p style="margin: 0; font-size: 14px;">Crossy-road style minigame. Your mobility stat affects traffic density.</p>
-          </div>
+        const isEveningCommute = state.currentScene === 'evening-commute';
+        appTitle.textContent = isEveningCommute ? 'Maps - Evening Transport' : 'Maps - Morning Transport';
+        
+        if (isEveningCommute) {
+          // Evening commute - show selectable options
+          content.innerHTML = `
+            <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 16px; cursor: pointer;" onclick="selectTransport('walk')">
+              <h3 style="margin-top: 0; color: #4ac94a;">🚶 Walk Home</h3>
+              <p style="margin: 8px 0; color: #999;">Free • ~45 min • Medium difficulty</p>
+              <p style="margin: 0; font-size: 14px;">Crossy-road style minigame. Your mobility stat affects traffic density.</p>
+            </div>
+            
+            <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 16px; cursor: pointer;" onclick="selectTransport('bus')">
+              <h3 style="margin-top: 0; color: #4ac94a;">🚌 Bus/Tram Home</h3>
+              <p style="margin: 8px 0; color: #999;">$5 • ~35 min • Easy</p>
+              <p style="margin: 0; font-size: 14px;">Balance minigame. Your aura stat affects stability.</p>
+            </div>
+            
+            <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; cursor: pointer;" onclick="selectTransport('drive')">
+              <h3 style="margin-top: 0; color: #4ac94a;">🚗 Drive Home</h3>
+              <p style="margin: 8px 0; color: #999;">$12 • ~30 min • Hard</p>
+              <p style="margin: 0; font-size: 14px;">Two-phase: traffic dodging + parking. Organisation/Aura affects difficulty.</p>
+            </div>
+            
+            <div style="background: #3a2a1a; border-radius: 8px; padding: 12px; margin-top: 16px; border-left: 3px solid #fbbf24;">
+              <p style="margin: 0; font-size: 13px; color: #fbbf24;">💡 Tip: Tap a transport option to select it, then lock your phone to begin!</p>
+            </div>
+          `;
           
-          <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-            <h3 style="margin-top: 0; color: #4ac94a;">🚌 Bus/Tram</h3>
-            <p style="margin: 8px 0; color: #999;">$5 • ~35 min • Easy</p>
-            <p style="margin: 0; font-size: 14px;">Balance minigame. Your aura stat affects stability. Bus may arrive late (random).</p>
-          </div>
-          
-          <div style="background: #2a2a2a; border-radius: 8px; padding: 16px;">
-            <h3 style="margin-top: 0; color: #4ac94a;">🚗 Drive</h3>
-            <p style="margin: 8px 0; color: #999;">$12 • ~30 min • Hard</p>
-            <p style="margin: 0; font-size: 14px;">Two-phase: traffic dodging + parking. Organisation/Aura affects difficulty.</p>
-          </div>
-          
-          <div style="background: #3a2a1a; border-radius: 8px; padding: 12px; margin-top: 16px; border-left: 3px solid #fbbf24;">
-            <p style="margin: 0; font-size: 13px; color: #fbbf24;">💡 Tip: Lock your phone to begin your morning commute!</p>
-          </div>
-        `;
+          // Add click handlers
+          (window as any).selectTransport = (transportId: string) => {
+            (window as any).__selectedTransport = transportId;
+            store.setState((prev) => transitionScene(prev, 'evening-commute'));
+          };
+        } else {
+          // Morning commute - show info only
+          content.innerHTML = `
+            <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+              <h3 style="margin-top: 0; color: #4ac94a;">🚶 Walk</h3>
+              <p style="margin: 8px 0; color: #999;">Free • ~45 min • Medium difficulty</p>
+              <p style="margin: 0; font-size: 14px;">Crossy-road style minigame. Your mobility stat affects traffic density.</p>
+            </div>
+            
+            <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+              <h3 style="margin-top: 0; color: #4ac94a;">🚌 Bus/Tram</h3>
+              <p style="margin: 8px 0; color: #999;">$5 • ~35 min • Easy</p>
+              <p style="margin: 0; font-size: 14px;">Balance minigame. Your aura stat affects stability. Bus may arrive late (random).</p>
+            </div>
+            
+            <div style="background: #2a2a2a; border-radius: 8px; padding: 16px;">
+              <h3 style="margin-top: 0; color: #4ac94a;">🚗 Drive</h3>
+              <p style="margin: 8px 0; color: #999;">$12 • ~30 min • Hard</p>
+              <p style="margin: 0; font-size: 14px;">Two-phase: traffic dodging + parking. Organisation/Aura affects difficulty.</p>
+            </div>
+            
+            <div style="background: #3a2a1a; border-radius: 8px; padding: 12px; margin-top: 16px; border-left: 3px solid #fbbf24;">
+              <p style="margin: 0; font-size: 13px; color: #fbbf24;">💡 Tip: Lock your phone to begin your morning commute!</p>
+            </div>
+          `;
+        }
         break;
 
       case 'notes':

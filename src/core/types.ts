@@ -53,7 +53,6 @@ export const SCENE_IDS = [
   'phone',
   'morning-commute',
   'evening-commute',
-  'evening-activity',
 ] as const;
 
 export type SceneId = (typeof SCENE_IDS)[number];

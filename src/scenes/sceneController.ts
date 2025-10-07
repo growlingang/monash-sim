@@ -10,8 +10,7 @@ export const SCENE_FLOW: SceneTransition[] = [
   { scene: 'bedroom', next: 'morning-commute' },
   { scene: 'phone', next: 'morning-commute' },
   { scene: 'morning-commute', next: 'evening-commute' },
-  { scene: 'evening-commute', next: 'evening-activity' },
-  { scene: 'evening-activity', next: null }, // End of Day 1 flow
+  { scene: 'evening-commute', next: 'bedroom' }, // Go back to bedroom after evening commute
 ];
 
 export const getNextScene = (current: SceneId): SceneId | null => {
