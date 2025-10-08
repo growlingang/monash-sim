@@ -5,6 +5,7 @@ import { MAJOR_DEFINITIONS } from './data/majors';
 import { mountScene } from './scenes/ui/root';
 import { initPhoneOverlay } from './ui/phoneOverlay';
 import { loadGame, hasAutoSave } from './utils/saveSystem';
+import { playBackgroundMusic } from './utils/audioManager';
 
 const DEFAULT_MAJOR: MajorId = 'engineering';
 
@@ -25,6 +26,23 @@ const store = initialState
 
 // Initialize phone overlay
 initPhoneOverlay(store);
+
+// Initialize background music
+// You can replace this with your own MP3 file
+// Place your soundtrack in public/audio/music/ and update the path below
+try {
+  await playBackgroundMusic('/audio/music/background.mp3', {
+    loop: true,
+    volume: 0.6, // Increased default volume for better audio presence
+    autoplay: true
+  });
+  console.log('🎵 Background music initialized');
+} catch (error) {
+  console.log('ℹ️ No background music file found at /audio/music/background.mp3');
+  console.log('💡 To add your own soundtrack:');
+  console.log('   1. Place your MP3 file in public/audio/music/');
+  console.log('   2. Update the path in src/main.ts');
+}
 
 const app = document.querySelector<HTMLDivElement>('#app');
 
