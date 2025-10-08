@@ -1,7 +1,13 @@
 import type { GameStore } from '../core/store';
+import type { NpcId } from '../core/types';
 import { getSaveMetadata, saveGame } from '../utils/saveSystem';
+import { getAvailableActivities, EVENING_ACTIVITY_DEFINITIONS } from '../data/eveningActivities';
+import { NPC_DEFINITIONS } from '../data/npcs';
+import { applyDeltas, formatMinutes, logActivity } from '../core/gameState';
+import { createCutscene } from './cutscene';
+import { getEveningActivityCutscene } from '../data/eveningCutscenes';
 
-type PhoneApp = 'home' | 'maps' | 'notes' | 'messages' | 'save' | 'settings';
+type PhoneApp = 'home' | 'maps' | 'notes' | 'messages' | 'save' | 'settings' | 'activities';
 
 let overlayContainer: HTMLElement | null = null;
 let isPhoneOpen = false;
@@ -140,10 +146,16 @@ const renderPhoneContent = (store: GameStore) => {
       align-content: start;
     `;
 
+    // Get current scene to determine which apps to show
+    const currentState = store.getState();
+    const isBedroomScene = currentState.currentScene === 'bedroom';
+
     const apps = [
       { id: 'maps', name: 'Maps', icon: '🗺️', color: '#34d399' },
       { id: 'notes', name: 'Notes', icon: '📝', color: '#fbbf24' },
       { id: 'messages', name: 'WhatsApp', icon: '💬', color: '#25D366' },
+      // Only show Activities app in bedroom scene
+      ...(isBedroomScene ? [{ id: 'activities', name: 'Activities', icon: '🎯', color: '#f97316' }] : []),
       { id: 'save', name: 'Save', icon: '💾', color: '#60a5fa' },
       { id: 'settings', name: 'Settings', icon: '⚙️', color: '#6b7280' },
       { id: 'close', name: 'Close', icon: '❌', color: '#ef4444' },
@@ -647,6 +659,10 @@ const renderPhoneContent = (store: GameStore) => {
         break;
       }
 
+      case 'activities':
+        renderActivitiesApp(appTitle, content, store, renderHomeScreen);
+        break;
+
       case 'settings':
         appTitle.textContent = 'Settings';
         const major = currentState.major;
@@ -688,4 +704,379 @@ const renderPhoneContent = (store: GameStore) => {
   renderHomeScreen();
 };
 
+function renderActivitiesApp(
+  appTitle: HTMLElement,
+  content: HTMLElement,
+  store: GameStore,
+  renderHomeScreen: () => void
+) {
+  appTitle.textContent = 'Evening Activities';
+  content.innerHTML = '';
+
+  const state = store.getState();
+  const timeStr = formatMinutes(state.timeMinutes);
+
+  // Get available activities
+  const availableActivities = getAvailableActivities({
+    money: state.money,
+    hunger: state.hunger,
+    timeMinutes: state.timeMinutes,
+    doomscrollUsed: state.flags.has('doomscroll-used'),
+  });
+
+  // Stats display
+  const statsDisplay = document.createElement('div');
+  statsDisplay.style.cssText = `
+    background: #2a2a2a;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    color: #999;
+  `;
+  statsDisplay.innerHTML = `
+    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+      <span>💰 Money: $${state.money}</span>
+      <span>🍔 Hunger: ${state.hunger}/10</span>
+    </div>
+    <div style="color: #666; font-size: 12px;">⏰ Time: ${timeStr}</div>
+  `;
+  content.appendChild(statsDisplay);
+
+  // Instructions
+  const instructions = document.createElement('div');
+  instructions.style.cssText = `
+    background: #1e3a5f;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+    border-left: 3px solid #3b82f6;
+    font-size: 13px;
+    color: #93c5fd;
+  `;
+  instructions.innerHTML = `
+    <p style="margin: 0;">💡 Choose an evening activity before heading to bed.</p>
+  `;
+  content.appendChild(instructions);
+
+  // Render activities
+  EVENING_ACTIVITY_DEFINITIONS.forEach((activity) => {
+    const isAvailable = availableActivities.some((a) => a.id === activity.id);
+    
+    const activityCard = document.createElement('div');
+    activityCard.style.cssText = `
+      background: ${isAvailable ? '#2a2a2a' : '#1a1a1a'};
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      cursor: ${isAvailable ? 'pointer' : 'not-allowed'};
+      opacity: ${isAvailable ? '1' : '0.5'};
+      border: 2px solid ${isAvailable ? 'transparent' : '#333'};
+      transition: all 0.2s;
+    `;
+
+    const activityIcon = getActivityIcon(activity.id as any);
+    const activityTitle = document.createElement('h3');
+    activityTitle.textContent = `${activityIcon} ${activity.label}`;
+    activityTitle.style.cssText = `
+      margin: 0 0 8px 0;
+      color: ${isAvailable ? '#4ac94a' : '#666'};
+      font-size: 16px;
+    `;
+
+    const activityDesc = document.createElement('p');
+    activityDesc.textContent = activity.description;
+    activityDesc.style.cssText = `
+      margin: 0 0 8px 0;
+      color: #999;
+      font-size: 14px;
+    `;
+
+    const activityReqs = document.createElement('div');
+    activityReqs.style.cssText = 'font-size: 13px; color: #666;';
+    
+    const reqParts: string[] = [];
+    if (activity.requirements.money) {
+      reqParts.push(`💰 $${activity.requirements.money}`);
+    }
+    if (activity.requirements.hungerMax !== undefined) {
+      reqParts.push(`🍔 Hunger < ${activity.requirements.hungerMax + 1}`);
+    }
+    if (activity.requirements.hungerMin !== undefined && activity.requirements.hungerMin > 0) {
+      reqParts.push(`🍔 Hunger > ${activity.requirements.hungerMin - 1}`);
+    }
+    reqParts.push(`⏰ ${activity.requirements.time} min`);
+    
+    activityReqs.textContent = reqParts.join(' • ');
+
+    activityCard.appendChild(activityTitle);
+    activityCard.appendChild(activityDesc);
+    activityCard.appendChild(activityReqs);
+
+    // Show why it's unavailable
+    if (!isAvailable) {
+      const unavailableReason = getUnavailableReason(activity, state);
+      if (unavailableReason) {
+        const reasonDiv = document.createElement('div');
+        reasonDiv.style.cssText = `
+          margin-top: 8px;
+          padding: 8px;
+          background: #3a1a1a;
+          border-radius: 4px;
+          font-size: 12px;
+          color: #ff6b6b;
+        `;
+        reasonDiv.textContent = `❌ ${unavailableReason}`;
+        activityCard.appendChild(reasonDiv);
+      }
+    }
+
+    // Add hover effect for available activities
+    if (isAvailable) {
+      activityCard.addEventListener('mouseenter', () => {
+        activityCard.style.background = '#3a3a3a';
+        activityCard.style.borderColor = '#4ac94a';
+      });
+
+      activityCard.addEventListener('mouseleave', () => {
+        activityCard.style.background = '#2a2a2a';
+        activityCard.style.borderColor = 'transparent';
+      });
+
+      activityCard.addEventListener('click', () => {
+        if (activity.id === 'text') {
+          // Show NPC selection
+          renderNPCSelection(appTitle, content, store, renderHomeScreen);
+        } else {
+          // Execute activity
+          executeActivity(activity.id as any, store, renderHomeScreen);
+        }
+      });
+    }
+
+    content.appendChild(activityCard);
+  });
+}
+
+function getActivityIcon(activityId: 'eat' | 'rest' | 'text' | 'doomscroll'): string {
+  switch (activityId) {
+    case 'eat': return '🍔';
+    case 'rest': return '😴';
+    case 'text': return '💬';
+    case 'doomscroll': return '📱';
+  }
+}
+
+function getUnavailableReason(activity: typeof EVENING_ACTIVITY_DEFINITIONS[0], state: any): string | null {
+  const timeRemaining = 15 * ((22 - 7) * 4) - state.timeMinutes;
+  
+  if (timeRemaining < activity.requirements.time) {
+    return 'Not enough time remaining';
+  }
+  
+  if (activity.requirements.money && state.money < activity.requirements.money) {
+    return `Need $${activity.requirements.money}`;
+  }
+  
+  if (activity.requirements.hungerMin !== undefined && state.hunger < activity.requirements.hungerMin) {
+    return `Hunger too low (need > ${activity.requirements.hungerMin - 1})`;
+  }
+  
+  if (activity.requirements.hungerMax !== undefined && state.hunger > activity.requirements.hungerMax) {
+    return `Hunger too high (need < ${activity.requirements.hungerMax + 1})`;
+  }
+  
+  if (activity.requirements.doomscrollUsed === false && state.flags.has('doomscroll-used')) {
+    return 'Already used today';
+  }
+  
+  return null;
+}
+
+function renderNPCSelection(
+  appTitle: HTMLElement,
+  content: HTMLElement,
+  store: GameStore,
+  renderHomeScreen: () => void
+) {
+  appTitle.textContent = 'Text Someone';
+  content.innerHTML = '';
+
+  const backButton = document.createElement('button');
+  backButton.textContent = '← Back to Activities';
+  backButton.style.cssText = `
+    width: 100%;
+    padding: 12px;
+    background: #2a2a2a;
+    color: #4ac94a;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    margin-bottom: 16px;
+  `;
+  backButton.addEventListener('click', () => {
+    renderActivitiesApp(appTitle, content, store, renderHomeScreen);
+  });
+  content.appendChild(backButton);
+
+  const instruction = document.createElement('p');
+  instruction.textContent = 'Choose a teammate to send a message to:';
+  instruction.style.cssText = 'color: #999; font-size: 14px; margin-bottom: 16px;';
+  content.appendChild(instruction);
+
+  // Show all NPCs
+  const state = store.getState();
+  const npcIds: NpcId[] = ['bonsen', 'zahir', 'jiun', 'anika', 'jiawen'];
+
+  npcIds.forEach((npcId) => {
+    const npc = NPC_DEFINITIONS[npcId];
+    const rapport = state.rapport[npcId];
+    
+    const npcCard = document.createElement('div');
+    npcCard.style.cssText = `
+      background: #2a2a2a;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    `;
+
+    const npcHeader = document.createElement('div');
+    npcHeader.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;';
+    
+    const npcName = document.createElement('h4');
+    npcName.textContent = npc.name;
+    npcName.style.cssText = 'margin: 0; color: #4ac94a; font-size: 16px;';
+    
+    const rapportBadge = document.createElement('span');
+    rapportBadge.textContent = `❤️ ${rapport > 0 ? '+' : ''}${rapport}`;
+    rapportBadge.style.cssText = `
+      padding: 4px 8px;
+      background: ${rapport >= 0 ? '#1e3a1e' : '#3a1e1e'};
+      color: ${rapport >= 0 ? '#4ac94a' : '#ff6b6b'};
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    `;
+    
+    npcHeader.appendChild(npcName);
+    npcHeader.appendChild(rapportBadge);
+
+    const npcFocus = document.createElement('p');
+    npcFocus.textContent = `${npc.focus.charAt(0).toUpperCase() + npc.focus.slice(1)} • ${npc.majorAffinity.toUpperCase()}`;
+    npcFocus.style.cssText = 'margin: 0; color: #666; font-size: 12px;';
+
+    npcCard.appendChild(npcHeader);
+    npcCard.appendChild(npcFocus);
+
+    npcCard.addEventListener('mouseenter', () => {
+      npcCard.style.background = '#3a3a3a';
+      npcCard.style.borderColor = '#4ac94a';
+    });
+
+    npcCard.addEventListener('mouseleave', () => {
+      npcCard.style.background = '#2a2a2a';
+      npcCard.style.borderColor = 'transparent';
+    });
+
+    npcCard.addEventListener('click', () => {
+      executeActivity('text', store, renderHomeScreen, npcId);
+    });
+
+    content.appendChild(npcCard);
+  });
+}
+
+function executeActivity(
+  activityId: 'eat' | 'rest' | 'text' | 'doomscroll',
+  store: GameStore,
+  renderHomeScreen: () => void,
+  targetNpc?: NpcId
+) {
+  const state = store.getState();
+  const activity = EVENING_ACTIVITY_DEFINITIONS.find((a) => a.id === activityId);
+  
+  if (!activity) return;
+
+  // Build deltas
+  const deltas: any = {
+    time: activity.outcome.timeDelta,
+  };
+
+  if (activity.outcome.hungerDelta !== undefined) {
+    // For eat: set hunger to 10
+    if (activityId === 'eat') {
+      deltas.hunger = 10 - state.hunger; // Delta to reach 10
+    } else {
+      deltas.hunger = activity.outcome.hungerDelta;
+    }
+  }
+
+  if (activity.outcome.moneyDelta !== undefined) {
+    deltas.money = activity.outcome.moneyDelta;
+  }
+
+  if (activity.outcome.statDeltas) {
+    deltas.stats = activity.outcome.statDeltas;
+  }
+
+  // Handle text activity with rapport
+  if (activityId === 'text' && targetNpc) {
+    const currentRapport = state.rapport[targetNpc];
+    const rapportDelta = currentRapport <= 0 ? 2 : 1;
+    deltas.rapport = { [targetNpc]: rapportDelta };
+  }
+
+  // Apply deltas
+  let nextState = applyDeltas(state, deltas);
+
+  // Add flag for doomscroll
+  if (activityId === 'doomscroll') {
+    nextState.flags.add('doomscroll-used');
+  }
+
+  // Log activity
+  const summaryText = targetNpc 
+    ? `${activity.outcome.description} (Texted ${NPC_DEFINITIONS[targetNpc].name})`
+    : activity.outcome.description;
+    
+  nextState = logActivity(nextState, {
+    segment: 'bedroom',
+    choiceId: activityId,
+    summary: summaryText,
+    deltas,
+  });
+
+  // Update store
+  store.setState(nextState);
+
+  // Close phone and show cutscene
+  closePhone();
+  
+  // Get cutscene frames for this activity
+  const cutsceneFrames = getEveningActivityCutscene(activityId, targetNpc);
+  
+  // Show cutscene and then go to recap
+  createCutscene(document.body, {
+    frames: cutsceneFrames,
+    canSkip: true,
+    onComplete: () => {
+      // Transition to recap scene after cutscene
+      store.setState((prev) => ({ ...prev, currentScene: 'recap' }));
+    },
+  });
+}
+
+
 export const isPhoneOverlayOpen = () => isPhoneOpen;
+
+export const createPhoneOverlay = (root: HTMLElement, store: GameStore, onClose: () => void) => {
+  openPhone(store);
+  
+  // Override close behavior to call onClose callback
+  const originalClose = closePhone;
+  (window as any).__phoneOverlayCloseCallback = onClose;
+};

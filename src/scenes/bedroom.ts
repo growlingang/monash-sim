@@ -2,6 +2,7 @@ import type { GameStore } from '../core/store';
 import { createStatsBar } from '../ui/statsBar';
 import { loadSprite, drawSprite } from '../utils/spriteLoader';
 import { Tileset } from '../utils/tilesetLoader';
+import { createPhoneOverlay } from '../ui/phoneOverlay';
 
 const TILE_SIZE = 32;
 const ROOM_WIDTH = 20; // tiles
@@ -342,12 +343,21 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
   const playerSize = TILE_SIZE;
   let lastTime = performance.now();
   let gameActive = true;
+  let phoneOpen = false;
 
   // Input handling
   const keys: Record<string, boolean> = {};
 
   const handleKeyDown = (e: KeyboardEvent) => {
     keys[e.key.toLowerCase()] = true;
+
+    // Press P to open evening activities phone
+    if (e.key.toLowerCase() === 'p' && !phoneOpen) {
+      phoneOpen = true;
+      createPhoneOverlay(root, store, () => {
+        phoneOpen = false;
+      });
+    }
 
     // Test shortcut: Press T to open tileset test scene
     if (e.key.toLowerCase() === 't') {

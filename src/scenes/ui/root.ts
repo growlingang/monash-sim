@@ -7,6 +7,7 @@ import { renderBedroom } from '../bedroom';
 import { renderPhone } from '../phone';
 import { renderMorningCommute } from '../morningCommute';
 import { renderEveningCommute } from '../eveningCommute';
+import { renderRecap } from '../recap';
 import { renderTilesetTest } from '../tilesetTest';
 
 export const mountScene = (scene: SceneId, root: HTMLElement, store: GameStore) => {
@@ -32,6 +33,9 @@ export const mountScene = (scene: SceneId, root: HTMLElement, store: GameStore) 
       break;
     case 'evening-commute':
       renderEveningCommute(root, store);
+      break;
+    case 'recap':
+      renderRecap(root, store);
       break;
     case 'tileset-test':
       // Async call - tileset test loads sprites

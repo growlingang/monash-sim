@@ -55,6 +55,7 @@ export const SCENE_IDS = [
   'phone',
   'morning-commute',
   'evening-commute',
+  'recap',
   'tileset-test', // Test scene for tileset functionality
 ] as const;
 
