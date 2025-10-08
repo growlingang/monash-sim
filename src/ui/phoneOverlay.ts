@@ -6,6 +6,7 @@ import { NPC_DEFINITIONS } from '../data/npcs';
 import { applyDeltas, formatMinutes, logActivity } from '../core/gameState';
 import { createCutscene } from './cutscene';
 import { getEveningActivityCutscene } from '../data/eveningCutscenes';
+import { getAudioSettings, setVolume, toggleMute, startBackgroundMusic } from '../utils/audioManager';
 
 type PhoneApp = 'home' | 'maps' | 'notes' | 'messages' | 'save' | 'settings' | 'activities';
 
@@ -667,12 +668,54 @@ const renderPhoneContent = (store: GameStore) => {
         appTitle.textContent = 'Settings';
         const major = currentState.major;
         const majorName = major.charAt(0).toUpperCase() + major.slice(1);
+        const audioSettings = getAudioSettings();
         content.innerHTML = `
           <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
             <h3 style="margin-top: 0; color: #6b7280;">👤 Player Info</h3>
             <p style="margin: 8px 0;"><strong>Name:</strong> ${currentState.playerName || 'Unregistered'}</p>
             <p style="margin: 8px 0;"><strong>Major:</strong> ${majorName}</p>
             <p style="margin: 8px 0;"><strong>Special Item:</strong> ${currentState.specialItem}</p>
+          </div>
+          
+          <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+            <h3 style="margin-top: 0; color: #6b7280;">🔊 Audio Settings</h3>
+            <div style="margin-bottom: 12px;">
+              <button id="mute-toggle" style="
+                background: ${audioSettings.isMuted ? '#ef4444' : '#10b981'};
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 14px;
+                margin-right: 8px;
+              ">${audioSettings.isMuted ? '🔇 Unmute' : '🔊 Mute'}</button>
+              ${!audioSettings.isPlaying ? `
+                <button id="start-music" style="
+                  background: #3b82f6;
+                  color: white;
+                  border: none;
+                  padding: 8px 16px;
+                  border-radius: 6px;
+                  cursor: pointer;
+                  font-size: 14px;
+                  margin-right: 8px;
+                ">🎵 Start Music</button>
+              ` : ''}
+              <span style="color: #999; font-size: 12px;">${audioSettings.isPlaying ? 'Music: Playing' : 'Music: Ready to Play'}</span>
+            </div>
+            <div style="margin-bottom: 8px;">
+              <label style="color: #999; font-size: 12px; display: block; margin-bottom: 4px;">Master Volume: ${Math.round(audioSettings.masterVolume * 100)}%</label>
+              <input type="range" id="master-volume" min="0" max="100" value="${Math.round(audioSettings.masterVolume * 100)}" style="width: 100%;">
+            </div>
+            <div style="margin-bottom: 8px;">
+              <label style="color: #999; font-size: 12px; display: block; margin-bottom: 4px;">Music Volume: ${Math.round(audioSettings.musicVolume * 100)}%</label>
+              <input type="range" id="music-volume" min="0" max="100" value="${Math.round(audioSettings.musicVolume * 100)}" style="width: 100%;">
+            </div>
+            <div>
+              <label style="color: #999; font-size: 12px; display: block; margin-bottom: 4px;">SFX Volume: ${Math.round(audioSettings.sfxVolume * 100)}%</label>
+              <input type="range" id="sfx-volume" min="0" max="100" value="${Math.round(audioSettings.sfxVolume * 100)}" style="width: 100%;">
+            </div>
           </div>
           
           <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
@@ -695,6 +738,95 @@ const renderPhoneContent = (store: GameStore) => {
             </div>
           </div>
         `;
+
+        // Add event listeners for audio controls
+        const muteButton = content.querySelector('#mute-toggle') as HTMLButtonElement;
+        const startMusicButton = content.querySelector('#start-music') as HTMLButtonElement;
+        const masterVolumeSlider = content.querySelector('#master-volume') as HTMLInputElement;
+        const musicVolumeSlider = content.querySelector('#music-volume') as HTMLInputElement;
+        const sfxVolumeSlider = content.querySelector('#sfx-volume') as HTMLInputElement;
+
+        if (startMusicButton) {
+          startMusicButton.addEventListener('click', async () => {
+            try {
+              await startBackgroundMusic();
+              // Remove the start button and update status
+              startMusicButton.remove();
+              const statusSpan = content.querySelector('span');
+              if (statusSpan) {
+                statusSpan.textContent = 'Music: Playing';
+              }
+              console.log('🎵 Music started successfully!');
+            } catch (error) {
+              console.error('Failed to start music:', error);
+              alert('Failed to start music. Please try again.');
+            }
+          });
+        }
+
+        if (muteButton) {
+          muteButton.addEventListener('click', () => {
+            toggleMute();
+            // Update button appearance
+            const newSettings = getAudioSettings();
+            muteButton.style.background = newSettings.isMuted ? '#ef4444' : '#10b981';
+            muteButton.textContent = newSettings.isMuted ? '🔇 Unmute' : '🔊 Mute';
+            
+            // Update volume sliders
+            const masterVol = content.querySelector('#master-volume') as HTMLInputElement;
+            const musicVol = content.querySelector('#music-volume') as HTMLInputElement;
+            const sfxVol = content.querySelector('#sfx-volume') as HTMLInputElement;
+            
+            if (masterVol) masterVol.value = Math.round(newSettings.masterVolume * 100).toString();
+            if (musicVol) musicVol.value = Math.round(newSettings.musicVolume * 100).toString();
+            if (sfxVol) sfxVol.value = Math.round(newSettings.sfxVolume * 100).toString();
+          });
+        }
+
+        if (masterVolumeSlider) {
+          masterVolumeSlider.addEventListener('input', (e) => {
+            const value = parseInt((e.target as HTMLInputElement).value) / 100;
+            setVolume('master', value);
+            
+            // Update labels
+            const labels = content.querySelectorAll('label');
+            labels.forEach(label => {
+              if (label.textContent?.includes('Master Volume:')) {
+                label.textContent = `Master Volume: ${Math.round(value * 100)}%`;
+              }
+            });
+          });
+        }
+
+        if (musicVolumeSlider) {
+          musicVolumeSlider.addEventListener('input', (e) => {
+            const value = parseInt((e.target as HTMLInputElement).value) / 100;
+            setVolume('music', value);
+            
+            // Update labels
+            const labels = content.querySelectorAll('label');
+            labels.forEach(label => {
+              if (label.textContent?.includes('Music Volume:')) {
+                label.textContent = `Music Volume: ${Math.round(value * 100)}%`;
+              }
+            });
+          });
+        }
+
+        if (sfxVolumeSlider) {
+          sfxVolumeSlider.addEventListener('input', (e) => {
+            const value = parseInt((e.target as HTMLInputElement).value) / 100;
+            setVolume('sfx', value);
+            
+            // Update labels
+            const labels = content.querySelectorAll('label');
+            labels.forEach(label => {
+              if (label.textContent?.includes('SFX Volume:')) {
+                label.textContent = `SFX Volume: ${Math.round(value * 100)}%`;
+              }
+            });
+          });
+        }
         break;
     }
 
