@@ -8,13 +8,13 @@
   "description": "A small Monash university life simulation prototype.",
   "icons": [
     {
-      "src": "/monashsimicon.png",
+      "src": "/monashsimicon.png?v=2",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/monashsimicon.png",
+      "src": "/monashsimicon.png?v=2",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
