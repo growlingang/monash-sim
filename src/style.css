@@ -1,7 +1,21 @@
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@font-face {
+  font-family: 'VCR OSD Mono';
+  src: url('/fonts/VCR_OSD_MONO_1.001.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: '04B_30';
+  src: url('/fonts/04B_30__.TTF') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
-  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'VCR OSD Mono', monospace;
   line-height: 1.6;
   font-weight: 400;
   color: #f5f7ff;
@@ -52,6 +66,7 @@ body {
   margin: 0;
   font-size: 1.9rem;
   letter-spacing: 0.04em;
+  font-family: '04B_30', monospace;
 }
 
 .ui-shell__subtitle {
@@ -67,6 +82,7 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: rgba(219, 227, 255, 0.86);
+  font-family: '04B_30', monospace;
 }
 
 #state-dump {
@@ -146,6 +162,7 @@ body {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: rgba(230, 235, 255, 0.95);
+  font-family: '04B_30', monospace;
 }
 
 .character-create__copy {
@@ -269,6 +286,7 @@ body {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   font-size: 1.15rem;
+  font-family: '04B_30', monospace;
 }
 
 .commute__intro p {
@@ -340,6 +358,7 @@ body {
 .commute__option h3 {
   margin: 0;
   font-size: 1.1rem;
+  font-family: '04B_30', monospace;
 }
 
 .commute__difficulty {
@@ -420,7 +439,7 @@ body {
   justify-content: center;
   background-size: cover;
   background-position: center;
-  font-family: 'Press Start 2P', 'Courier New', monospace;
+  font-family: '04B_30', monospace;
   color: #2c1d11;
   overflow: hidden;
 }
@@ -522,7 +541,7 @@ body {
   padding: 3rem 2rem;
   box-sizing: border-box;
   color: #fbe9cf;
-  font-family: 'Press Start 2P', 'Courier New', monospace;
+  font-family: '04B_30', monospace;
   overflow: hidden;
 }
 
@@ -637,7 +656,7 @@ body {
 }
 
 .main-menu__item-subtitle {
-  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  font-family: 'VCR OSD Mono', monospace;
   font-size: 0.8rem;
   letter-spacing: 0.04em;
   color: rgba(255, 233, 196, 0.7);
@@ -645,7 +664,7 @@ body {
 }
 
 .main-menu__footer {
-  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  font-family: 'VCR OSD Mono', monospace;
   font-size: 0.75rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;

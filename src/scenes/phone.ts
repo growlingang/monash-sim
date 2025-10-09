@@ -25,10 +25,10 @@ export const renderPhone = (root: HTMLElement, store: GameStore) => {
     width: 375px;
     height: 667px;
     background: #000;
-    border-radius: 36px;
     padding: 16px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     position: relative;
+    border: 2px solid #333;
   `;
 
   const phoneScreen = document.createElement('div');
@@ -37,10 +37,10 @@ export const renderPhone = (root: HTMLElement, store: GameStore) => {
     width: 100%;
     height: 100%;
     background: #1a1a1a;
-    border-radius: 24px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    border: 1px solid #555;
   `;
 
   const statusBar = document.createElement('div');
@@ -54,6 +54,8 @@ export const renderPhone = (root: HTMLElement, store: GameStore) => {
     padding: 0 16px;
     color: #fff;
     font-size: 14px;
+    font-family: 'VCR OSD Mono', monospace;
+    border-bottom: 1px solid #333;
   `;
 
   const state = store.getState();
@@ -71,6 +73,7 @@ export const renderPhone = (root: HTMLElement, store: GameStore) => {
     background: #1a1a1a;
     overflow-y: auto;
     padding: 16px;
+    font-family: 'VCR OSD Mono', monospace;
   `;
 
   phoneScreen.appendChild(statusBar);

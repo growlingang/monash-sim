@@ -82,10 +82,10 @@ const renderPhoneContent = (store: GameStore) => {
     width: 375px;
     height: 667px;
     background: #000;
-    border-radius: 36px;
     padding: 16px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
     position: relative;
+    border: 2px solid #333;
   `;
 
   const phoneScreen = document.createElement('div');
@@ -94,10 +94,10 @@ const renderPhoneContent = (store: GameStore) => {
     width: 100%;
     height: 100%;
     background: #1a1a1a;
-    border-radius: 24px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    border: 1px solid #555;
   `;
 
   const statusBar = document.createElement('div');
@@ -111,6 +111,8 @@ const renderPhoneContent = (store: GameStore) => {
     padding: 0 16px;
     color: #fff;
     font-size: 14px;
+    font-family: "VCR OSD Mono", monospace;
+    border-bottom: 1px solid #333;
   `;
 
   const state = store.getState();
@@ -128,6 +130,7 @@ const renderPhoneContent = (store: GameStore) => {
     background: #1a1a1a;
     overflow-y: auto;
     padding: 16px;
+    font-family: "VCR OSD Mono", monospace;
   `;
 
   phoneScreen.appendChild(statusBar);
@@ -139,12 +142,14 @@ const renderPhoneContent = (store: GameStore) => {
     appContent.innerHTML = '';
     appContent.style.cssText = `
       flex: 1;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #0a0a0a;
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 24px;
+      gap: 16px;
       padding: 32px 16px;
       align-content: start;
+      font-family: "VCR OSD Mono", monospace;
+      border: 1px solid #333;
     `;
 
     // Get current scene to determine which apps to show
@@ -167,8 +172,7 @@ const renderPhoneContent = (store: GameStore) => {
       appIcon.className = 'phone__app-icon';
       appIcon.style.cssText = `
         background: ${app.color};
-        border: none;
-        border-radius: 16px;
+        border: 2px solid #000;
         aspect-ratio: 1;
         display: flex;
         flex-direction: column;
@@ -176,13 +180,14 @@ const renderPhoneContent = (store: GameStore) => {
         justify-content: center;
         gap: 4px;
         cursor: pointer;
-        transition: transform 0.2s;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        transition: none;
+        box-shadow: 0 0 0 1px #333;
+        font-family: "VCR OSD Mono", monospace;
       `;
 
       appIcon.innerHTML = `
         <div style="font-size: 32px;">${app.icon}</div>
-        <div style="font-size: 11px; color: white; font-weight: 500;">${app.name}</div>
+        <div style="font-size: 11px; color: white; font-weight: normal; font-family: "VCR OSD Mono", monospace;">${app.name}</div>
       `;
 
       appIcon.addEventListener('mouseenter', () => {
@@ -213,6 +218,7 @@ const renderPhoneContent = (store: GameStore) => {
       background: #1a1a1a;
       overflow-y: auto;
       padding: 0;
+      font-family: "VCR OSD Mono", monospace;
     `;
 
     // Back button
@@ -224,6 +230,7 @@ const renderPhoneContent = (store: GameStore) => {
       align-items: center;
       gap: 12px;
       border-bottom: 1px solid #333;
+      font-family: "VCR OSD Mono", monospace;
     `;
 
     const backBtn = document.createElement('button');
@@ -235,18 +242,19 @@ const renderPhoneContent = (store: GameStore) => {
       font-size: 16px;
       cursor: pointer;
       padding: 4px;
+      font-family: "VCR OSD Mono", monospace;
     `;
     backBtn.addEventListener('click', () => renderHomeScreen());
 
     const appTitle = document.createElement('h2');
-    appTitle.style.cssText = 'color: white; font-size: 18px; margin: 0;';
+    appTitle.style.cssText = 'color: white; font-size: 18px; margin: 0; font-family: "VCR OSD Mono", monospace;';
 
     header.appendChild(backBtn);
     header.appendChild(appTitle);
     appContent.appendChild(header);
 
     const content = document.createElement('div');
-    content.style.cssText = 'padding: 16px; color: white;';
+    content.style.cssText = 'padding: 16px; color: white; font-family: "VCR OSD Mono", monospace;';
 
     const currentState = store.getState();
 
@@ -258,59 +266,59 @@ const renderPhoneContent = (store: GameStore) => {
         if (isEveningCommute) {
           // Evening commute - show transport options
           content.innerHTML = `
-            <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-              <h3 style="margin-top: 0; color: #4ac94a;">🚶 Walk Home</h3>
-              <p style="margin: 8px 0; color: #999;">Free • ~45 min • Medium difficulty</p>
-              <p style="margin: 0 0 12px 0; font-size: 14px;">Crossy-road style minigame. Your mobility stat affects traffic density.</p>
+            <div style="background: #2a2a2a; padding: 16px; margin-bottom: 16px; border: 1px solid #555;">
+              <h3 style="margin-top: 0; color: #4ac94a; font-family: "VCR OSD Mono", monospace;">🚶 WALK HOME</h3>
+              <p style="margin: 8px 0; color: #999; font-family: "VCR OSD Mono", monospace;">FREE • ~45 MIN • MEDIUM DIFFICULTY</p>
+              <p style="margin: 0 0 12px 0; font-size: 14px; font-family: "VCR OSD Mono", monospace;">Crossy-road style minigame. Your mobility stat affects traffic density.</p>
               <button id="walk-btn" style="
                 width: 100%;
                 padding: 12px;
                 background: #4ac94a;
-                border: none;
-                border-radius: 6px;
+                border: 2px solid #000;
                 color: #000;
                 font-weight: bold;
                 cursor: pointer;
                 font-size: 14px;
-              ">Choose Walk</button>
+                font-family: "VCR OSD Mono", monospace;
+              ">CHOOSE WALK</button>
             </div>
             
-            <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-              <h3 style="margin-top: 0; color: #4ac94a;">🚌 Bus/Tram Home</h3>
-              <p style="margin: 8px 0; color: #999;">$5 • ~35 min • Easy</p>
-              <p style="margin: 0 0 12px 0; font-size: 14px;">Balance minigame. Your aura stat affects stability.</p>
+            <div style="background: #2a2a2a; padding: 16px; margin-bottom: 16px; border: 1px solid #555;">
+              <h3 style="margin-top: 0; color: #4ac94a; font-family: "VCR OSD Mono", monospace;">🚌 BUS/TRAM HOME</h3>
+              <p style="margin: 8px 0; color: #999; font-family: "VCR OSD Mono", monospace;">$5 • ~35 MIN • EASY</p>
+              <p style="margin: 0 0 12px 0; font-size: 14px; font-family: "VCR OSD Mono", monospace;">Balance minigame. Your aura stat affects stability.</p>
               <button id="bus-btn" style="
                 width: 100%;
                 padding: 12px;
                 background: ${currentState.money >= 5 ? '#4ac94a' : '#666'};
-                border: none;
-                border-radius: 6px;
+                border: 2px solid #000;
                 color: ${currentState.money >= 5 ? '#000' : '#999'};
                 font-weight: bold;
                 cursor: ${currentState.money >= 5 ? 'pointer' : 'not-allowed'};
                 font-size: 14px;
-              ">${currentState.money >= 5 ? 'Choose Bus' : 'Insufficient Funds ($5)'}</button>
+                font-family: "VCR OSD Mono", monospace;
+              ">${currentState.money >= 5 ? 'CHOOSE BUS' : 'INSUFFICIENT FUNDS ($5)'}</button>
             </div>
             
-            <div style="background: #2a2a2a; border-radius: 8px; padding: 16px;">
-              <h3 style="margin-top: 0; color: #4ac94a;">🚗 Drive Home</h3>
-              <p style="margin: 8px 0; color: #999;">$12 • ~30 min • Hard</p>
-              <p style="margin: 0 0 12px 0; font-size: 14px;">Two-phase: traffic dodging + parking. Organisation/Aura affects difficulty.</p>
+            <div style="background: #2a2a2a; padding: 16px; border: 1px solid #555;">
+              <h3 style="margin-top: 0; color: #4ac94a; font-family: "VCR OSD Mono", monospace;">🚗 DRIVE HOME</h3>
+              <p style="margin: 8px 0; color: #999; font-family: "VCR OSD Mono", monospace;">$12 • ~30 MIN • HARD</p>
+              <p style="margin: 0 0 12px 0; font-size: 14px; font-family: "VCR OSD Mono", monospace;">Two-phase: traffic dodging + parking. Organisation/Aura affects difficulty.</p>
               <button id="drive-btn" style="
                 width: 100%;
                 padding: 12px;
                 background: ${currentState.money >= 12 ? '#4ac94a' : '#666'};
-                border: none;
-                border-radius: 6px;
+                border: 2px solid #000;
                 color: ${currentState.money >= 12 ? '#000' : '#999'};
                 font-weight: bold;
                 cursor: ${currentState.money >= 12 ? 'pointer' : 'not-allowed'};
                 font-size: 14px;
-              ">${currentState.money >= 12 ? 'Choose Drive' : 'Insufficient Funds ($12)'}</button>
+                font-family: "VCR OSD Mono", monospace;
+              ">${currentState.money >= 12 ? 'CHOOSE DRIVE' : 'INSUFFICIENT FUNDS ($12)'}</button>
             </div>
             
-            <div style="background: #3a2a1a; border-radius: 8px; padding: 12px; margin-top: 16px; border-left: 3px solid #fbbf24;">
-              <p style="margin: 0; font-size: 13px; color: #fbbf24;">💡 Tip: Select your transport, then close the phone to begin!</p>
+            <div style="background: #3a2a1a; padding: 12px; margin-top: 16px; border: 2px solid #fbbf24;">
+              <p style="margin: 0; font-size: 13px; color: #fbbf24; font-family: "VCR OSD Mono", monospace;">💡 TIP: SELECT YOUR TRANSPORT, THEN CLOSE THE PHONE TO BEGIN!</p>
             </div>
           `;
           
@@ -350,59 +358,59 @@ const renderPhoneContent = (store: GameStore) => {
         } else {
           // Morning commute - show transport options
           content.innerHTML = `
-            <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-              <h3 style="margin-top: 0; color: #4ac94a;">🚶 Walk</h3>
-              <p style="margin: 8px 0; color: #999;">Free • ~45 min • Medium difficulty</p>
-              <p style="margin: 0 0 12px 0; font-size: 14px;">Crossy-road style minigame. Your mobility stat affects traffic density.</p>
+            <div style="background: #2a2a2a; padding: 16px; margin-bottom: 16px; border: 1px solid #555;">
+              <h3 style="margin-top: 0; color: #4ac94a; font-family: "VCR OSD Mono", monospace;">🚶 WALK</h3>
+              <p style="margin: 8px 0; color: #999; font-family: "VCR OSD Mono", monospace;">FREE • ~45 MIN • MEDIUM DIFFICULTY</p>
+              <p style="margin: 0 0 12px 0; font-size: 14px; font-family: "VCR OSD Mono", monospace;">Crossy-road style minigame. Your mobility stat affects traffic density.</p>
               <button id="walk-btn" style="
                 width: 100%;
                 padding: 12px;
                 background: #4ac94a;
-                border: none;
-                border-radius: 6px;
+                border: 2px solid #000;
                 color: #000;
                 font-weight: bold;
                 cursor: pointer;
                 font-size: 14px;
-              ">Start Walking Commute</button>
+                font-family: "VCR OSD Mono", monospace;
+              ">START WALKING COMMUTE</button>
             </div>
             
-            <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-              <h3 style="margin-top: 0; color: #4ac94a;">🚌 Bus/Tram</h3>
-              <p style="margin: 8px 0; color: #999;">$5 • ~35 min • Easy</p>
-              <p style="margin: 0 0 12px 0; font-size: 14px;">Balance minigame. Your aura stat affects stability. Bus may arrive late (random).</p>
+            <div style="background: #2a2a2a; padding: 16px; margin-bottom: 16px; border: 1px solid #555;">
+              <h3 style="margin-top: 0; color: #4ac94a; font-family: "VCR OSD Mono", monospace;">🚌 BUS/TRAM</h3>
+              <p style="margin: 8px 0; color: #999; font-family: "VCR OSD Mono", monospace;">$5 • ~35 MIN • EASY</p>
+              <p style="margin: 0 0 12px 0; font-size: 14px; font-family: "VCR OSD Mono", monospace;">Balance minigame. Your aura stat affects stability. Bus may arrive late (random).</p>
               <button id="bus-btn" style="
                 width: 100%;
                 padding: 12px;
                 background: ${currentState.money >= 5 ? '#4ac94a' : '#666'};
-                border: none;
-                border-radius: 6px;
+                border: 2px solid #000;
                 color: ${currentState.money >= 5 ? '#000' : '#999'};
                 font-weight: bold;
                 cursor: ${currentState.money >= 5 ? 'pointer' : 'not-allowed'};
                 font-size: 14px;
-              ">${currentState.money >= 5 ? 'Start Bus Commute' : 'Insufficient Funds ($5)'}</button>
+                font-family: "VCR OSD Mono", monospace;
+              ">${currentState.money >= 5 ? 'START BUS COMMUTE' : 'INSUFFICIENT FUNDS ($5)'}</button>
             </div>
             
-            <div style="background: #2a2a2a; border-radius: 8px; padding: 16px;">
-              <h3 style="margin-top: 0; color: #4ac94a;">🚗 Drive</h3>
-              <p style="margin: 8px 0; color: #999;">$12 • ~30 min • Hard</p>
-              <p style="margin: 0 0 12px 0; font-size: 14px;">Two-phase: traffic dodging + parking. Organisation/Aura affects difficulty.</p>
+            <div style="background: #2a2a2a; padding: 16px; border: 1px solid #555;">
+              <h3 style="margin-top: 0; color: #4ac94a; font-family: "VCR OSD Mono", monospace;">🚗 DRIVE</h3>
+              <p style="margin: 8px 0; color: #999; font-family: "VCR OSD Mono", monospace;">$12 • ~30 MIN • HARD</p>
+              <p style="margin: 0 0 12px 0; font-size: 14px; font-family: "VCR OSD Mono", monospace;">Two-phase: traffic dodging + parking. Organisation/Aura affects difficulty.</p>
               <button id="drive-btn" style="
                 width: 100%;
                 padding: 12px;
                 background: ${currentState.money >= 12 ? '#4ac94a' : '#666'};
-                border: none;
-                border-radius: 6px;
+                border: 2px solid #000;
                 color: ${currentState.money >= 12 ? '#000' : '#999'};
                 font-weight: bold;
                 cursor: ${currentState.money >= 12 ? 'pointer' : 'not-allowed'};
                 font-size: 14px;
-              ">${currentState.money >= 12 ? 'Start Driving Commute' : 'Insufficient Funds ($12)'}</button>
+                font-family: "VCR OSD Mono", monospace;
+              ">${currentState.money >= 12 ? 'START DRIVING COMMUTE' : 'INSUFFICIENT FUNDS ($12)'}</button>
             </div>
             
-            <div style="background: #3a2a1a; border-radius: 8px; padding: 12px; margin-top: 16px; border-left: 3px solid #fbbf24;">
-              <p style="margin: 0; font-size: 13px; color: #fbbf24;">💡 Tip: Choose your transport to begin your morning commute!</p>
+            <div style="background: #3a2a1a; padding: 12px; margin-top: 16px; border: 2px solid #fbbf24;">
+              <p style="margin: 0; font-size: 13px; color: #fbbf24; font-family: "VCR OSD Mono", monospace;">💡 TIP: CHOOSE YOUR TRANSPORT TO BEGIN YOUR MORNING COMMUTE!</p>
             </div>
           `;
           
@@ -452,26 +460,26 @@ const renderPhoneContent = (store: GameStore) => {
         appTitle.textContent = 'Notes - Tasks';
         const activityLog = currentState.activityLog;
         content.innerHTML = `
-          <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-            <h3 style="margin-top: 0; color: #fbbf24;">📋 Day 1 Tasks</h3>
-            <ul style="margin: 8px 0; padding-left: 20px; color: #999;">
-              <li>Morning Commute to Campus</li>
-              <li>Explore Campus</li>
-              <li>Meet Group Members</li>
-              <li>Assignment Briefing</li>
-              <li>Evening Activities</li>
+          <div style="background: #2a2a2a; padding: 16px; margin-bottom: 16px; border: 1px solid #555;">
+            <h3 style="margin-top: 0; color: #fbbf24; font-family: "VCR OSD Mono", monospace;">📋 DAY 1 TASKS</h3>
+            <ul style="margin: 8px 0; padding-left: 20px; color: #999; font-family: "VCR OSD Mono", monospace;">
+              <li>MORNING COMMUTE TO CAMPUS</li>
+              <li>EXPLORE CAMPUS</li>
+              <li>MEET GROUP MEMBERS</li>
+              <li>ASSIGNMENT BRIEFING</li>
+              <li>EVENING ACTIVITIES</li>
             </ul>
           </div>
           
-          <div style="background: #2a2a2a; border-radius: 8px; padding: 16px;">
-            <h3 style="margin-top: 0; color: #fbbf24;">📝 Activity Log</h3>
+          <div style="background: #2a2a2a; padding: 16px; border: 1px solid #555;">
+            <h3 style="margin-top: 0; color: #fbbf24; font-family: "VCR OSD Mono", monospace;">📝 ACTIVITY LOG</h3>
             ${activityLog.length > 0
             ? activityLog.map(entry => `
-                  <div style="border-bottom: 1px solid #333; padding: 8px 0; font-size: 14px;">
-                    <div style="color: #4ac94a;">${entry.time} - ${entry.summary}</div>
+                  <div style="border-bottom: 1px solid #333; padding: 8px 0; font-size: 14px; font-family: "VCR OSD Mono", monospace;">
+                    <div style="color: #4ac94a;">${entry.time} - ${entry.summary.toUpperCase()}</div>
                   </div>
                 `).join('')
-            : '<p style="color: #666; font-style: italic;">No activities yet. Start your day!</p>'
+            : '<p style="color: #666; font-style: italic; font-family: "VCR OSD Mono", monospace;">NO ACTIVITIES YET. START YOUR DAY!</p>'
           }
           </div>
         `;
@@ -480,10 +488,10 @@ const renderPhoneContent = (store: GameStore) => {
       case 'messages':
         appTitle.textContent = 'WhatsApp';
         content.innerHTML = `
-          <div style="text-align: center; padding: 40px 16px; color: #666;">
+          <div style="text-align: center; padding: 40px 16px; color: #666; font-family: "VCR OSD Mono", monospace;">
             <div style="font-size: 48px; margin-bottom: 16px;">💬</div>
-            <p>No messages yet</p>
-            <p style="font-size: 14px; margin-top: 8px;">You'll receive messages from your group members later today!</p>
+            <p>NO MESSAGES YET</p>
+            <p style="font-size: 14px; margin-top: 8px;">YOU'LL RECEIVE MESSAGES FROM YOUR GROUP MEMBERS LATER TODAY!</p>
           </div>
         `;
         break;
@@ -493,19 +501,19 @@ const renderPhoneContent = (store: GameStore) => {
         content.innerHTML = '';
 
         const intro = document.createElement('p');
-        intro.style.cssText = 'margin: 0 0 16px; color: #bbb; font-size: 14px; line-height: 1.5;';
+        intro.style.cssText = 'margin: 0 0 16px; color: #bbb; font-size: 14px; line-height: 1.5; font-family: "VCR OSD Mono", monospace;';
         intro.textContent = 'Save your progress so you can continue later. Saves live in your browser on this device.';
 
         const metadataCard = document.createElement('div');
         metadataCard.style.cssText = `
           background: #262626;
-          border: 1px solid #333;
-          border-radius: 10px;
+          border: 2px solid #333;
           padding: 12px 16px;
           margin-bottom: 16px;
           font-size: 13px;
           color: #ddd;
           line-height: 1.5;
+          font-family: "VCR OSD Mono", monospace;
         `;
 
         const renderMetadata = () => {
@@ -533,14 +541,13 @@ const renderPhoneContent = (store: GameStore) => {
         saveBtn.style.cssText = `
           width: 100%;
           padding: 12px;
-          border: none;
-          border-radius: 8px;
+          border: 2px solid #000;
           background: #60a5fa;
           color: #0f172a;
           font-weight: 600;
           font-size: 15px;
           cursor: pointer;
-          transition: transform 0.2s;
+          font-family: "VCR OSD Mono", monospace;
         `;
         saveBtn.textContent = 'Save Progress';
 
@@ -569,13 +576,12 @@ const renderPhoneContent = (store: GameStore) => {
         quitButton.type = 'button';
         quitButton.style.cssText = `
           padding: 10px;
-          border: 1px solid #ef4444;
-          border-radius: 8px;
+          border: 2px solid #ef4444;
           background: transparent;
           color: #ef4444;
           font-weight: 600;
           cursor: pointer;
-          transition: background 0.2s, color 0.2s;
+          font-family: "VCR OSD Mono", monospace;
         `;
         quitButton.textContent = 'Quit to Main Menu';
 
@@ -598,13 +604,12 @@ const renderPhoneContent = (store: GameStore) => {
         continueButton.type = 'button';
         continueButton.style.cssText = `
           padding: 10px;
-          border: 1px solid #4ac94a;
-          border-radius: 8px;
+          border: 2px solid #4ac94a;
           background: transparent;
           color: #4ac94a;
           font-weight: 600;
           cursor: pointer;
-          transition: background 0.2s, color 0.2s;
+          font-family: "VCR OSD Mono", monospace;
         `;
         continueButton.textContent = 'Continue Playing';
 
@@ -670,71 +675,71 @@ const renderPhoneContent = (store: GameStore) => {
         const majorName = major.charAt(0).toUpperCase() + major.slice(1);
         const audioSettings = getAudioSettings();
         content.innerHTML = `
-          <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-            <h3 style="margin-top: 0; color: #6b7280;">👤 Player Info</h3>
-            <p style="margin: 8px 0;"><strong>Name:</strong> ${currentState.playerName || 'Unregistered'}</p>
-            <p style="margin: 8px 0;"><strong>Major:</strong> ${majorName}</p>
-            <p style="margin: 8px 0;"><strong>Special Item:</strong> ${currentState.specialItem}</p>
+          <div style="background: #2a2a2a; padding: 16px; margin-bottom: 16px; border: 1px solid #555;">
+            <h3 style="margin-top: 0; color: #6b7280; font-family: "VCR OSD Mono", monospace;">👤 PLAYER INFO</h3>
+            <p style="margin: 8px 0; font-family: "VCR OSD Mono", monospace;"><strong>NAME:</strong> ${currentState.playerName || 'UNREGISTERED'}</p>
+            <p style="margin: 8px 0; font-family: "VCR OSD Mono", monospace;"><strong>MAJOR:</strong> ${majorName}</p>
+            <p style="margin: 8px 0; font-family: "VCR OSD Mono", monospace;"><strong>SPECIAL ITEM:</strong> ${currentState.specialItem}</p>
           </div>
           
-          <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-            <h3 style="margin-top: 0; color: #6b7280;">🔊 Audio Settings</h3>
+          <div style="background: #2a2a2a; padding: 16px; margin-bottom: 16px; border: 1px solid #555;">
+            <h3 style="margin-top: 0; color: #6b7280; font-family: "VCR OSD Mono", monospace;">🔊 AUDIO SETTINGS</h3>
             <div style="margin-bottom: 12px;">
               <button id="mute-toggle" style="
                 background: ${audioSettings.isMuted ? '#ef4444' : '#10b981'};
                 color: white;
-                border: none;
+                border: 2px solid #000;
                 padding: 8px 16px;
-                border-radius: 6px;
                 cursor: pointer;
                 font-size: 14px;
                 margin-right: 8px;
-              ">${audioSettings.isMuted ? '🔇 Unmute' : '🔊 Mute'}</button>
+                font-family: "VCR OSD Mono", monospace;
+              ">${audioSettings.isMuted ? '🔇 UNMUTE' : '🔊 MUTE'}</button>
               ${!audioSettings.isPlaying ? `
                 <button id="start-music" style="
                   background: #3b82f6;
                   color: white;
-                  border: none;
+                  border: 2px solid #000;
                   padding: 8px 16px;
-                  border-radius: 6px;
                   cursor: pointer;
                   font-size: 14px;
                   margin-right: 8px;
-                ">🎵 Start Music</button>
+                  font-family: "VCR OSD Mono", monospace;
+                ">🎵 START MUSIC</button>
               ` : ''}
-              <span style="color: #999; font-size: 12px;">${audioSettings.isPlaying ? 'Music: Playing' : 'Music: Ready to Play'}</span>
+              <span style="color: #999; font-size: 12px; font-family: "VCR OSD Mono", monospace;">${audioSettings.isPlaying ? 'MUSIC: PLAYING' : 'MUSIC: READY TO PLAY'}</span>
             </div>
             <div style="margin-bottom: 8px;">
-              <label style="color: #999; font-size: 12px; display: block; margin-bottom: 4px;">Master Volume: ${Math.round(audioSettings.masterVolume * 100)}%</label>
+              <label style="color: #999; font-size: 12px; display: block; margin-bottom: 4px; font-family: "VCR OSD Mono", monospace;">MASTER VOLUME: ${Math.round(audioSettings.masterVolume * 100)}%</label>
               <input type="range" id="master-volume" min="0" max="100" value="${Math.round(audioSettings.masterVolume * 100)}" style="width: 100%;">
             </div>
             <div style="margin-bottom: 8px;">
-              <label style="color: #999; font-size: 12px; display: block; margin-bottom: 4px;">Music Volume: ${Math.round(audioSettings.musicVolume * 100)}%</label>
+              <label style="color: #999; font-size: 12px; display: block; margin-bottom: 4px; font-family: "VCR OSD Mono", monospace;">MUSIC VOLUME: ${Math.round(audioSettings.musicVolume * 100)}%</label>
               <input type="range" id="music-volume" min="0" max="100" value="${Math.round(audioSettings.musicVolume * 100)}" style="width: 100%;">
             </div>
             <div>
-              <label style="color: #999; font-size: 12px; display: block; margin-bottom: 4px;">SFX Volume: ${Math.round(audioSettings.sfxVolume * 100)}%</label>
+              <label style="color: #999; font-size: 12px; display: block; margin-bottom: 4px; font-family: "VCR OSD Mono", monospace;">SFX VOLUME: ${Math.round(audioSettings.sfxVolume * 100)}%</label>
               <input type="range" id="sfx-volume" min="0" max="100" value="${Math.round(audioSettings.sfxVolume * 100)}" style="width: 100%;">
             </div>
           </div>
           
-          <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-            <h3 style="margin-top: 0; color: #6b7280;">📊 MONASH Stats</h3>
-            <div style="font-family: monospace; font-size: 14px;">
-              <div style="margin: 4px 0;">M (Mobility): ${currentState.stats.M}/10</div>
-              <div style="margin: 4px 0;">O (Organisation): ${currentState.stats.O}/10</div>
-              <div style="margin: 4px 0;">N (Networking): ${currentState.stats.N}/10</div>
-              <div style="margin: 4px 0;">A (Aura): ${currentState.stats.A}/10</div>
-              <div style="margin: 4px 0;">S (Skills): ${currentState.stats.S}/10</div>
+          <div style="background: #2a2a2a; padding: 16px; margin-bottom: 16px; border: 1px solid #555;">
+            <h3 style="margin-top: 0; color: #6b7280; font-family: "VCR OSD Mono", monospace;">📊 MONASH STATS</h3>
+            <div style="font-family: "VCR OSD Mono", monospace; font-size: 14px;">
+              <div style="margin: 4px 0;">M (MOBILITY): ${currentState.stats.M}/10</div>
+              <div style="margin: 4px 0;">O (ORGANISATION): ${currentState.stats.O}/10</div>
+              <div style="margin: 4px 0;">N (NETWORKING): ${currentState.stats.N}/10</div>
+              <div style="margin: 4px 0;">A (AURA): ${currentState.stats.A}/10</div>
+              <div style="margin: 4px 0;">S (SKILLS): ${currentState.stats.S}/10</div>
             </div>
           </div>
           
-          <div style="background: #2a2a2a; border-radius: 8px; padding: 16px;">
-            <h3 style="margin-top: 0; color: #6b7280;">💰 Resources</h3>
-            <div style="font-family: monospace; font-size: 14px;">
-              <div style="margin: 4px 0;">Money: $${currentState.money}</div>
-              <div style="margin: 4px 0;">Hunger: ${currentState.hunger}/${currentState.stats.H}</div>
-              <div style="margin: 4px 0;">Time: ${timeStr}</div>
+          <div style="background: #2a2a2a; padding: 16px; border: 1px solid #555;">
+            <h3 style="margin-top: 0; color: #6b7280; font-family: "VCR OSD Mono", monospace;">💰 RESOURCES</h3>
+            <div style="font-family: "VCR OSD Mono", monospace; font-size: 14px;">
+              <div style="margin: 4px 0;">MONEY: $${currentState.money}</div>
+              <div style="margin: 4px 0;">HUNGER: ${currentState.hunger}/${currentState.stats.H}</div>
+              <div style="margin: 4px 0;">TIME: ${timeStr}</div>
             </div>
           </div>
         `;
@@ -860,11 +865,12 @@ function renderActivitiesApp(
   const statsDisplay = document.createElement('div');
   statsDisplay.style.cssText = `
     background: #2a2a2a;
-    border-radius: 8px;
     padding: 12px;
     margin-bottom: 16px;
     font-size: 14px;
     color: #999;
+    border: 1px solid #555;
+    font-family: "VCR OSD Mono", monospace;
   `;
   statsDisplay.innerHTML = `
     <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
@@ -879,12 +885,12 @@ function renderActivitiesApp(
   const instructions = document.createElement('div');
   instructions.style.cssText = `
     background: #1e3a5f;
-    border-radius: 8px;
     padding: 12px;
     margin-bottom: 16px;
-    border-left: 3px solid #3b82f6;
+    border: 2px solid #3b82f6;
     font-size: 13px;
     color: #93c5fd;
+    font-family: "VCR OSD Mono", monospace;
   `;
   instructions.innerHTML = `
     <p style="margin: 0;">💡 Choose an evening activity before heading to bed.</p>
@@ -898,13 +904,12 @@ function renderActivitiesApp(
     const activityCard = document.createElement('div');
     activityCard.style.cssText = `
       background: ${isAvailable ? '#2a2a2a' : '#1a1a1a'};
-      border-radius: 8px;
       padding: 16px;
       margin-bottom: 12px;
       cursor: ${isAvailable ? 'pointer' : 'not-allowed'};
       opacity: ${isAvailable ? '1' : '0.5'};
-      border: 2px solid ${isAvailable ? 'transparent' : '#333'};
-      transition: all 0.2s;
+      border: 2px solid ${isAvailable ? '#555' : '#333'};
+      font-family: "VCR OSD Mono", monospace;
     `;
 
     const activityIcon = getActivityIcon(activity.id as any);
@@ -914,6 +919,7 @@ function renderActivitiesApp(
       margin: 0 0 8px 0;
       color: ${isAvailable ? '#4ac94a' : '#666'};
       font-size: 16px;
+      font-family: "VCR OSD Mono", monospace;
     `;
 
     const activityDesc = document.createElement('p');
@@ -922,10 +928,11 @@ function renderActivitiesApp(
       margin: 0 0 8px 0;
       color: #999;
       font-size: 14px;
+      font-family: "VCR OSD Mono", monospace;
     `;
 
     const activityReqs = document.createElement('div');
-    activityReqs.style.cssText = 'font-size: 13px; color: #666;';
+    activityReqs.style.cssText = 'font-size: 13px; color: #666; font-family: "VCR OSD Mono", monospace;';
     
     const reqParts: string[] = [];
     if (activity.requirements.money) {
@@ -954,9 +961,10 @@ function renderActivitiesApp(
           margin-top: 8px;
           padding: 8px;
           background: #3a1a1a;
-          border-radius: 4px;
           font-size: 12px;
           color: #ff6b6b;
+          border: 1px solid #ff6b6b;
+          font-family: "VCR OSD Mono", monospace;
         `;
         reasonDiv.textContent = `❌ ${unavailableReason}`;
         activityCard.appendChild(reasonDiv);
@@ -1041,11 +1049,11 @@ function renderNPCSelection(
     padding: 12px;
     background: #2a2a2a;
     color: #4ac94a;
-    border: none;
-    border-radius: 8px;
+    border: 2px solid #4ac94a;
     font-size: 14px;
     cursor: pointer;
     margin-bottom: 16px;
+    font-family: "VCR OSD Mono", monospace;
   `;
   backButton.addEventListener('click', () => {
     renderActivitiesApp(appTitle, content, store, renderHomeScreen);
@@ -1054,7 +1062,7 @@ function renderNPCSelection(
 
   const instruction = document.createElement('p');
   instruction.textContent = 'Choose a teammate to send a message to:';
-  instruction.style.cssText = 'color: #999; font-size: 14px; margin-bottom: 16px;';
+  instruction.style.cssText = 'color: #999; font-size: 14px; margin-bottom: 16px; font-family: "VCR OSD Mono", monospace;';
   content.appendChild(instruction);
 
   // Show all NPCs
@@ -1068,12 +1076,11 @@ function renderNPCSelection(
     const npcCard = document.createElement('div');
     npcCard.style.cssText = `
       background: #2a2a2a;
-      border-radius: 8px;
       padding: 16px;
       margin-bottom: 12px;
       cursor: pointer;
-      border: 2px solid transparent;
-      transition: all 0.2s;
+      border: 2px solid #555;
+      font-family: "VCR OSD Mono", monospace;
     `;
 
     const npcHeader = document.createElement('div');
@@ -1081,7 +1088,7 @@ function renderNPCSelection(
     
     const npcName = document.createElement('h4');
     npcName.textContent = npc.name;
-    npcName.style.cssText = 'margin: 0; color: #4ac94a; font-size: 16px;';
+    npcName.style.cssText = 'margin: 0; color: #4ac94a; font-size: 16px; font-family: "VCR OSD Mono", monospace;';
     
     const rapportBadge = document.createElement('span');
     rapportBadge.textContent = `❤️ ${rapport > 0 ? '+' : ''}${rapport}`;
@@ -1089,9 +1096,10 @@ function renderNPCSelection(
       padding: 4px 8px;
       background: ${rapport >= 0 ? '#1e3a1e' : '#3a1e1e'};
       color: ${rapport >= 0 ? '#4ac94a' : '#ff6b6b'};
-      border-radius: 4px;
+      border: 1px solid ${rapport >= 0 ? '#4ac94a' : '#ff6b6b'};
       font-size: 12px;
       font-weight: bold;
+      font-family: "VCR OSD Mono", monospace;
     `;
     
     npcHeader.appendChild(npcName);
@@ -1099,7 +1107,7 @@ function renderNPCSelection(
 
     const npcFocus = document.createElement('p');
     npcFocus.textContent = `${npc.focus.charAt(0).toUpperCase() + npc.focus.slice(1)} • ${npc.majorAffinity.toUpperCase()}`;
-    npcFocus.style.cssText = 'margin: 0; color: #666; font-size: 12px;';
+    npcFocus.style.cssText = 'margin: 0; color: #666; font-size: 12px; font-family: "VCR OSD Mono", monospace;';
 
     npcCard.appendChild(npcHeader);
     npcCard.appendChild(npcFocus);
