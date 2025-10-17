@@ -28,7 +28,7 @@ export const getEveningActivityCutscene = (
         },
         {
           background: 'linear-gradient(135deg, #1a4a1a 0%, #1b2d1b 100%)',
-          emoji: '😊',
+          image: '/src/sprites/bleh.png',
           text: 'Feeling refreshed!',
           subtext: 'Nothing beats a good meal after a long day. Ready to take on tomorrow!',
         },
