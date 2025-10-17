@@ -149,13 +149,17 @@ const renderPhoneContent = (store: GameStore) => {
     // Get current scene to determine which apps to show
     const currentState = store.getState();
     const isBedroomScene = currentState.currentScene === 'bedroom';
+    const isMorningPhone = currentState.currentScene === 'morning-phone';
+    
+    // Only show Activities in bedroom scene (evening), not in morning-phone
+    const showActivities = isBedroomScene && !isMorningPhone;
 
     const apps = [
       { id: 'maps', name: 'Maps', icon: '🗺️', color: '#34d399' },
       { id: 'notes', name: 'Notes', icon: '📝', color: '#fbbf24' },
       { id: 'messages', name: 'WhatsApp', icon: '💬', color: '#25D366' },
-      // Only show Activities app in bedroom scene
-      ...(isBedroomScene ? [{ id: 'activities', name: 'Activities', icon: '🎯', color: '#f97316' }] : []),
+      // Only show Activities app in bedroom scene (evening)
+      ...(showActivities ? [{ id: 'activities', name: 'Activities', icon: '🎯', color: '#f97316' }] : []),
       { id: 'save', name: 'Save', icon: '💾', color: '#60a5fa' },
       { id: 'settings', name: 'Settings', icon: '⚙️', color: '#6b7280' },
       { id: 'close', name: 'Close', icon: '❌', color: '#ef4444' },

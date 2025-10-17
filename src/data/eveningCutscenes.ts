@@ -4,6 +4,15 @@ import { NPC_DEFINITIONS } from './npcs';
 
 type EveningActivityId = 'eat' | 'rest' | 'text' | 'doomscroll';
 
+// Note: You can now use 'image' instead of 'emoji' in cutscene frames
+// Example:
+// {
+//   background: 'linear-gradient(135deg, #1a1a2e 0%, #2d1b3d 100%)',
+//   image: '/path/to/your/image.png',
+//   text: 'Time for dinner!',
+//   subtext: 'You head to the kitchen, stomach rumbling...',
+// }
+
 export const getEveningActivityCutscene = (
   activityId: EveningActivityId,
   targetNpc?: NpcId
@@ -13,13 +22,7 @@ export const getEveningActivityCutscene = (
       return [
         {
           background: 'linear-gradient(135deg, #1a1a2e 0%, #2d1b3d 100%)',
-          emoji: '🍔',
-          text: 'Time for dinner!',
-          subtext: 'You head to the kitchen, stomach rumbling...',
-        },
-        {
-          background: 'linear-gradient(135deg, #4a1a1a 0%, #2d1b1b 100%)',
-          emoji: '🍽️',
+          image: '/src/sprites/eat.jpg',
           text: 'A satisfying meal',
           subtext: 'You prepare a hearty dinner and enjoy every bite. Your energy is fully restored!',
         },

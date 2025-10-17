@@ -3,6 +3,7 @@ export interface CutsceneFrame {
   text: string;
   subtext?: string;
   emoji?: string;
+  image?: string; // Image URL to display instead of emoji
   duration?: number; // Auto-advance after this many ms (optional)
 }
 
@@ -70,15 +71,18 @@ export const createCutscene = (root: HTMLElement, options: CutsceneOptions) => {
     text-align: center;
   `;
 
-  // Emoji element
-  const emojiElement = document.createElement('div');
-  emojiElement.className = 'cutscene-emoji';
-  emojiElement.style.cssText = `
+  // Visual element (can be emoji or image)
+  const visualElement = document.createElement('div');
+  visualElement.className = 'cutscene-visual';
+  visualElement.style.cssText = `
     font-size: 120px;
     margin-bottom: 30px;
     opacity: 0;
     transform: scale(0.5);
     transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   `;
 
   // Text element
@@ -156,7 +160,7 @@ export const createCutscene = (root: HTMLElement, options: CutsceneOptions) => {
     options.onComplete();
   });
 
-  contentLayer.appendChild(emojiElement);
+  contentLayer.appendChild(visualElement);
   contentLayer.appendChild(textElement);
   contentLayer.appendChild(subtextElement);
   container.appendChild(backgroundLayer);
@@ -175,8 +179,8 @@ export const createCutscene = (root: HTMLElement, options: CutsceneOptions) => {
     const frame = options.frames[index];
 
     // Fade out current content
-    emojiElement.style.opacity = '0';
-    emojiElement.style.transform = 'scale(0.5)';
+    visualElement.style.opacity = '0';
+    visualElement.style.transform = 'scale(0.5)';
     textElement.style.opacity = '0';
     textElement.style.transform = 'translateY(20px)';
     subtextElement.style.opacity = '0';
@@ -187,12 +191,17 @@ export const createCutscene = (root: HTMLElement, options: CutsceneOptions) => {
       backgroundLayer.style.background = frame.background;
       backgroundLayer.style.opacity = '1';
 
-      // Update content
-      if (frame.emoji) {
-        emojiElement.textContent = frame.emoji;
-        emojiElement.style.display = 'block';
+      // Update visual content (image or emoji)
+      if (frame.image) {
+        // Display image
+        visualElement.innerHTML = `<img src="${frame.image}" alt="" style="max-width: 300px; max-height: 300px; object-fit: contain; border-radius: 12px;" />`;
+        visualElement.style.display = 'flex';
+      } else if (frame.emoji) {
+        // Display emoji
+        visualElement.textContent = frame.emoji;
+        visualElement.style.display = 'block';
       } else {
-        emojiElement.style.display = 'none';
+        visualElement.style.display = 'none';
       }
 
       textElement.textContent = frame.text;
@@ -206,9 +215,9 @@ export const createCutscene = (root: HTMLElement, options: CutsceneOptions) => {
 
       // Fade in new content
       setTimeout(() => {
-        if (frame.emoji) {
-          emojiElement.style.opacity = '1';
-          emojiElement.style.transform = 'scale(1)';
+        if (frame.image || frame.emoji) {
+          visualElement.style.opacity = '1';
+          visualElement.style.transform = 'scale(1)';
         }
         textElement.style.opacity = '1';
         textElement.style.transform = 'translateY(0)';

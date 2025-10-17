@@ -5,6 +5,8 @@ import { renderCharacterCreation } from '../characterCreation';
 import { renderOnboarding } from '../onboarding';
 import { renderBedroom } from '../bedroom';
 import { renderPhone } from '../phone';
+import { renderMorningPhone } from '../morningPhone';
+import { renderEveningPhone } from '../eveningPhone';
 import { renderMorningCommute } from '../morningCommute';
 import { renderEveningCommute } from '../eveningCommute';
 import { renderRecap } from '../recap';
@@ -27,6 +29,12 @@ export const mountScene = (scene: SceneId, root: HTMLElement, store: GameStore) 
       break;
     case 'phone':
       renderPhone(root, store);
+      break;
+    case 'morning-phone':
+      renderMorningPhone(root, store);
+      break;
+    case 'evening-phone':
+      renderEveningPhone(root, store);
       break;
     case 'morning-commute':
       renderMorningCommute(root, store);
