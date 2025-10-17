@@ -98,6 +98,7 @@ export const createCutscene = (root: HTMLElement, options: CutsceneOptions) => {
     transition: all 0.6s ease;
     text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
     line-height: 1.4;
+    font-family: 'Press Start 2P', 'Courier New', monospace;
   `;
 
   // Subtext element
@@ -111,6 +112,7 @@ export const createCutscene = (root: HTMLElement, options: CutsceneOptions) => {
     transition: all 0.6s ease 0.2s;
     text-shadow: 0 1px 5px rgba(0, 0, 0, 0.8);
     line-height: 1.6;
+    font-family: 'Press Start 2P', 'Courier New', monospace;
   `;
 
   // Continue prompt
@@ -124,6 +126,7 @@ export const createCutscene = (root: HTMLElement, options: CutsceneOptions) => {
     color: rgba(255, 255, 255, 0.6);
     font-size: 14px;
     animation: pulse 2s ease-in-out infinite;
+    font-family: 'Press Start 2P', 'Courier New', monospace;
   `;
   continuePrompt.textContent = 'Click or press any key to continue';
 
@@ -144,6 +147,7 @@ export const createCutscene = (root: HTMLElement, options: CutsceneOptions) => {
     cursor: pointer;
     transition: all 0.2s;
     display: ${options.canSkip !== false ? 'block' : 'none'};
+    font-family: 'Press Start 2P', 'Courier New', monospace;
   `;
 
   skipButton.addEventListener('mouseenter', () => {
