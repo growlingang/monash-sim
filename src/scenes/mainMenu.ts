@@ -1,6 +1,7 @@
 import type { GameStore } from '../core/store';
 import { hasSave, loadGame, getSaveMetadata, deleteSave } from '../utils/saveSystem';
 import { createInitialGameState } from '../core/gameState';
+import { getAudioSettings, startBackgroundMusic } from '../utils/audioManager';
 
 const MAIN_MENU_BG_URL = 'http://localhost:3845/assets/83620c84c4b12a561dce0aeab7a621382516f9c8.png';
 
@@ -41,6 +42,50 @@ export const renderMainMenu = (root: HTMLElement, store: GameStore) => {
   const footer = document.createElement('div');
   footer.className = 'main-menu__footer';
   footer.textContent = '© 2025 Team GrowlinGang';
+
+  // Add music control button if music is not playing
+  const audioSettings = getAudioSettings();
+  if (!audioSettings.isPlaying) {
+    const musicButton = document.createElement('button');
+    musicButton.className = 'main-menu__music-button';
+    musicButton.style.cssText = `
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(59, 130, 246, 0.8);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    `;
+    musicButton.innerHTML = '🎵 Start Music';
+    musicButton.addEventListener('mouseenter', () => {
+      musicButton.style.background = 'rgba(59, 130, 246, 1)';
+      musicButton.style.transform = 'scale(1.05)';
+    });
+    musicButton.addEventListener('mouseleave', () => {
+      musicButton.style.background = 'rgba(59, 130, 246, 0.8)';
+      musicButton.style.transform = 'scale(1)';
+    });
+    musicButton.addEventListener('click', async () => {
+      try {
+        await startBackgroundMusic();
+        musicButton.innerHTML = '🎵 Music Playing';
+        musicButton.style.background = 'rgba(16, 185, 129, 0.8)';
+        musicButton.disabled = true;
+        console.log('🎵 Background music started from main menu');
+      } catch (error) {
+        console.error('Failed to start music:', error);
+        alert('Failed to start music. Please try again.');
+      }
+    });
+    wrapper.appendChild(musicButton);
+  }
 
   const saveExists = hasSave();
   const saveMetadata = getSaveMetadata();
