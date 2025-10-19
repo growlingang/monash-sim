@@ -435,8 +435,12 @@ export const driveMinigame: Minigame = {
           ctx.drawImage(carSprite, car.x, car.y, CAR_WIDTH, CAR_HEIGHT);
         });
 
-        // Player car (uses smoothly interpolated playerX)
-        ctx.drawImage(playerCarSprite, playerX, playerY, CAR_WIDTH, CAR_HEIGHT);
+        // Player car (uses smoothly interpolated playerX) - rotated 180 degrees
+        ctx.save();
+        ctx.translate(playerX + CAR_WIDTH / 2, playerY + CAR_HEIGHT / 2);
+        ctx.rotate(Math.PI); // 180 degrees rotation
+        ctx.drawImage(playerCarSprite, -CAR_WIDTH / 2, -CAR_HEIGHT / 2, CAR_WIDTH, CAR_HEIGHT);
+        ctx.restore();
       };
 
       const renderParking = () => {
@@ -453,10 +457,14 @@ export const driveMinigame: Minigame = {
         ctx.lineWidth = 4;
         ctx.strokeRect(CANVAS_WIDTH / 2 - parkingWidth / 2, CANVAS_HEIGHT / 2 - parkingHeight / 2, parkingWidth, parkingHeight);
 
-        // Draw player car in parking space
+        // Draw player car in parking space - rotated 180 degrees
         const carX = CANVAS_WIDTH / 2 - CAR_WIDTH / 2;
         const carY = CANVAS_HEIGHT / 2 - CAR_HEIGHT / 2;
-        ctx.drawImage(playerCarSprite, carX, carY, CAR_WIDTH, CAR_HEIGHT);
+        ctx.save();
+        ctx.translate(carX + CAR_WIDTH / 2, carY + CAR_HEIGHT / 2);
+        ctx.rotate(Math.PI); // 180 degrees rotation
+        ctx.drawImage(playerCarSprite, -CAR_WIDTH / 2, -CAR_HEIGHT / 2, CAR_WIDTH, CAR_HEIGHT);
+        ctx.restore();
 
         // Parking indicator bar (aligned to 32x32 tiles)
         const barWidth = 384; // 12 tiles (fits within 480px canvas)
