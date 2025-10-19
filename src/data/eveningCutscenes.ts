@@ -37,20 +37,14 @@ export const getEveningActivityCutscene = (
     case 'rest':
       return [
         {
-          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-          emoji: '😴',
-          text: 'Time to unwind...',
-          subtext: 'You settle into your favorite spot and let the stress of the day melt away.',
-        },
-        {
           background: 'linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%)',
-          emoji: '🌙',
+          image: '/src/sprites/sleep.png',
           text: 'Peaceful rest',
           subtext: 'You close your eyes, breathe deeply, and find your center. The world fades away...',
         },
         {
           background: 'linear-gradient(135deg, #1a2e4a 0%, #1b2d3d 100%)',
-          emoji: '✨',
+          image: '/src/sprites/energised.png',
           text: 'Recharged!',
           subtext: 'You feel more energized and ready to face whatever comes next.',
         },
@@ -71,14 +65,8 @@ export const getEveningActivityCutscene = (
       const npc = NPC_DEFINITIONS[targetNpc];
       return [
         {
-          background: 'linear-gradient(135deg, #1a1a2e 0%, #2e1a4a 100%)',
-          emoji: '📱',
-          text: 'Opening WhatsApp...',
-          subtext: `You decide to text ${npc.name}.`,
-        },
-        {
           background: 'linear-gradient(135deg, #2e1a4a 0%, #1a2e4a 100%)',
-          emoji: '💬',
+          image: '/src/sprites/chat.png',
           text: `Chatting with ${npc.name}`,
           subtext: getTextingSubtext(targetNpc),
         },
