@@ -152,8 +152,10 @@ const renderPhoneContent = (store: GameStore) => {
     const isBedroomScene = currentState.currentScene === 'bedroom';
     const isMorningPhone = currentState.currentScene === 'morning-phone';
     
-    // Only show Activities in bedroom scene (evening), not in morning-phone
-    const showActivities = isBedroomScene && !isMorningPhone;
+    // Only show Activities in evening bedroom (after commute, timeMinutes > 60)
+    // Morning bedroom has low timeMinutes (0-60), evening has high timeMinutes (900+)
+    const isEveningBedroom = isBedroomScene && currentState.timeMinutes > 60;
+    const showActivities = isEveningBedroom && !isMorningPhone;
 
     const apps = [
       { id: 'maps', name: 'Maps', icon: '🗺️', color: '#34d399' },
