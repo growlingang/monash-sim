@@ -1,8 +1,11 @@
 import type { GameStore } from '../core/store';
 import { createStatsBar } from '../ui/statsBar';
 import { loadSprite, drawSprite } from '../utils/spriteLoader';
+import { buildCompositeSprite } from '../sprites/playerSpriteOptimizer';
+import { drawCharacter } from '../sprites/playerRenderer';
 import { Tileset } from '../utils/tilesetLoader';
 import { createPhoneOverlay } from '../ui/phoneOverlay';
+import { custom } from 'zod';
 
 const TILE_SIZE = 32;
 const ROOM_WIDTH = 20; // tiles
@@ -57,6 +60,19 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
   } catch (error) {
     console.warn('⚠️ Failed to load player sprite, using rectangle fallback', error);
   }
+
+  // If there's a custom player sprite in the game state, try to build its composite
+  const customSprite = store.getState().playerSprite;
+  if (customSprite) {
+    try {
+      // frame size here should match your sprite sheets; using 64x64 as preview/demo
+      await buildCompositeSprite(customSprite, 64, 64);
+      console.log('✅ Built composite for custom player sprite');
+    } catch (err) {
+      console.warn('⚠️ Failed to build composite for custom player', err);
+    }
+  } else {console.warn('⚠️ No custom player sprite found in game state');}
+  
 
   try {
     plantSprite = await loadSprite('/sprites/tiles/plant.png');
@@ -515,8 +531,8 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
       });
     }
     // Draw player
-    if (playerSprite) {
-      drawSprite(ctx, playerSprite, {
+    if (customSprite) {
+      drawSprite(ctx, customSprite.compositedImage, {
         x: playerX,
         y: playerY,
         width: playerSize,
