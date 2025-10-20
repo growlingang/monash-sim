@@ -14,36 +14,39 @@ export const renderRecap = (root: HTMLElement, store: GameStore) => {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 40px 20px;
+    padding: 30px 20px;
     max-width: 900px;
     margin: 0 auto;
     min-height: 100vh;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    background: #3a2817;
+    overflow-y: auto;
   `;
 
   // Header
   const header = document.createElement('div');
   header.style.cssText = `
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: 24px;
     width: 100%;
   `;
 
   const title = document.createElement('h1');
   title.textContent = '📊 Day 1 Recap';
   title.style.cssText = `
-    font-size: 48px;
-    margin: 0 0 16px 0;
-    color: #4ac94a;
-    text-shadow: 0 0 20px rgba(74, 201, 74, 0.5);
+    font-size: 24px;
+    margin: 0 0 12px 0;
+    color: #d4f0d4;
+    font-family: 'Press Start 2P', monospace;
+    text-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
   `;
 
   const subtitle = document.createElement('p');
   subtitle.textContent = `Your first day at Monash University - ${formatMinutes(state.timeMinutes)}`;
   subtitle.style.cssText = `
-    font-size: 18px;
+    font-size: 10px;
     margin: 0;
-    color: #999;
+    color: #d4a574;
+    font-family: 'Press Start 2P', monospace;
   `;
 
   header.appendChild(title);
@@ -55,9 +58,9 @@ export const renderRecap = (root: HTMLElement, store: GameStore) => {
   contentGrid.style.cssText = `
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    gap: 16px;
     width: 100%;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
   `;
 
   // Stats Section
@@ -72,9 +75,9 @@ export const renderRecap = (root: HTMLElement, store: GameStore) => {
 
   // Resources Section
   const resourcesCard = createCard('💰 Resources', [
-    createResourceRow('💵 Money', `$${state.money}`, state.money < 10 ? '#ff6b6b' : '#4ac94a'),
-    createResourceRow('🍔 Hunger', `${state.hunger}/${state.stats.H}`, state.hunger < 5 ? '#ff6b6b' : '#4ac94a'),
-    createResourceRow('⏰ Time Ended', formatMinutes(state.timeMinutes), '#93c5fd'),
+    createResourceRow('💵 Money', `$${state.money}`, state.money < 10 ? '#c97a7a' : '#6a9e6a'),
+    createResourceRow('🍔 Hunger', `${state.hunger}/${state.stats.H}`, state.hunger < 5 ? '#c97a7a' : '#6a9e6a'),
+    createResourceRow('⏰ Time Ended', formatMinutes(state.timeMinutes), '#d4a574'),
   ]);
   contentGrid.appendChild(resourcesCard);
 
@@ -103,27 +106,28 @@ export const renderRecap = (root: HTMLElement, store: GameStore) => {
   const continueBtn = document.createElement('button');
   continueBtn.textContent = 'Continue to Day 2';
   continueBtn.style.cssText = `
-    padding: 16px 48px;
-    background: #4ac94a;
-    color: #000;
-    border: none;
-    border-radius: 12px;
-    font-size: 20px;
+    padding: 12px 36px;
+    background: #6a9e6a;
+    color: #fbe9cf;
+    border: 3px solid #4a7a4a;
+    border-radius: 0;
+    font-size: 11px;
     font-weight: bold;
+    font-family: 'Press Start 2P', monospace;
     cursor: pointer;
-    margin-top: 30px;
-    transition: all 0.2s;
-    box-shadow: 0 4px 20px rgba(74, 201, 74, 0.4);
+    margin-top: 20px;
+    transition: none;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
   `;
 
   continueBtn.addEventListener('mouseenter', () => {
-    continueBtn.style.transform = 'scale(1.05)';
-    continueBtn.style.boxShadow = '0 6px 30px rgba(74, 201, 74, 0.6)';
+    continueBtn.style.transform = 'translate(-2px, -2px)';
+    continueBtn.style.boxShadow = '6px 6px 0 rgba(0, 0, 0, 0.3)';
   });
 
   continueBtn.addEventListener('mouseleave', () => {
-    continueBtn.style.transform = 'scale(1)';
-    continueBtn.style.boxShadow = '0 4px 20px rgba(74, 201, 74, 0.4)';
+    continueBtn.style.transform = 'translate(0, 0)';
+    continueBtn.style.boxShadow = '4px 4px 0 rgba(0, 0, 0, 0.3)';
   });
 
   continueBtn.addEventListener('click', () => {
@@ -138,21 +142,22 @@ export const renderRecap = (root: HTMLElement, store: GameStore) => {
 function createCard(title: string, content: HTMLElement[]): HTMLElement {
   const card = document.createElement('div');
   card.style.cssText = `
-    background: rgba(42, 42, 42, 0.8);
-    border-radius: 12px;
-    padding: 20px;
-    border: 1px solid #333;
-    backdrop-filter: blur(10px);
+    background: #5a4a35;
+    border-radius: 0;
+    padding: 16px;
+    border: 3px solid #8b6f47;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
   `;
 
   const cardTitle = document.createElement('h3');
   cardTitle.textContent = title;
   cardTitle.style.cssText = `
-    margin: 0 0 16px 0;
-    color: #4ac94a;
-    font-size: 20px;
-    border-bottom: 2px solid #333;
-    padding-bottom: 8px;
+    margin: 0 0 12px 0;
+    color: #d4f0d4;
+    font-size: 11px;
+    font-family: 'Press Start 2P', monospace;
+    border-bottom: 3px solid #8b6f47;
+    padding-bottom: 6px;
   `;
 
   card.appendChild(cardTitle);
@@ -167,9 +172,10 @@ function createStatRow(label: string, value: number): HTMLElement {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
-    color: #ddd;
-    font-size: 16px;
+    margin-bottom: 8px;
+    color: #fbe9cf;
+    font-size: 9px;
+    font-family: 'Press Start 2P', monospace;
   `;
 
   const labelSpan = document.createElement('span');
@@ -182,16 +188,18 @@ function createStatRow(label: string, value: number): HTMLElement {
   valueSpan.textContent = `${value}/10`;
   valueSpan.style.cssText = `
     font-weight: bold;
-    color: ${value >= 7 ? '#4ac94a' : value >= 4 ? '#fbbf24' : '#ff6b6b'};
+    font-family: 'Press Start 2P', monospace;
+    color: ${value >= 7 ? '#6a9e6a' : value >= 4 ? '#d4a574' : '#c97a7a'};
   `;
 
   // Progress bar
   const progressBar = document.createElement('div');
   progressBar.style.cssText = `
-    width: 100px;
-    height: 8px;
-    background: #1a1a1a;
-    border-radius: 4px;
+    width: 80px;
+    height: 6px;
+    background: #3a2817;
+    border-radius: 0;
+    border: 2px solid #8b6f47;
     overflow: hidden;
   `;
 
@@ -199,8 +207,8 @@ function createStatRow(label: string, value: number): HTMLElement {
   progress.style.cssText = `
     width: ${value * 10}%;
     height: 100%;
-    background: ${value >= 7 ? '#4ac94a' : value >= 4 ? '#fbbf24' : '#ff6b6b'};
-    transition: width 0.3s ease;
+    background: ${value >= 7 ? '#6a9e6a' : value >= 4 ? '#d4a574' : '#c97a7a'};
+    transition: none;
   `;
 
   progressBar.appendChild(progress);
@@ -219,9 +227,10 @@ function createResourceRow(label: string, value: string, color: string): HTMLEle
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
-    color: #ddd;
-    font-size: 16px;
+    margin-bottom: 8px;
+    color: #fbe9cf;
+    font-size: 9px;
+    font-family: 'Press Start 2P', monospace;
   `;
 
   const labelSpan = document.createElement('span');
@@ -231,6 +240,7 @@ function createResourceRow(label: string, value: string, color: string): HTMLEle
   valueSpan.textContent = value;
   valueSpan.style.cssText = `
     font-weight: bold;
+    font-family: 'Press Start 2P', monospace;
     color: ${color};
   `;
 
@@ -243,23 +253,24 @@ function createResourceRow(label: string, value: string, color: string): HTMLEle
 function createRapportCard(state: any): HTMLElement {
   const card = document.createElement('div');
   card.style.cssText = `
-    background: rgba(42, 42, 42, 0.8);
-    border-radius: 12px;
-    padding: 20px;
-    border: 1px solid #333;
-    backdrop-filter: blur(10px);
+    background: #4a3a2a;
+    border-radius: 0;
+    padding: 16px;
+    border: 3px solid #8b6f47;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
     width: 100%;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
   `;
 
   const cardTitle = document.createElement('h3');
   cardTitle.textContent = '❤️ Team Rapport';
   cardTitle.style.cssText = `
-    margin: 0 0 16px 0;
-    color: #4ac94a;
-    font-size: 20px;
-    border-bottom: 2px solid #333;
-    padding-bottom: 8px;
+    margin: 0 0 12px 0;
+    color: #d4f0d4;
+    font-size: 11px;
+    font-family: 'Press Start 2P', monospace;
+    border-bottom: 3px solid #8b6f47;
+    padding-bottom: 6px;
   `;
 
   card.appendChild(cardTitle);
@@ -275,10 +286,11 @@ function createRapportCard(state: any): HTMLElement {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
-      padding: 12px;
-      background: rgba(26, 26, 26, 0.5);
-      border-radius: 8px;
+      margin-bottom: 10px;
+      padding: 10px;
+      background: #3a2817;
+      border-radius: 0;
+      border: 2px solid #5a4a35;
     `;
 
     const npcInfo = document.createElement('div');
@@ -288,16 +300,18 @@ function createRapportCard(state: any): HTMLElement {
     npcName.textContent = npc.name;
     npcName.style.cssText = `
       font-weight: bold;
-      color: #fff;
-      font-size: 16px;
+      color: #fbe9cf;
+      font-size: 9px;
+      font-family: 'Press Start 2P', monospace;
     `;
 
     const npcDesc = document.createElement('span');
     npcDesc.textContent = `${npc.focus.charAt(0).toUpperCase() + npc.focus.slice(1)} - ${npc.majorAffinity.toUpperCase()}`;
     npcDesc.style.cssText = `
-      font-size: 12px;
-      color: #666;
+      font-size: 7px;
+      color: #8b6f47;
       margin-top: 4px;
+      font-family: 'Press Start 2P', monospace;
     `;
 
     npcInfo.appendChild(npcName);
@@ -308,10 +322,11 @@ function createRapportCard(state: any): HTMLElement {
 
     const rapportBar = document.createElement('div');
     rapportBar.style.cssText = `
-      width: 150px;
-      height: 10px;
-      background: #1a1a1a;
-      border-radius: 5px;
+      width: 120px;
+      height: 8px;
+      background: #2d1f0f;
+      border-radius: 0;
+      border: 2px solid #5a4a35;
       position: relative;
       overflow: hidden;
     `;
@@ -326,8 +341,8 @@ function createRapportCard(state: any): HTMLElement {
       top: 0;
       width: ${rapportPercent}%;
       height: 100%;
-      background: ${rapport >= 0 ? 'linear-gradient(90deg, #4ac94a 0%, #2d5016 100%)' : 'linear-gradient(90deg, #ff6b6b 0%, #8b0000 100%)'};
-      transition: width 0.3s ease;
+      background: ${rapport >= 0 ? '#6a9e6a' : '#c97a7a'};
+      transition: none;
     `;
 
     // Center line marker
@@ -338,7 +353,7 @@ function createRapportCard(state: any): HTMLElement {
       top: 0;
       width: 2px;
       height: 100%;
-      background: #666;
+      background: #8b6f47;
     `;
 
     rapportBar.appendChild(rapportFill);
@@ -348,10 +363,11 @@ function createRapportCard(state: any): HTMLElement {
     rapportValue.textContent = rapport > 0 ? `+${rapport}` : `${rapport}`;
     rapportValue.style.cssText = `
       font-weight: bold;
-      font-size: 18px;
-      min-width: 40px;
+      font-size: 10px;
+      min-width: 35px;
       text-align: center;
-      color: ${rapport >= 0 ? '#4ac94a' : '#ff6b6b'};
+      font-family: 'Press Start 2P', monospace;
+      color: ${rapport >= 0 ? '#6a9e6a' : '#c97a7a'};
     `;
 
     rapportContainer.appendChild(rapportBar);
@@ -369,23 +385,24 @@ function createRapportCard(state: any): HTMLElement {
 function createActivityLogCard(state: any): HTMLElement {
   const card = document.createElement('div');
   card.style.cssText = `
-    background: rgba(42, 42, 42, 0.8);
-    border-radius: 12px;
-    padding: 20px;
-    border: 1px solid #333;
-    backdrop-filter: blur(10px);
+    background: #6a5a3a;
+    border-radius: 0;
+    padding: 16px;
+    border: 3px solid #8b6f47;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
     width: 100%;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
   `;
 
   const cardTitle = document.createElement('h3');
   cardTitle.textContent = '📝 Activity Log';
   cardTitle.style.cssText = `
-    margin: 0 0 16px 0;
-    color: #4ac94a;
-    font-size: 20px;
-    border-bottom: 2px solid #333;
-    padding-bottom: 8px;
+    margin: 0 0 12px 0;
+    color: #d4f0d4;
+    font-size: 11px;
+    font-family: 'Press Start 2P', monospace;
+    border-bottom: 3px solid #8b6f47;
+    padding-bottom: 6px;
   `;
 
   card.appendChild(cardTitle);
@@ -393,7 +410,7 @@ function createActivityLogCard(state: any): HTMLElement {
   if (state.activityLog.length === 0) {
     const emptyMsg = document.createElement('p');
     emptyMsg.textContent = 'No activities logged today.';
-    emptyMsg.style.cssText = 'color: #666; font-style: italic;';
+    emptyMsg.style.cssText = 'color: #8b6f47; font-size: 8px; font-family: "Press Start 2P", monospace;';
     card.appendChild(emptyMsg);
     return card;
   }
@@ -408,11 +425,11 @@ function createActivityLogCard(state: any): HTMLElement {
   state.activityLog.forEach((entry: any, index: number) => {
     const logEntry = document.createElement('div');
     logEntry.style.cssText = `
-      padding: 12px;
+      padding: 10px;
       margin-bottom: 8px;
-      background: rgba(26, 26, 26, 0.5);
-      border-radius: 8px;
-      border-left: 3px solid #4ac94a;
+      background: #5a4a35;
+      border-radius: 0;
+      border-left: 4px solid #6a9e6a;
     `;
 
     const timeAndSummary = document.createElement('div');
@@ -421,14 +438,16 @@ function createActivityLogCard(state: any): HTMLElement {
     const time = document.createElement('span');
     time.textContent = entry.time;
     time.style.cssText = `
-      color: #4ac94a;
+      color: #d4f0d4;
       font-weight: bold;
-      margin-right: 12px;
+      margin-right: 8px;
+      font-size: 8px;
+      font-family: 'Press Start 2P', monospace;
     `;
 
     const summary = document.createElement('span');
     summary.textContent = entry.summary;
-    summary.style.cssText = 'color: #ddd;';
+    summary.style.cssText = 'color: #fbe9cf; font-size: 8px; font-family: "Press Start 2P", monospace;';
 
     timeAndSummary.appendChild(time);
     timeAndSummary.appendChild(summary);
@@ -440,32 +459,33 @@ function createActivityLogCard(state: any): HTMLElement {
       const deltasContainer = document.createElement('div');
       deltasContainer.style.cssText = `
         display: flex;
-        gap: 12px;
+        gap: 8px;
         flex-wrap: wrap;
-        margin-top: 8px;
-        font-size: 12px;
+        margin-top: 6px;
+        font-size: 7px;
+        font-family: 'Press Start 2P', monospace;
       `;
 
       const deltas = [];
 
       if (entry.deltas.time) {
-        deltas.push({ icon: '⏰', value: `${entry.deltas.time > 0 ? '+' : ''}${entry.deltas.time} min`, color: '#93c5fd' });
+        deltas.push({ icon: '⏰', value: `${entry.deltas.time > 0 ? '+' : ''}${entry.deltas.time} min`, color: '#d4a574' });
       }
       if (entry.deltas.money) {
-        deltas.push({ icon: '💰', value: `${entry.deltas.money > 0 ? '+' : ''}$${entry.deltas.money}`, color: entry.deltas.money > 0 ? '#4ac94a' : '#ff6b6b' });
+        deltas.push({ icon: '💰', value: `${entry.deltas.money > 0 ? '+' : ''}$${entry.deltas.money}`, color: entry.deltas.money > 0 ? '#6a9e6a' : '#c97a7a' });
       }
       if (entry.deltas.hunger) {
-        deltas.push({ icon: '🍔', value: `${entry.deltas.hunger > 0 ? '+' : ''}${entry.deltas.hunger}`, color: entry.deltas.hunger > 0 ? '#4ac94a' : '#ff6b6b' });
+        deltas.push({ icon: '🍔', value: `${entry.deltas.hunger > 0 ? '+' : ''}${entry.deltas.hunger}`, color: entry.deltas.hunger > 0 ? '#6a9e6a' : '#c97a7a' });
       }
       if (entry.deltas.stats) {
         Object.entries(entry.deltas.stats).forEach(([stat, value]: [string, any]) => {
-          deltas.push({ icon: '📊', value: `${stat} ${value > 0 ? '+' : ''}${value}`, color: value > 0 ? '#4ac94a' : '#ff6b6b' });
+          deltas.push({ icon: '📊', value: `${stat} ${value > 0 ? '+' : ''}${value}`, color: value > 0 ? '#6a9e6a' : '#c97a7a' });
         });
       }
       if (entry.deltas.rapport) {
         Object.entries(entry.deltas.rapport).forEach(([npc, value]: [string, any]) => {
           const npcName = NPC_DEFINITIONS[npc as NpcId]?.name || npc;
-          deltas.push({ icon: '❤️', value: `${npcName} ${value > 0 ? '+' : ''}${value}`, color: value > 0 ? '#4ac94a' : '#ff6b6b' });
+          deltas.push({ icon: '❤️', value: `${npcName} ${value > 0 ? '+' : ''}${value}`, color: value > 0 ? '#6a9e6a' : '#c97a7a' });
         });
       }
 
@@ -473,10 +493,12 @@ function createActivityLogCard(state: any): HTMLElement {
         const deltaSpan = document.createElement('span');
         deltaSpan.textContent = `${delta.icon} ${delta.value}`;
         deltaSpan.style.cssText = `
-          padding: 4px 8px;
-          background: rgba(0, 0, 0, 0.3);
-          border-radius: 4px;
+          padding: 3px 6px;
+          background: #3a2817;
+          border-radius: 0;
+          border: 2px solid #5a4a35;
           color: ${delta.color};
+          font-family: 'Press Start 2P', monospace;
         `;
         deltasContainer.appendChild(deltaSpan);
       });
@@ -544,23 +566,24 @@ function generateWarnings(state: any): string[] {
 function createWarningsCard(warnings: string[]): HTMLElement {
   const card = document.createElement('div');
   card.style.cssText = `
-    background: rgba(58, 26, 26, 0.8);
-    border-radius: 12px;
-    padding: 20px;
-    border: 2px solid #ff6b6b;
-    backdrop-filter: blur(10px);
+    background: #6a5a3a;
+    border-radius: 0;
+    padding: 16px;
+    border: 3px solid #c97a7a;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
     width: 100%;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
   `;
 
   const cardTitle = document.createElement('h3');
   cardTitle.textContent = '⚠️ Warnings & Alerts';
   cardTitle.style.cssText = `
-    margin: 0 0 16px 0;
-    color: #ff6b6b;
-    font-size: 20px;
-    border-bottom: 2px solid rgba(255, 107, 107, 0.3);
-    padding-bottom: 8px;
+    margin: 0 0 12px 0;
+    color: #fbe9cf;
+    font-size: 11px;
+    font-family: 'Press Start 2P', monospace;
+    border-bottom: 3px solid #8b6f47;
+    padding-bottom: 6px;
   `;
 
   card.appendChild(cardTitle);
@@ -616,9 +639,10 @@ function createReminderCard(): HTMLElement {
   `;
   message.style.cssText = `
     margin: 0;
-    color: #93c5fd;
-    font-size: 16px;
-    line-height: 1.8;
+    color: #fbe9cf;
+    font-size: 9px;
+    line-height: 1.6;
+    font-family: 'Press Start 2P', monospace;
   `;
 
   card.appendChild(icon);

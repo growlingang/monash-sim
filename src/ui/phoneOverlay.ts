@@ -148,9 +148,10 @@ const renderPhoneContent = (store: GameStore) => {
       background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 24px;
-      padding: 32px 16px;
+      gap: 16px;
+      padding: 32px 20px;
       align-content: start;
+      justify-items: center;
     `;
 
     // Get current scene to determine which apps to show
@@ -164,14 +165,14 @@ const renderPhoneContent = (store: GameStore) => {
     const showActivities = isEveningBedroom && !isMorningPhone;
 
     const apps = [
-      { id: 'maps', name: 'Maps', icon: '🗺️', color: '#34d399' },
-      { id: 'notes', name: 'Notes', icon: '📝', color: '#fbbf24' },
-      { id: 'messages', name: 'WhatsApp', icon: '💬', color: '#25D366' },
+      { id: 'maps', name: 'Maps', icon: '🗺️', color: '#6a9e6a' },
+      { id: 'notes', name: 'Notes', icon: '📝', color: '#d4a574' },
+      { id: 'messages', name: 'WhatsApp', icon: '💬', color: '#6a9e6a' },
       // Only show Activities app in bedroom scene (evening)
-      ...(showActivities ? [{ id: 'activities', name: 'Activities', icon: '🎯', color: '#f97316' }] : []),
-      { id: 'save', name: 'Save', icon: '💾', color: '#60a5fa' },
-      { id: 'settings', name: 'Settings', icon: '⚙️', color: '#6b7280' },
-      { id: 'close', name: 'Close', icon: '❌', color: '#ef4444' },
+      ...(showActivities ? [{ id: 'activities', name: 'Activities', icon: '🎯', color: '#c97a5a' }] : []),
+      { id: 'save', name: 'Save', icon: '💾', color: '#8b8b6a' },
+      { id: 'settings', name: 'Settings', icon: '⚙️', color: '#8b6f47' },
+      { id: 'close', name: 'Close', icon: '❌', color: '#c97a7a' },
     ];
 
     apps.forEach((app) => {
@@ -181,7 +182,8 @@ const renderPhoneContent = (store: GameStore) => {
         background: ${app.color};
         border: 3px solid #5a4a35;
         border-radius: 0;
-        aspect-ratio: 1;
+        width: 85px;
+        height: 85px;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -1119,13 +1121,14 @@ function renderNPCSelection(
     
     const npcCard = document.createElement('div');
     npcCard.style.cssText = `
-      background: #2a2a2a;
-      border-radius: 8px;
+      background: #5a4a35;
+      border-radius: 0;
       padding: 16px;
       margin-bottom: 12px;
       cursor: pointer;
-      border: 2px solid transparent;
-      transition: all 0.2s;
+      border: 3px solid #8b6f47;
+      transition: all 0.1s;
+      box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
     `;
 
     const npcHeader = document.createElement('div');
@@ -1133,17 +1136,19 @@ function renderNPCSelection(
     
     const npcName = document.createElement('h4');
     npcName.textContent = npc.name;
-    npcName.style.cssText = 'margin: 0; color: #4ac94a; font-size: 16px;';
+    npcName.style.cssText = 'margin: 0; color: #fbe9cf; font-size: 11px; font-family: "Press Start 2P", monospace;';
     
     const rapportBadge = document.createElement('span');
     rapportBadge.textContent = `❤️ ${rapport > 0 ? '+' : ''}${rapport}`;
     rapportBadge.style.cssText = `
       padding: 4px 8px;
-      background: ${rapport >= 0 ? '#1e3a1e' : '#3a1e1e'};
-      color: ${rapport >= 0 ? '#4ac94a' : '#ff6b6b'};
-      border-radius: 4px;
-      font-size: 12px;
+      background: ${rapport >= 0 ? '#4a5a3a' : '#5a3a3a'};
+      color: ${rapport >= 0 ? '#d4f0d4' : '#f0d4d4'};
+      border-radius: 0;
+      border: 2px solid ${rapport >= 0 ? '#6a9e6a' : '#c97a7a'};
+      font-size: 9px;
       font-weight: bold;
+      font-family: 'Press Start 2P', monospace;
     `;
     
     npcHeader.appendChild(npcName);
@@ -1151,19 +1156,21 @@ function renderNPCSelection(
 
     const npcFocus = document.createElement('p');
     npcFocus.textContent = `${npc.focus.charAt(0).toUpperCase() + npc.focus.slice(1)} • ${npc.majorAffinity.toUpperCase()}`;
-    npcFocus.style.cssText = 'margin: 0; color: #666; font-size: 12px;';
+    npcFocus.style.cssText = 'margin: 0; color: #d4a574; font-size: 8px; font-family: "Press Start 2P", monospace;';
 
     npcCard.appendChild(npcHeader);
     npcCard.appendChild(npcFocus);
 
     npcCard.addEventListener('mouseenter', () => {
-      npcCard.style.background = '#3a3a3a';
-      npcCard.style.borderColor = '#4ac94a';
+      npcCard.style.background = '#6a5a3a';
+      npcCard.style.transform = 'translate(-2px, -2px)';
+      npcCard.style.boxShadow = '6px 6px 0 rgba(0, 0, 0, 0.3)';
     });
 
     npcCard.addEventListener('mouseleave', () => {
-      npcCard.style.background = '#2a2a2a';
-      npcCard.style.borderColor = 'transparent';
+      npcCard.style.background = '#5a4a35';
+      npcCard.style.transform = 'translate(0, 0)';
+      npcCard.style.boxShadow = '4px 4px 0 rgba(0, 0, 0, 0.3)';
     });
 
     npcCard.addEventListener('click', () => {
