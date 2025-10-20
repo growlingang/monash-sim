@@ -69,7 +69,16 @@ export function drawCharacter(
       if (!layer.src) continue;
       const img = imageCache.get(layer.src);
       if (!img) continue;
-      ctx.drawImage(img, sx, sy, frameW, frameH, x, y, frameW, frameH);
+      if (!player.compositedImage) return; 
+    //   ctx.drawImage(img, sx, sy, frameW, frameH, x, y, frameW, frameH);
+        ctx.drawImage(
+        player.compositedImage, // full sprite sheet
+        sx, sy,                 // source top-left
+        frameW, frameH,         // source width/height
+        x, y,                   // destination top-left
+        frameW, frameH           // destination width/height
+        );
+
     }
   }
 }
@@ -116,6 +125,7 @@ export function createAnimationLoop(options: {
     }
 
     ctx.clearRect(x, y, frameW, frameH);
+    if (!player.compositedImage) return; // wait until loaded
     drawCharacter(ctx, player, animationName, currentFrame, x, y, frameW, frameH);
     requestAnimationFrame(tick);
   }

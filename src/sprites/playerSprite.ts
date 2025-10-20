@@ -68,7 +68,7 @@ export const EQUIPMENT = {
   accessories: {
     beard: ['beard.png'],
     earring: ['earring_red.png'],
-    glasses: ['glasses.png', 'glasses_sun.png'],
+    // glasses: ['glasses.png', 'glasses_sun.png'],
     hat: ['hat_cowboy.png', 'hat_pumpkin.png'],
   },
 };

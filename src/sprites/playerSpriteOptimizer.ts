@@ -60,8 +60,8 @@ export async function buildCompositeSprite(
 ): Promise<HTMLImageElement> {
   // Create offscreen canvas for drawing
   const canvas = document.createElement('canvas');
-  canvas.width = frameW * SPRITE_GRID.COLS;
-  canvas.height = frameH * SPRITE_GRID.ROWS;
+  canvas.width = frameW/2 * SPRITE_GRID.COLS;
+  canvas.height = frameH/2 * SPRITE_GRID.ROWS;
   const ctx = canvas.getContext('2d')!;
 
   await loadPlayerImages(player);
