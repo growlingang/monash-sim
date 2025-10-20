@@ -6,6 +6,20 @@ import { applyDeltas, logActivity, transitionScene } from '../core/gameState';
 
 type ChoiceKey = 'friendly' | 'dismissive' | 'major';
 
+// Image cache for NPC sprites
+const imageCache = new Map<NpcId, HTMLImageElement>();
+
+// Preload NPC sprites
+const preloadNpcSprites = () => {
+    const npcIds: NpcId[] = ['bonsen', 'zahir', 'jiun', 'anika', 'jiawen'];
+    npcIds.forEach(id => {
+        const img = new Image();
+        img.src = `/sprites/npcs/${id}.png`;
+        img.onerror = () => console.warn(`Failed to load sprite for ${id}, using fallback`);
+        imageCache.set(id, img);
+    });
+};
+
 const matchesMajor = (playerMajor: MajorId, npcId: NpcId) => {
     const def = NPC_DEFINITIONS[npcId];
     return def.majorAffinity === playerMajor;
@@ -52,32 +66,203 @@ const typewriterEffect = (element: HTMLElement, text: string, speed = 30): Promi
 export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) => {
     root.innerHTML = '';
 
+    // Preload sprites
+    preloadNpcSprites();
+
     // Prevent multiple instances - cleanup any existing state
     if ((window as any).__gm_cleanup) {
         (window as any).__gm_cleanup();
         delete (window as any).__gm_cleanup;
     }
 
-    // Lightweight styling
+    // Enhanced styling with animations and polish
     if (!document.head.querySelector('style[data-meeting-room]')) {
         const style = document.createElement('style');
         style.setAttribute('data-meeting-room', 'true');
         style.textContent = `
-            .meeting__wrap { display:flex; flex-direction:column; gap:12px; padding:16px; max-width:980px; margin:0 auto; }
-            .meeting__header h2 { margin: 0 0 4px; }
-            .meeting__canvasWrap { position:relative; width:100%; aspect-ratio: 16 / 9; background: #1a1a1a; border:1px solid #334155; border-radius:10px; overflow:hidden; }
-            .meeting__canvas { display:block; width:100%; height:100%; image-rendering: pixelated; }
-            .meeting__dialogue { position:absolute; left:50%; bottom:12px; transform:translateX(-50%); width:92%; max-width:860px; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
-            .meeting__bubble { position:relative; padding:12px 14px; background: rgba(17,24,39,0.95); border:1px solid #334155; border-radius:10px; color:#e5e7eb; box-shadow:0 6px 18px rgba(0,0,0,0.4); font-size:14px; pointer-events:auto; }
-            .meeting__bubble .speaker { display:block; font-weight:800; color:#a7f3d0; margin-bottom:4px; letter-spacing:0.3px; }
-            .meeting__options { display:grid; gap:10px; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top:4px; }
-            .meeting__optionBtn { padding:10px 12px; border:1px solid #334155; border-radius:8px; background:#0b1220; color:#e2e8f0; cursor:pointer; transition: transform 0.04s ease, background 0.2s ease, border-color 0.2s ease; text-align:left; }
-            .meeting__optionBtn:hover { background:#101a30; border-color:#475569; transform: translateY(-1px); }
-            .meeting__status { position:absolute; top:12px; left:50%; transform:translateX(-50%); background: rgba(17,24,39,0.9); border:1px solid #334155; border-radius:8px; padding:6px 12px; color:#cbd5e1; font-size:13px; white-space:nowrap; }
-            .meeting__controls { display:flex; justify-content:space-between; gap:8px; margin-top:12px; }
-            .meeting__hint { color:#94a3b8; font-size:13px; }
-            .meeting__next { padding:10px 16px; border:none; border-radius:8px; background:#22c55e; color:#052e16; font-weight:800; cursor:pointer; opacity:1; }
-            .meeting__next[disabled] { opacity:0.5; cursor:default; }
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            @keyframes pulse {
+                0%, 100% { opacity: 0.6; }
+                50% { opacity: 1; }
+            }
+            @keyframes slideUp {
+                from { opacity: 0; transform: translateY(20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            
+            .meeting__wrap { 
+                display:flex; 
+                flex-direction:column; 
+                gap:16px; 
+                padding:20px; 
+                max-width:1100px; 
+                margin:0 auto;
+                animation: fadeIn 0.4s ease-out;
+            }
+            .meeting__header h2 { 
+                margin: 0 0 6px; 
+                color: #f8fafc;
+                text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            }
+            .meeting__header p {
+                color: #cbd5e1;
+                margin: 0;
+            }
+            .meeting__canvasWrap { 
+                position:relative; 
+                width:100%; 
+                aspect-ratio: 16 / 9; 
+                background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+                border: 2px solid #334155; 
+                border-radius:12px; 
+                overflow:hidden;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05) inset;
+            }
+            .meeting__canvas { 
+                display:block; 
+                width:100%; 
+                height:100%; 
+                image-rendering: pixelated;
+            }
+            .meeting__dialogue { 
+                position:absolute; 
+                left:50%; 
+                bottom:16px; 
+                transform:translateX(-50%); 
+                width:94%; 
+                max-width:900px; 
+                display:flex; 
+                flex-direction:column; 
+                gap:10px; 
+                pointer-events:none;
+                z-index: 10;
+            }
+            .meeting__bubble { 
+                position:relative; 
+                padding:14px 16px; 
+                background: linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(30,41,59,0.98) 100%);
+                border:2px solid rgba(100,116,139,0.5); 
+                border-radius:12px; 
+                color:#f1f5f9; 
+                box-shadow: 0 8px 24px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.1) inset;
+                font-size:15px; 
+                pointer-events:auto;
+                animation: slideUp 0.3s ease-out;
+                backdrop-filter: blur(8px);
+            }
+            .meeting__bubble .speaker { 
+                display:block; 
+                font-weight:800; 
+                color:#6ee7b7; 
+                margin-bottom:6px; 
+                letter-spacing:0.5px;
+                text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+                font-size: 13px;
+                text-transform: uppercase;
+            }
+            .meeting__options { 
+                display:grid; 
+                gap:10px; 
+                grid-template-columns: repeat(3, minmax(0, 1fr)); 
+                margin-top:8px;
+            }
+            .meeting__optionBtn { 
+                padding:12px 14px; 
+                border:2px solid #475569; 
+                border-radius:10px; 
+                background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+                color:#e2e8f0; 
+                cursor:pointer; 
+                transition: all 0.2s ease;
+                text-align:left;
+                font-size: 14px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                position: relative;
+                overflow: hidden;
+            }
+            .meeting__optionBtn::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+                transition: left 0.5s;
+            }
+            .meeting__optionBtn:hover::before {
+                left: 100%;
+            }
+            .meeting__optionBtn:hover { 
+                background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+                border-color:#64748b; 
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            }
+            .meeting__optionBtn:active {
+                transform: translateY(0);
+            }
+            .meeting__status { 
+                position:absolute; 
+                top:16px; 
+                left:50%; 
+                transform:translateX(-50%); 
+                background: linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(30,41,59,0.95) 100%);
+                border:2px solid rgba(100,116,139,0.6); 
+                border-radius:10px; 
+                padding:8px 16px; 
+                color:#f1f5f9; 
+                font-size:14px; 
+                white-space:nowrap;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+                backdrop-filter: blur(8px);
+                font-weight: 600;
+                animation: pulse 2s ease-in-out infinite;
+            }
+            .meeting__controls { 
+                display:flex; 
+                justify-content:space-between; 
+                align-items: center;
+                gap:12px; 
+                margin-top:8px;
+                padding: 0 4px;
+            }
+            .meeting__hint { 
+                color:#94a3b8; 
+                font-size:14px;
+                font-weight: 500;
+            }
+            .meeting__next { 
+                padding:12px 24px; 
+                border:none; 
+                border-radius:10px; 
+                background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+                color:#052e16; 
+                font-weight:800; 
+                cursor:pointer; 
+                transition: all 0.2s ease;
+                box-shadow: 0 4px 12px rgba(34,197,94,0.3);
+                font-size: 15px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            .meeting__next:hover:not([disabled]) {
+                background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(34,197,94,0.4);
+            }
+            .meeting__next:active:not([disabled]) {
+                transform: translateY(0);
+            }
+            .meeting__next[disabled] { 
+                opacity:0.4; 
+                cursor:not-allowed;
+                background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+                box-shadow: none;
+            }
         `;
         document.head.appendChild(style);
     }
@@ -211,12 +396,40 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
         clearDialogue();
         const bubble = document.createElement('div');
         bubble.className = 'meeting__bubble';
+        bubble.style.display = 'flex';
+        bubble.style.gap = '12px';
+        bubble.style.alignItems = 'flex-start';
+
+        // Add portrait if sprite is loaded
+        const img = imageCache.get(npcId);
+        if (img && img.complete && img.naturalWidth > 0) {
+            const portrait = document.createElement('img');
+            portrait.src = img.src;
+            portrait.style.cssText = `
+                width: 64px;
+                height: 64px;
+                border-radius: 8px;
+                object-fit: cover;
+                border: 2px solid #6ee7b7;
+                flex-shrink: 0;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            `;
+            bubble.appendChild(portrait);
+        }
+
+        // Text content wrapper
+        const textWrap = document.createElement('div');
+        textWrap.style.flex = '1';
+        textWrap.style.minWidth = '0';
+
         const speakerSpan = document.createElement('span');
         speakerSpan.className = 'speaker';
         speakerSpan.textContent = npc.name;
         const textSpan = document.createElement('span');
-        bubble.appendChild(speakerSpan);
-        bubble.appendChild(textSpan);
+
+        textWrap.appendChild(speakerSpan);
+        textWrap.appendChild(textSpan);
+        bubble.appendChild(textWrap);
         dialogueLayer.appendChild(bubble);
 
         // Typewriter greeting
@@ -314,12 +527,40 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
         // Show NPC reaction
         const reactionBubble = document.createElement('div');
         reactionBubble.className = 'meeting__bubble';
+        reactionBubble.style.display = 'flex';
+        reactionBubble.style.gap = '12px';
+        reactionBubble.style.alignItems = 'flex-start';
+
+        // Add portrait if sprite is loaded
+        const img = imageCache.get(npcId);
+        if (img && img.complete && img.naturalWidth > 0) {
+            const portrait = document.createElement('img');
+            portrait.src = img.src;
+            portrait.style.cssText = `
+                width: 64px;
+                height: 64px;
+                border-radius: 8px;
+                object-fit: cover;
+                border: 2px solid #6ee7b7;
+                flex-shrink: 0;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            `;
+            reactionBubble.appendChild(portrait);
+        }
+
+        // Text content wrapper
+        const textWrap = document.createElement('div');
+        textWrap.style.flex = '1';
+        textWrap.style.minWidth = '0';
+
         const npcLabel = document.createElement('span');
         npcLabel.className = 'speaker';
         npcLabel.textContent = npc.name;
         const reactionText = document.createElement('span');
-        reactionBubble.appendChild(npcLabel);
-        reactionBubble.appendChild(reactionText);
+
+        textWrap.appendChild(npcLabel);
+        textWrap.appendChild(reactionText);
+        reactionBubble.appendChild(textWrap);
         dialogueLayer.appendChild(reactionBubble);
 
         await typewriterEffect(reactionText, reply.flavor || 'You chat briefly.', 25);
@@ -423,70 +664,263 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
             }
         }
 
-        // Render
-        ctx.fillStyle = '#1a2233';
+        // Render with enhanced visuals
+        // Background gradient
+        const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        bgGradient.addColorStop(0, '#1e293b');
+        bgGradient.addColorStop(1, '#0f172a');
+        ctx.fillStyle = bgGradient;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Floor pattern
-        ctx.fillStyle = '#2a3347';
+        // Floor pattern with depth
         for (let x = 0; x < canvas.width; x += 16) {
             for (let y = 0; y < canvas.height; y += 16) {
                 if ((x / 16 + y / 16) % 2 === 0) {
-                    ctx.fillRect(x, y, 16, 16);
+                    ctx.fillStyle = '#2a3347';
+                } else {
+                    ctx.fillStyle = '#1e293b';
                 }
+                ctx.fillRect(x, y, 16, 16);
             }
         }
 
-        // Whiteboard at top
-        ctx.fillStyle = '#e5eef6';
+        // Add floor grid lines for depth
+        ctx.strokeStyle = 'rgba(100, 116, 139, 0.15)';
+        ctx.lineWidth = 1;
+        for (let x = 0; x <= canvas.width; x += 32) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, canvas.height);
+            ctx.stroke();
+        }
+        for (let y = 0; y <= canvas.height; y += 32) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(canvas.width, y);
+            ctx.stroke();
+        }
+
+        // Whiteboard at top with shadow and 3D effect
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+        ctx.shadowBlur = 12;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 4;
+
+        // Whiteboard frame
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillRect(155, 15, 330, 60);
+
+        // Whiteboard surface
+        const boardGradient = ctx.createLinearGradient(160, 20, 160, 70);
+        boardGradient.addColorStop(0, '#f8fafc');
+        boardGradient.addColorStop(1, '#e2e8f0');
+        ctx.fillStyle = boardGradient;
         ctx.fillRect(160, 20, 320, 50);
+
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+
         ctx.strokeStyle = '#94a3b8';
         ctx.lineWidth = 3;
         ctx.strokeRect(160, 20, 320, 50);
+
         if (meetingState.finished) {
             ctx.fillStyle = '#0f172a';
-            ctx.font = '12px sans-serif';
+            ctx.font = 'bold 13px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText('Assignment: Digital Privacy vs Convenience', 320, 50);
+            ctx.fillText('Assignment: Digital Privacy vs Convenience', 320, 47);
+            ctx.font = '10px sans-serif';
+            ctx.fillStyle = '#475569';
+            ctx.fillText('Due: Day 7, 11:59 PM', 320, 60);
         }
 
-        // Table (central rectangle)
-        ctx.fillStyle = '#5f4b32';
+        // Table with 3D shadow and wood texture
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+        ctx.shadowBlur = 20;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 8;
+
+        // Table top gradient
+        const tableGradient = ctx.createLinearGradient(200, 140, 200, 220);
+        tableGradient.addColorStop(0, '#6b4423');
+        tableGradient.addColorStop(0.5, '#5f4b32');
+        tableGradient.addColorStop(1, '#4a3824');
+        ctx.fillStyle = tableGradient;
         ctx.fillRect(200, 140, 240, 80);
-        ctx.strokeStyle = '#312417';
-        ctx.lineWidth = 4;
+
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
+
+        // Table border/edge
+        ctx.strokeStyle = '#3a2817';
+        ctx.lineWidth = 5;
         ctx.strokeRect(200, 140, 240, 80);
 
-        // NPCs
-        meetingState.npcs.forEach(npc => {
-            ctx.fillStyle = npc.talked ? '#6b7280' : '#0ea5e9';
+        // Wood grain lines
+        ctx.strokeStyle = 'rgba(58, 40, 23, 0.3)';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 4; i++) {
             ctx.beginPath();
-            ctx.arc(npc.x, npc.y, 16, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 2;
+            ctx.moveTo(210 + i * 55, 145);
+            ctx.lineTo(210 + i * 55, 215);
             ctx.stroke();
+        }
 
-            // Label
+        // NPCs with sprites or fallback to circles
+        meetingState.npcs.forEach(npc => {
+            const talked = npc.talked;
+            const img = imageCache.get(npc.npcId);
+            const maxSpriteSize = 48; // Maximum display size for sprites
+
+            if (img && img.complete && img.naturalWidth > 0) {
+                // RENDER SPRITE with original aspect ratio
+                ctx.save();
+
+                // Calculate dimensions maintaining aspect ratio
+                const aspectRatio = img.naturalWidth / img.naturalHeight;
+                let drawWidth, drawHeight;
+
+                if (aspectRatio > 1) {
+                    // Wider than tall
+                    drawWidth = maxSpriteSize;
+                    drawHeight = maxSpriteSize / aspectRatio;
+                } else {
+                    // Taller than wide or square
+                    drawHeight = maxSpriteSize;
+                    drawWidth = maxSpriteSize * aspectRatio;
+                }
+
+                // Shadow
+                ctx.shadowColor = talked ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.5)';
+                ctx.shadowBlur = talked ? 8 : 15;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 4;
+
+                // Glow for active NPCs
+                if (!talked) {
+                    ctx.shadowColor = 'rgba(14, 165, 233, 0.8)';
+                    ctx.shadowBlur = 20;
+                }
+
+                // Draw sprite centered on NPC position with correct aspect ratio
+                ctx.drawImage(img, npc.x - drawWidth / 2, npc.y - drawHeight / 2, drawWidth, drawHeight);
+
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetY = 0;
+
+                // Gray overlay if already talked (maintains aspect ratio)
+                if (talked) {
+                    ctx.fillStyle = 'rgba(100, 100, 100, 0.5)';
+                    ctx.fillRect(npc.x - drawWidth / 2, npc.y - drawHeight / 2, drawWidth, drawHeight);
+                }
+
+                ctx.restore();
+            } else {
+                // FALLBACK: Render circle if sprite not loaded
+                // Shadow
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+                ctx.shadowBlur = 8;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 4;
+
+                // Glow for active NPCs
+                if (!talked) {
+                    ctx.shadowColor = 'rgba(14, 165, 233, 0.6)';
+                    ctx.shadowBlur = 15;
+                }
+
+                // Avatar gradient
+                const avatarGradient = ctx.createRadialGradient(npc.x, npc.y - 2, 4, npc.x, npc.y, 16);
+                if (talked) {
+                    avatarGradient.addColorStop(0, '#94a3b8');
+                    avatarGradient.addColorStop(1, '#64748b');
+                } else {
+                    avatarGradient.addColorStop(0, '#38bdf8');
+                    avatarGradient.addColorStop(1, '#0284c7');
+                }
+                ctx.fillStyle = avatarGradient;
+                ctx.beginPath();
+                ctx.arc(npc.x, npc.y, 16, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetY = 0;
+
+                // Border
+                ctx.strokeStyle = talked ? '#e2e8f0' : '#ffffff';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                // Inner highlight
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(npc.x, npc.y - 3, 12, Math.PI * 1.2, Math.PI * 1.8);
+                ctx.stroke();
+            }
+
+            // Label with shadow (for both sprite and circle)
             const def = NPC_DEFINITIONS[npc.npcId];
-            ctx.fillStyle = '#e2e8f0';
-            ctx.font = 'bold 10px sans-serif';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetY = 1;
+            ctx.fillStyle = talked ? '#cbd5e1' : '#f1f5f9';
+            ctx.font = 'bold 11px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText(def.name.split(' ')[0], npc.x, npc.y + 30);
+            const labelY = img && img.complete && img.naturalWidth > 0 ? npc.y + maxSpriteSize / 2 + 16 : npc.y + 32;
+            ctx.fillText(def.name.split(' ')[0], npc.x, labelY);
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
         });
 
-        // Player
-        ctx.fillStyle = '#f59e0b';
+        // Player with glow and shadow
+        ctx.shadowColor = 'rgba(245, 158, 11, 0.6)';
+        ctx.shadowBlur = 20;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 4;
+
+        // Player gradient
+        const playerGradient = ctx.createRadialGradient(
+            meetingState.playerX,
+            meetingState.playerY - 2,
+            4,
+            meetingState.playerX,
+            meetingState.playerY,
+            14
+        );
+        playerGradient.addColorStop(0, '#fbbf24');
+        playerGradient.addColorStop(1, '#f59e0b');
+        ctx.fillStyle = playerGradient;
         ctx.beginPath();
         ctx.arc(meetingState.playerX, meetingState.playerY, 14, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 2;
+
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
+
+        // Border
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3;
         ctx.stroke();
-        ctx.fillStyle = '#000';
+
+        // Inner highlight
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(meetingState.playerX, meetingState.playerY - 3, 10, Math.PI * 1.2, Math.PI * 1.8);
+        ctx.stroke();
+
+        // YOU label with shadow
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetY = 1;
+        ctx.fillStyle = '#1e293b';
         ctx.font = 'bold 10px sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('YOU', meetingState.playerX, meetingState.playerY + 4);
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
 
         animFrame = requestAnimationFrame(loop);
     };
