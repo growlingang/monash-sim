@@ -361,8 +361,8 @@ export const walkMinigame: Minigame = {
         ctx.fillStyle = '#1a1a1a';
         ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-        // Draw goal zone at top (only visible when camera is at the top)
-        if (cameraOffset === 0) {
+        // Draw goal zone at top (visible when camera is near the top)
+        if (cameraOffset < 1) {
           // Draw grass tiles for campus area
           for (let x = 0; x < CANVAS_WIDTH; x += TILE_SIZE) {
             ctx.drawImage(grassTile, x, 0, TILE_SIZE, 32);
