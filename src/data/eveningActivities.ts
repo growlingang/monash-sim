@@ -95,7 +95,6 @@ const rawEveningActivities: EveningActivityDefinition[] = [
     description: 'Spend time browsing social media',
     requirements: {
       time: 30,
-      doomscrollUsed: false,
     },
     outcome: {
       id: 'success',
