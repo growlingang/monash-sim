@@ -31,7 +31,7 @@ export type PlayerSprite = {
 };
 
 export const DEFAULT_PLAYER: PlayerSprite = {
-  skin: 'skintone_4.png',
+  skin: 'skintone_2.png',
   hair: 'emo_darkbrown.png',
   eyes: 'eyes_brown.png',
   lipstick: null,

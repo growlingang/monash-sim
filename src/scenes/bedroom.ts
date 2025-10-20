@@ -67,6 +67,11 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
   if (customSprite) {
     try {
       // frame size here should match your sprite sheets; using 64x64 as preview/demo
+      customSprite.accessories.beard = null;
+      customSprite.accessories.hat = null;
+      customSprite.accessories.earring = null;
+      customSprite.hair ='ponytail_darkbrown.png';
+      customSprite.shoes = 'shoes_red.png';
       await buildCompositeSprite(customSprite, 32, 32);
       console.log('✅ Built composite for custom player sprite');
     } catch (err) {
