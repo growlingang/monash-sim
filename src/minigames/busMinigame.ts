@@ -154,32 +154,108 @@ export const busMinigame: Minigame = {
         ctx.fillStyle = '#1a1a1a';
         ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-        // Draw bus interior background
-        ctx.fillStyle = '#3a3a3a';
+        // Draw bus interior background (walls)
+        ctx.fillStyle = '#4a4a4a';
         ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
         
-        // Bus windows
-        for (let i = 0; i < 4; i++) {
-          const x = 50 + i * 150;
-          ctx.fillStyle = '#87ceeb';
-          ctx.fillRect(x, 40, 100, 80);
-          ctx.fillStyle = '#4a90a4';
-          ctx.fillRect(x + 50, 40, 2, 80);
+        // Ceiling with lighting
+        ctx.fillStyle = '#2a2a2a';
+        ctx.fillRect(0, 0, CANVAS_WIDTH, 35);
+        
+        // Ceiling lights
+        for (let i = 0; i < 5; i++) {
+          const x = 80 + i * 130;
+          ctx.fillStyle = '#ffffe0';
+          ctx.fillRect(x, 8, 50, 15);
+          ctx.fillStyle = '#ffffaa';
+          ctx.fillRect(x + 5, 12, 40, 8);
+        }
+        
+        // Bus windows with animated scenery
+        const scrollOffset = (performance.now() / 50) % 150;
+        for (let i = 0; i < 5; i++) {
+          const x = 30 + i * 130;
+          
+          // Window frame
+          ctx.fillStyle = '#2a2a2a';
+          ctx.fillRect(x, 40, 110, 90);
+          
+          // Window glass with sky gradient
+          const gradient = ctx.createLinearGradient(0, 40, 0, 130);
+          gradient.addColorStop(0, '#87ceeb');
+          gradient.addColorStop(1, '#b0d4f1');
+          ctx.fillStyle = gradient;
+          ctx.fillRect(x + 5, 45, 100, 80);
+          
+          // Passing clouds/buildings
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+          const cloudX = (x + scrollOffset + i * 40) % (CANVAS_WIDTH + 60);
+          ctx.fillRect(cloudX - 30, 55, 40, 15);
+          ctx.fillRect(cloudX - 20, 65, 30, 15);
+          
+          // Building silhouettes
+          ctx.fillStyle = 'rgba(80, 80, 80, 0.4)';
+          const buildingX = (x - scrollOffset * 1.5 + i * 60) % (CANVAS_WIDTH + 100);
+          ctx.fillRect(buildingX - 40, 90, 25, 35);
+          ctx.fillRect(buildingX - 10, 95, 20, 30);
+          
+          // Window divider
+          ctx.fillStyle = '#2a2a2a';
+          ctx.fillRect(x + 52, 45, 6, 80);
         }
 
-        // Bus floor
-        ctx.fillStyle = '#555';
+        // Bus seats on the sides
+        for (let i = 0; i < 3; i++) {
+          const y = 150 + i * 60;
+          
+          // Left seats
+          ctx.fillStyle = '#3d5a80';
+          ctx.fillRect(10, y, 60, 45);
+          ctx.fillStyle = '#293f5e';
+          ctx.fillRect(10, y, 60, 15); // Seat back
+          ctx.fillStyle = '#4a6fa5';
+          ctx.fillRect(15, y + 5, 50, 8);
+          
+          // Right seats
+          ctx.fillRect(CANVAS_WIDTH - 70, y, 60, 45);
+          ctx.fillStyle = '#293f5e';
+          ctx.fillRect(CANVAS_WIDTH - 70, y, 60, 15);
+          ctx.fillStyle = '#4a6fa5';
+          ctx.fillRect(CANVAS_WIDTH - 65, y + 5, 50, 8);
+        }
+
+        // Vertical poles
+        for (let i = 0; i < 4; i++) {
+          const x = 150 + i * 130;
+          ctx.fillStyle = '#888';
+          ctx.fillRect(x, 35, 8, CANVAS_HEIGHT - 135);
+          
+          // Pole shine
+          ctx.fillStyle = '#aaa';
+          ctx.fillRect(x + 1, 35, 3, CANVAS_HEIGHT - 135);
+        }
+        
+        // Horizontal hand rails
+        ctx.fillStyle = '#888';
+        ctx.fillRect(100, 35, CANVAS_WIDTH - 200, 6);
+        ctx.fillStyle = '#aaa';
+        ctx.fillRect(100, 36, CANVAS_WIDTH - 200, 2);
+
+        // Bus floor with better texture
+        ctx.fillStyle = '#3a3a3a';
         ctx.fillRect(0, CANVAS_HEIGHT - 100, CANVAS_WIDTH, 100);
         
-        // Floor lines
-        ctx.strokeStyle = '#666';
-        ctx.lineWidth = 2;
-        for (let i = 0; i < 10; i++) {
-          ctx.beginPath();
-          ctx.moveTo(i * 80, CANVAS_HEIGHT - 100);
-          ctx.lineTo(i * 80 + 40, CANVAS_HEIGHT);
-          ctx.stroke();
+        // Floor pattern (rubber mat texture)
+        ctx.fillStyle = '#2a2a2a';
+        for (let y = 0; y < 100; y += 10) {
+          for (let x = 0; x < CANVAS_WIDTH; x += 10) {
+            ctx.fillRect(x + (y % 20) / 2, CANVAS_HEIGHT - 100 + y, 8, 8);
+          }
         }
+        
+        // Yellow safety line at floor edge
+        ctx.fillStyle = '#ffd700';
+        ctx.fillRect(0, CANVAS_HEIGHT - 100, CANVAS_WIDTH, 4);
 
         // Draw balance bar
         const barX = CANVAS_WIDTH / 2 - BALANCE_BAR_WIDTH / 2;
@@ -216,18 +292,84 @@ export const busMinigame: Minigame = {
         ctx.translate(playerX + PLAYER_WIDTH / 2, playerY + PLAYER_HEIGHT);
         ctx.rotate(balance * 0.3);
         
-        // Body
-        ctx.fillStyle = '#4a8c2a';
-        ctx.fillRect(-PLAYER_WIDTH / 2, -PLAYER_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT);
+        // Legs
+        ctx.fillStyle = '#2a4d6e';
+        ctx.fillRect(-PLAYER_WIDTH / 2 + 4, -16, 10, 16);
+        ctx.fillRect(-PLAYER_WIDTH / 2 + 18, -16, 10, 16);
         
-        // Face
-        ctx.fillStyle = '#2d5016';
-        ctx.fillRect(-PLAYER_WIDTH / 2 + 6, -PLAYER_HEIGHT + 8, 6, 6);
-        ctx.fillRect(-PLAYER_WIDTH / 2 + 20, -PLAYER_HEIGHT + 8, 6, 6);
+        // Shoes
+        ctx.fillStyle = '#1a1a1a';
+        ctx.fillRect(-PLAYER_WIDTH / 2 + 2, -4, 12, 4);
+        ctx.fillRect(-PLAYER_WIDTH / 2 + 16, -4, 12, 4);
         
-        // Mouth (worried expression)
-        const mouthY = Math.abs(balance) > 0.5 ? -PLAYER_HEIGHT + 24 : -PLAYER_HEIGHT + 22;
-        ctx.fillRect(-PLAYER_WIDTH / 2 + 8, mouthY, 16, 3);
+        // Torso
+        ctx.fillStyle = '#5a9abd';
+        ctx.fillRect(-PLAYER_WIDTH / 2, -PLAYER_HEIGHT + 12, PLAYER_WIDTH, 32);
+        
+        // Arms (swaying for balance)
+        const armSwing = balance * 15;
+        ctx.fillStyle = '#d4a574';
+        // Left arm
+        ctx.fillRect(-PLAYER_WIDTH / 2 - 6, -PLAYER_HEIGHT + 14 - armSwing, 6, 20);
+        // Right arm
+        ctx.fillRect(PLAYER_WIDTH / 2, -PLAYER_HEIGHT + 14 + armSwing, 6, 20);
+        
+        // Hands
+        ctx.fillStyle = '#c49464';
+        ctx.beginPath();
+        ctx.arc(-PLAYER_WIDTH / 2 - 3, -PLAYER_HEIGHT + 34 - armSwing, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(PLAYER_WIDTH / 2 + 3, -PLAYER_HEIGHT + 34 + armSwing, 4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Neck
+        ctx.fillStyle = '#d4a574';
+        ctx.fillRect(-PLAYER_WIDTH / 2 + 10, -PLAYER_HEIGHT + 10, 12, 6);
+        
+        // Head
+        ctx.fillStyle = '#f5d5a8';
+        ctx.fillRect(-PLAYER_WIDTH / 2 + 6, -PLAYER_HEIGHT, 20, 16);
+        
+        // Hair
+        ctx.fillStyle = '#3d2817';
+        ctx.fillRect(-PLAYER_WIDTH / 2 + 6, -PLAYER_HEIGHT, 20, 6);
+        ctx.fillRect(-PLAYER_WIDTH / 2 + 4, -PLAYER_HEIGHT + 2, 4, 8);
+        ctx.fillRect(-PLAYER_WIDTH / 2 + 22, -PLAYER_HEIGHT + 2, 4, 8);
+        
+        // Eyes (worried expression)
+        ctx.fillStyle = '#2d2d2d';
+        if (Math.abs(balance) > 0.6) {
+          // Wide eyes when losing balance
+          ctx.fillRect(-PLAYER_WIDTH / 2 + 9, -PLAYER_HEIGHT + 7, 3, 5);
+          ctx.fillRect(-PLAYER_WIDTH / 2 + 20, -PLAYER_HEIGHT + 7, 3, 5);
+        } else {
+          // Normal eyes
+          ctx.fillRect(-PLAYER_WIDTH / 2 + 9, -PLAYER_HEIGHT + 8, 3, 3);
+          ctx.fillRect(-PLAYER_WIDTH / 2 + 20, -PLAYER_HEIGHT + 8, 3, 3);
+        }
+        
+        // Mouth (changes based on balance)
+        ctx.fillStyle = '#2d2d2d';
+        if (Math.abs(balance) > 0.7) {
+          // Worried/scared mouth
+          ctx.beginPath();
+          ctx.ellipse(0, -PLAYER_HEIGHT + 13, 4, 2, 0, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (Math.abs(balance) > 0.4) {
+          // Concerned line
+          ctx.fillRect(-PLAYER_WIDTH / 2 + 10, -PLAYER_HEIGHT + 13, 12, 2);
+        } else {
+          // Slight smile
+          ctx.fillRect(-PLAYER_WIDTH / 2 + 10, -PLAYER_HEIGHT + 13, 10, 2);
+          ctx.fillRect(-PLAYER_WIDTH / 2 + 11, -PLAYER_HEIGHT + 14, 8, 1);
+        }
+        
+        // Backpack (student detail)
+        ctx.fillStyle = '#8b4513';
+        ctx.fillRect(-PLAYER_WIDTH / 2 - 2, -PLAYER_HEIGHT + 16, 6, 16);
+        ctx.fillStyle = '#a0522d';
+        ctx.fillRect(-PLAYER_WIDTH / 2 - 1, -PLAYER_HEIGHT + 20, 4, 2);
         
         ctx.restore();
 

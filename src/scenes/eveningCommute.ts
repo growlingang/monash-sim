@@ -184,7 +184,7 @@ export const renderEveningCommute = (root: HTMLElement, store: GameStore) => {
   const header = document.createElement('div');
   header.className = 'evening-commute__header';
   header.style.cssText = 'margin-bottom: 10px; font-size: 14px; text-align: center; width: 100%;';
-  header.innerHTML = '<h2>Bus Bay</h2><p>Use <strong>Arrow Keys</strong> or <strong>WASD</strong> to move. Press <strong>P</strong> to open your phone.</p>';
+  header.innerHTML = '<h2>Bus Bay</h2><p>Use <strong>Left/Right Arrow Keys</strong> or <strong>A/D</strong> to move sideways. Press <strong>P</strong> to open your phone.</p>';
 
   // Add stats bar
   const statsBar = createStatsBar(store.getState());
@@ -198,29 +198,27 @@ export const renderEveningCommute = (root: HTMLElement, store: GameStore) => {
   statusBar.className = 'evening-commute__status';
   statusBar.style.cssText = 'margin-top: 10px; font-family: monospace; font-size: 12px; color: #999;';
   statusBar.innerHTML = 'You\'re at the bus bay. Press <strong>P</strong> for phone to choose your commute home.';
-  
-  // Add test button to skip minigame
-  const testButton = document.createElement('button');
-  testButton.textContent = 'TEST: Skip to Bedroom';
-  testButton.style.cssText = 'margin-top: 10px; padding: 8px 16px; background: #ff6b6b; color: white; border: none; border-radius: 4px; cursor: pointer;';
-  testButton.addEventListener('click', () => {
-    console.log('Test button clicked - transitioning to bedroom');
-    store.setState((prev) => transitionScene(prev, 'bedroom'));
-  });
 
   container.appendChild(header);
   container.appendChild(statsBar);
   container.appendChild(canvas);
   container.appendChild(statusBar);
-  container.appendChild(testButton);
   root.appendChild(container);
 
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
+  // Load background image
+  const backgroundImage = new Image();
+  backgroundImage.src = '/src/sprites/busloop.png';
+  let backgroundLoaded = false;
+  backgroundImage.onload = () => {
+    backgroundLoaded = true;
+  };
+
   // Player state
   let playerX = 5 * TILE_SIZE;
-  let playerY = 9 * TILE_SIZE;
+  const playerY = CANVAS_HEIGHT - 80; // Fixed Y position at bottom
   const playerSize = TILE_SIZE;
   let lastTime = performance.now();
   let gameActive = true;
@@ -244,8 +242,8 @@ export const renderEveningCommute = (root: HTMLElement, store: GameStore) => {
     const deltaTime = currentTime - lastTime;
     lastTime = currentTime;
 
-    // Update player position
-    const moveSpeed = 100; // pixels per second
+    // Update player position (sideways only)
+    const moveSpeed = 150; // pixels per second
     const moveDistance = (moveSpeed * deltaTime) / 1000;
 
     if (keys['arrowleft'] || keys['a']) {
@@ -254,12 +252,7 @@ export const renderEveningCommute = (root: HTMLElement, store: GameStore) => {
     if (keys['arrowright'] || keys['d']) {
       playerX = Math.min(CANVAS_WIDTH - playerSize, playerX + moveDistance);
     }
-    if (keys['arrowup'] || keys['w']) {
-      playerY = Math.max(0, playerY - moveDistance);
-    }
-    if (keys['arrowdown'] || keys['s']) {
-      playerY = Math.min(CANVAS_HEIGHT - playerSize, playerY + moveDistance);
-    }
+    // No up/down movement - playerY is fixed
 
     // Render
     render();
@@ -268,38 +261,17 @@ export const renderEveningCommute = (root: HTMLElement, store: GameStore) => {
   };
 
   const render = () => {
-    // Clear canvas with bus bay background
-    ctx.fillStyle = '#2a4a2a';
-    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
-    // Draw curb going through the entire screen
-    ctx.fillStyle = '#666666';
-    ctx.fillRect(0, 8 * TILE_SIZE, CANVAS_WIDTH, TILE_SIZE);
-    
-    // Draw curb edge (darker line)
-    ctx.fillStyle = '#444444';
-    ctx.fillRect(0, 8 * TILE_SIZE, CANVAS_WIDTH, 2);
-
-    // Draw bus bay elements
-    ctx.fillStyle = '#4a4a4a';
-    // Bus shelter (larger)
-    ctx.fillRect(10 * TILE_SIZE, 2 * TILE_SIZE, 4 * TILE_SIZE, 4 * TILE_SIZE);
-    
-    // Bus stop sign
-    ctx.fillStyle = '#ff6b6b';
-    ctx.fillRect(3 * TILE_SIZE, 2 * TILE_SIZE, TILE_SIZE, 2 * TILE_SIZE);
-    
-    // Benches along the curb
-    ctx.fillStyle = '#8b4513';
-    ctx.fillRect(2 * TILE_SIZE, 7 * TILE_SIZE, 3 * TILE_SIZE, TILE_SIZE);
-    ctx.fillRect(19 * TILE_SIZE, 7 * TILE_SIZE, 3 * TILE_SIZE, TILE_SIZE);
-    
-    // Trees
-    ctx.fillStyle = '#228b22';
-    ctx.fillRect(1 * TILE_SIZE, 1 * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-    ctx.fillRect(22 * TILE_SIZE, 1 * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-    ctx.fillRect(1 * TILE_SIZE, 14 * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-    ctx.fillRect(22 * TILE_SIZE, 14 * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    // Draw background image if loaded
+    if (backgroundLoaded) {
+      ctx.drawImage(backgroundImage, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    } else {
+      // Fallback background while loading
+      ctx.fillStyle = '#87ceeb';
+      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      ctx.fillStyle = '#333';
+      ctx.font = '14px monospace';
+      ctx.fillText('Loading bus loop...', CANVAS_WIDTH / 2 - 80, CANVAS_HEIGHT / 2);
+    }
 
     // Draw player
     ctx.fillStyle = '#4169e1';
