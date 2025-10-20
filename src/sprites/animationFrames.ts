@@ -1,0 +1,54 @@
+export const ANIMATION_FRAMES = {
+  idle_forward: [{ row: 1, col: 1 }],
+  idle_backward: [{ row: 2, col: 1 }],
+  idle_right: [{ row: 3, col: 1 }],
+  idle_left: [{ row: 4, col: 1 }],
+
+  walk_forward: [
+    { row: 1, col: 2 },
+    { row: 1, col: 4 },
+  ],
+  walk_backward: [
+    { row: 2, col: 2 },
+    { row: 2, col: 4 },
+  ],
+  walk_right: [
+    { row: 3, col: 2 },
+    { row: 3, col: 4 },
+  ],
+  walk_left: [
+    { row: 4, col: 2 },
+    { row: 4, col: 4 },
+  ],
+
+  jump_forward: [
+    { row: 13, col: 1 },
+    { row: 13, col: 2 },
+    { row: 13, col: 3 },
+    { row: 13, col: 4 },
+    { row: 13, col: 5 },
+  ],
+  jump_backward: [
+    { row: 14, col: 1 },
+    { row: 14, col: 2 },
+    { row: 14, col: 3 },
+    { row: 14, col: 4 },
+    { row: 14, col: 5 },
+  ],
+  jump_right: [
+    { row: 15, col: 1 },
+    { row: 15, col: 2 },
+    { row: 15, col: 3 },
+    { row: 15, col: 4 },
+    { row: 15, col: 5 },
+  ],
+  jump_left: [
+    { row: 16, col: 1 },
+    { row: 16, col: 2 },
+    { row: 16, col: 3 },
+    { row: 16, col: 4 },
+    { row: 16, col: 5 },
+  ],
+};
+
+

@@ -102,60 +102,32 @@ export const drawSprite = (
 /**
  * Draw a subsection of a sprite (sprite sheet support)
  */
-export interface DrawSubSpriteOptions extends DrawSpriteOptions {
-  sourceX: number;
-  sourceY: number;
-  sourceWidth: number;
-  sourceHeight: number;
-}
-
-export const drawSubSprite = (
+export function drawSubSprite(
   ctx: CanvasRenderingContext2D,
-  sprite: HTMLImageElement,
-  options: DrawSubSpriteOptions,
-): void => {
-  const {
-    x,
-    y,
-    width = options.sourceWidth,
-    height = options.sourceHeight,
-    sourceX,
-    sourceY,
-    sourceWidth,
-    sourceHeight,
-    rotation = 0,
-    flipX = false,
-    flipY = false,
-    alpha = 1,
-  } = options;
-
-  ctx.save();
-
-  ctx.globalAlpha = alpha;
-  ctx.translate(x + width / 2, y + height / 2);
-  
-  if (rotation !== 0) {
-    ctx.rotate(rotation);
+  img: HTMLImageElement,
+  options: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    sourceX: number;
+    sourceY: number;
+    sourceWidth: number;
+    sourceHeight: number;
   }
-  
-  if (flipX || flipY) {
-    ctx.scale(flipX ? -1 : 1, flipY ? -1 : 1);
-  }
-
+) {
   ctx.drawImage(
-    sprite,
-    sourceX,
-    sourceY,
-    sourceWidth,
-    sourceHeight,
-    -width / 2,
-    -height / 2,
-    width,
-    height,
+    img,
+    options.sourceX,
+    options.sourceY,
+    options.sourceWidth,
+    options.sourceHeight,
+    options.x,
+    options.y,
+    options.width,
+    options.height
   );
-
-  ctx.restore();
-};
+}
 
 /**
  * Clear the sprite cache (useful for testing or memory cleanup)

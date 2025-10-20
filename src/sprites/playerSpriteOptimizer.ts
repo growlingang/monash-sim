@@ -1,7 +1,7 @@
 import type { LayerKey, PlayerSprite } from './playerSprite';
 
 // Dimensions of the sprite sheet grid
-const SPRITE_GRID = {
+export const SPRITE_GRID = {
   ROWS: 49,
   COLS: 8,
 };
@@ -60,8 +60,8 @@ export async function buildCompositeSprite(
 ): Promise<HTMLImageElement> {
   // Create offscreen canvas for drawing
   const canvas = document.createElement('canvas');
-  canvas.width = frameW/2 * SPRITE_GRID.COLS;
-  canvas.height = frameH/2 * SPRITE_GRID.ROWS;
+  canvas.width = frameW * SPRITE_GRID.COLS;
+  canvas.height = frameH * SPRITE_GRID.ROWS;
   const ctx = canvas.getContext('2d')!;
 
   await loadPlayerImages(player);
@@ -91,9 +91,9 @@ export async function buildCompositeSprite(
         const img = imageCache.get(layer.src);
         if (!img) continue;
 
-        const sx = (col - 1) * frameW;
-        const sy = (row - 1) * frameH;
-        ctx.drawImage(img, sx, sy, frameW, frameH, x, y, frameW, frameH);
+        // const sx = (col - 1) * frameW;
+        // const sy = (row - 1) * frameH;
+        ctx.drawImage(img, x, y, frameW, frameH, x, y, frameW, frameH);
       }
     }
   }

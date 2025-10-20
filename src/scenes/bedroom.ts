@@ -1,8 +1,9 @@
 import type { GameStore } from '../core/store';
 import { createStatsBar } from '../ui/statsBar';
-import { loadSprite, drawSprite } from '../utils/spriteLoader';
+import { loadSprite, drawSprite, drawSubSprite } from '../utils/spriteLoader';
 import { buildCompositeSprite } from '../sprites/playerSpriteOptimizer';
-import { drawCharacter } from '../sprites/playerRenderer';
+// import { drawCharacter } from '../sprites/playerRenderer';
+import { ANIMATION_FRAMES } from '../sprites/animationFrames';
 import { Tileset } from '../utils/tilesetLoader';
 import { createPhoneOverlay } from '../ui/phoneOverlay';
 import { custom } from 'zod';
@@ -66,7 +67,7 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
   if (customSprite) {
     try {
       // frame size here should match your sprite sheets; using 64x64 as preview/demo
-      await buildCompositeSprite(customSprite, 64, 64);
+      await buildCompositeSprite(customSprite, 32, 32);
       console.log('✅ Built composite for custom player sprite');
     } catch (err) {
       console.warn('⚠️ Failed to build composite for custom player', err);
@@ -394,6 +395,28 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
   let gameActive = true;
   let phoneOpen = false;
 
+  let frameIndex = 0;
+  const currentAnimation = 'idle_forward';
+  const playerFrames = ANIMATION_FRAMES[currentAnimation];
+
+  const drawPlayer = () => {
+  if (!customSprite || !customSprite.compositedImage) return;
+
+  const frame = playerFrames[frameIndex];
+  drawSubSprite(ctx, customSprite.compositedImage, {
+    x: playerX,
+    y: playerY,
+    width: playerSize,
+    height: playerSize,
+    sourceX: (frame.col - 1) * 32, // match frameW you used in buildCompositeSprite
+    sourceY: (frame.row - 1) * 32,
+    sourceWidth: 32,
+    sourceHeight: 32,
+  });
+
+  frameIndex = (frameIndex + 1) % playerFrames.length;
+};
+
   // Input handling
   const keys: Record<string, boolean> = {};
 
@@ -532,24 +555,19 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
     }
     // Draw player
     if (customSprite) {
-      drawSprite(ctx, customSprite.compositedImage, {
-        x: playerX,
-        y: playerY,
-        width: playerSize,
-        height: playerSize,
-      });
-    } else {
-      // Fallback to rectangle if sprite failed to load
-      ctx.fillStyle = '#4a8c2a';
-      ctx.fillRect(playerX, playerY, playerSize, playerSize);
-    }
+      drawPlayer();
+        } else {
+          ctx.fillStyle = '#4a8c2a';
+          ctx.fillRect(playerX, playerY, playerSize, playerSize);
+    };
+};
 
-    // Player face
-    ctx.fillStyle = '#2d5016';
-    ctx.fillRect(playerX + 8, playerY + 8, 6, 6);
-    ctx.fillRect(playerX + 18, playerY + 8, 6, 6);
-    ctx.fillRect(playerX + 8, playerY + 18, 16, 4);
-  };
+  //   // Player face
+  //   ctx.fillStyle = '#2d5016';
+  //   ctx.fillRect(playerX + 8, playerY + 8, 6, 6);
+  //   ctx.fillRect(playerX + 18, playerY + 8, 6, 6);
+  //   ctx.fillRect(playerX + 8, playerY + 18, 16, 4);
+  // };
 
   const gameLoop = (currentTime: number) => {
     if (!gameActive) return;
