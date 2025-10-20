@@ -14,6 +14,7 @@ import { renderRecap } from '../recap';
 import { renderTilesetTest } from '../tilesetTest';
 import { renderCampusLTB } from '../campusLTB.ts';
 import { renderGroupMeeting } from '../groupMeeting.ts';
+import { renderAssignmentTasks } from '../assignmentTasks';
 
 export const mountScene = (scene: SceneId, root: HTMLElement, store: GameStore) => {
     switch (scene) {
@@ -47,6 +48,9 @@ export const mountScene = (scene: SceneId, root: HTMLElement, store: GameStore) 
             break;
         case 'group-meeting':
             void renderGroupMeeting(root, store);
+            break;
+        case 'assignment-tasks':
+            void renderAssignmentTasks(root, store);
             break;
         case 'evening-commute':
             renderEveningCommute(root, store);

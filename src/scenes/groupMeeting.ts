@@ -605,7 +605,7 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
         clearDialogue();
         const reveal = document.createElement('div');
         reveal.className = 'meeting__bubble';
-        reveal.innerHTML = `<span class="speaker">Facilitator</span>Assignment Topic: <em>Digital Privacy vs. Convenience — Okta Verify Debate</em>. Notes updated. You'll explore your phone later this evening.`;
+        reveal.innerHTML = `<span class="speaker">Facilitator</span>Assignment Topic: <em>Digital Privacy vs. Convenience — Okta Verify Debate</em>. Time to start working on tasks!`;
         dialogueLayer.appendChild(reveal);
         nextBtn.disabled = false;
         hint.textContent = 'All teammates met!';
@@ -620,7 +620,7 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
             document.removeEventListener('keyup', handleKeyUp);
             delete (window as any).__gm_state;
             delete (window as any).__gm_cleanup;
-            store.setState((prev) => transitionScene(prev, 'evening-commute'));
+            store.setState((prev) => transitionScene(prev, 'assignment-tasks'));
         }
     };
 

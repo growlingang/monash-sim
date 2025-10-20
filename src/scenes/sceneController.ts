@@ -13,7 +13,8 @@ export const SCENE_FLOW: SceneTransition[] = [
     { scene: 'phone', next: 'morning-commute' },
     { scene: 'morning-commute', next: 'campus-ltb' },
     { scene: 'campus-ltb', next: 'group-meeting' },
-    { scene: 'group-meeting', next: 'evening-commute' },
+    { scene: 'group-meeting', next: 'assignment-tasks' },
+    { scene: 'assignment-tasks', next: 'evening-commute' },
     { scene: 'evening-commute', next: 'bedroom' },
 ];
 
