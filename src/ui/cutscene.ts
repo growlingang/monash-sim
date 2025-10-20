@@ -195,10 +195,18 @@ export const createCutscene = (root: HTMLElement, options: CutsceneOptions) => {
       backgroundLayer.style.background = frame.background;
       backgroundLayer.style.opacity = '1';
 
-      // Update visual content (image or emoji)
+      // Update visual content (video, image or emoji)
       if (frame.image) {
-        // Display image
-        visualElement.innerHTML = `<img src="${frame.image}" alt="" style="max-width: 300px; max-height: 300px; object-fit: contain; border-radius: 12px;" />`;
+        // Check if it's a video file
+        const isVideo = /\.(mp4|webm|ogg|mov)$/i.test(frame.image);
+        
+        if (isVideo) {
+          // Display video
+          visualElement.innerHTML = `<video src="${frame.image}" autoplay loop playsinline style="max-width: 600px; max-height: 600px; object-fit: contain; border-radius: 12px;"></video>`;
+        } else {
+          // Display image
+          visualElement.innerHTML = `<img src="${frame.image}" alt="" style="max-width: 300px; max-height: 300px; object-fit: contain; border-radius: 12px;" />`;
+        }
         visualElement.style.display = 'flex';
       } else if (frame.emoji) {
         // Display emoji

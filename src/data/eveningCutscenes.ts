@@ -4,11 +4,12 @@ import { NPC_DEFINITIONS } from './npcs';
 
 type EveningActivityId = 'eat' | 'rest' | 'text' | 'doomscroll';
 
-// Note: You can now use 'image' instead of 'emoji' in cutscene frames
+// Note: You can use 'image' (for images/videos) or 'emoji' in cutscene frames
+// Supported formats: Images (.png, .jpg, .gif) and Videos (.mp4, .webm, .ogg, .mov)
 // Example:
 // {
 //   background: 'linear-gradient(135deg, #1a1a2e 0%, #2d1b3d 100%)',
-//   image: '/path/to/your/image.png',
+//   image: '/path/to/your/image.png',  // or '/path/to/video.mp4' for videos
 //   text: 'Time for dinner!',
 //   subtext: 'You head to the kitchen, stomach rumbling...',
 // }
@@ -82,22 +83,10 @@ export const getEveningActivityCutscene = (
       return [
         {
           background: 'linear-gradient(135deg, #1a1a2e 0%, #2e2a1a 100%)',
-          emoji: '📱',
+          image: '/src/sprites/mmm.mp4',
           text: 'Just a quick scroll...',
-          subtext: 'You open Instagram, telling yourself it\'ll only be a few minutes.',
-        },
-        {
-          background: 'linear-gradient(135deg, #2e2a1a 0%, #3d2d1b 100%)',
-          emoji: '👀',
-          text: 'Getting lost in the feed',
-          subtext: 'Memes, stories, reels... Time seems to disappear as you swipe through endless content.',
-        },
-        {
-          background: 'linear-gradient(135deg, #1a2e3d 0%, #1b2d2d 100%)',
-          emoji: '😎',
-          text: 'Feeling trendy',
-          subtext: 'You\'re up to date with all the latest trends and gossip. Your aura is boosted!',
-        },
+          subtext: 'You open Instagram, telling yourself it\'ll only be a few minutes. (surely)',
+        }
       ];
 
     default:
