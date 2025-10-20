@@ -19,8 +19,8 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
 
   const header = document.createElement('div');
   header.className = 'bedroom__header';
-  header.style.cssText = 'margin-bottom: 10px; font-size: 14px; text-align: center; width: 100%;';
-  header.innerHTML = '<h2>Your Room</h2><p>Use <strong>Arrow Keys</strong> or <strong>WASD</strong> to move. Press <strong>P</strong> to open your phone.</p>';
+  header.style.cssText = 'margin-bottom: 10px; font-size: 11px; text-align: center; width: 100%; background: #8b6f47; padding: 12px; border: 3px solid #5a4a35; color: #fbe9cf; font-family: "Press Start 2P", monospace; line-height: 1.8;';
+  header.innerHTML = '<h2 style="margin: 0 0 8px 0; font-size: 14px; color: #fbe9cf;">Your Room</h2><p style="margin: 0; color: #d4a574;">Arrow Keys/WASD = Move | P = Phone</p>';
 
   // Add stats bar
   const statsBar = createStatsBar(store.getState());
@@ -32,8 +32,8 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
 
   const statusBar = document.createElement('div');
   statusBar.className = 'bedroom__status';
-  statusBar.style.cssText = 'margin-top: 10px; font-family: monospace; font-size: 12px; color: #999;';
-  statusBar.innerHTML = 'Explore your room. Press <strong>P</strong> for phone. Press <strong>T</strong> to test tilesets.';
+  statusBar.style.cssText = 'margin-top: 10px; font-family: "Press Start 2P", monospace; font-size: 10px; color: #fbe9cf; background: #8b6f47; padding: 8px; border: 3px solid #5a4a35;';
+  statusBar.innerHTML = 'P = Phone | T = Tilesets';
 
   container.appendChild(header);
   container.appendChild(statsBar);

@@ -23,12 +23,13 @@ export const initPhoneOverlay = (store: GameStore) => {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(20, 15, 10, 0.95);
     display: none;
     justify-content: center;
     align-items: center;
     z-index: 1000;
-    backdrop-filter: blur(8px);
+    backdrop-filter: none;
+    image-rendering: pixelated;
   `;
 
   document.body.appendChild(overlayContainer);
@@ -81,11 +82,13 @@ const renderPhoneContent = (store: GameStore) => {
   phoneDevice.style.cssText = `
     width: 375px;
     height: 667px;
-    background: #000;
-    border-radius: 36px;
+    background: #3a2817;
+    border-radius: 0;
+    border: 6px solid #8b6f47;
     padding: 16px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+    box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.6);
     position: relative;
+    image-rendering: pixelated;
   `;
 
   const phoneScreen = document.createElement('div');
@@ -93,8 +96,9 @@ const renderPhoneContent = (store: GameStore) => {
   phoneScreen.style.cssText = `
     width: 100%;
     height: 100%;
-    background: #1a1a1a;
-    border-radius: 24px;
+    background: #c9a876;
+    border-radius: 0;
+    border: 3px solid #8b6f47;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -104,13 +108,15 @@ const renderPhoneContent = (store: GameStore) => {
   statusBar.className = 'phone__status-bar';
   statusBar.style.cssText = `
     height: 44px;
-    background: #000;
+    background: #8b6f47;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 16px;
-    color: #fff;
-    font-size: 14px;
+    color: #fbe9cf;
+    font-size: 12px;
+    font-family: 'Press Start 2P', monospace;
+    border-bottom: 3px solid #5a4a35;
   `;
 
   const state = store.getState();
@@ -125,7 +131,7 @@ const renderPhoneContent = (store: GameStore) => {
   appContent.className = 'phone__content';
   appContent.style.cssText = `
     flex: 1;
-    background: #1a1a1a;
+    background: #c9a876;
     overflow-y: auto;
     padding: 16px;
   `;
@@ -139,7 +145,7 @@ const renderPhoneContent = (store: GameStore) => {
     appContent.innerHTML = '';
     appContent.style.cssText = `
       flex: 1;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 24px;
@@ -173,8 +179,8 @@ const renderPhoneContent = (store: GameStore) => {
       appIcon.className = 'phone__app-icon';
       appIcon.style.cssText = `
         background: ${app.color};
-        border: none;
-        border-radius: 16px;
+        border: 3px solid #5a4a35;
+        border-radius: 0;
         aspect-ratio: 1;
         display: flex;
         flex-direction: column;
@@ -182,13 +188,15 @@ const renderPhoneContent = (store: GameStore) => {
         justify-content: center;
         gap: 4px;
         cursor: pointer;
-        transition: transform 0.2s;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        transition: transform 0.1s;
+        box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.4);
+        image-rendering: pixelated;
+        font-family: 'Press Start 2P', monospace;
       `;
 
       appIcon.innerHTML = `
         <div style="font-size: 32px;">${app.icon}</div>
-        <div style="font-size: 11px; color: white; font-weight: 500;">${app.name}</div>
+        <div style="font-size: 9px; color: white; font-weight: 500;">${app.name}</div>
       `;
 
       appIcon.addEventListener('mouseenter', () => {
@@ -216,7 +224,7 @@ const renderPhoneContent = (store: GameStore) => {
     appContent.innerHTML = '';
     appContent.style.cssText = `
       flex: 1;
-      background: #1a1a1a;
+      background: #c9a876;
       overflow-y: auto;
       padding: 0;
     `;
@@ -224,12 +232,12 @@ const renderPhoneContent = (store: GameStore) => {
     // Back button
     const header = document.createElement('div');
     header.style.cssText = `
-      background: #2a2a2a;
+      background: #8b6f47;
       padding: 12px 16px;
       display: flex;
       align-items: center;
       gap: 12px;
-      border-bottom: 1px solid #333;
+      border-bottom: 3px solid #5a4a35;
     `;
 
     const backBtn = document.createElement('button');
@@ -237,22 +245,23 @@ const renderPhoneContent = (store: GameStore) => {
     backBtn.style.cssText = `
       background: none;
       border: none;
-      color: #4ac94a;
-      font-size: 16px;
+      color: #fbe9cf;
+      font-size: 12px;
       cursor: pointer;
       padding: 4px;
+      font-family: 'Press Start 2P', monospace;
     `;
     backBtn.addEventListener('click', () => renderHomeScreen());
 
     const appTitle = document.createElement('h2');
-    appTitle.style.cssText = 'color: white; font-size: 18px; margin: 0;';
+    appTitle.style.cssText = 'color: #fbe9cf; font-size: 14px; margin: 0; font-family: "Press Start 2P", monospace;';
 
     header.appendChild(backBtn);
     header.appendChild(appTitle);
     appContent.appendChild(header);
 
     const content = document.createElement('div');
-    content.style.cssText = 'padding: 16px; color: white;';
+    content.style.cssText = 'padding: 16px; color: #fbe9cf; font-family: "Press Start 2P", monospace; font-size: 9px; line-height: 2;';
 
     const currentState = store.getState();
 
@@ -264,59 +273,61 @@ const renderPhoneContent = (store: GameStore) => {
         if (isEveningCommute) {
           // Evening commute - show transport options
           content.innerHTML = `
-            <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-              <h3 style="margin-top: 0; color: #4ac94a;">🚶 Walk Home</h3>
-              <p style="margin: 8px 0; color: #999;">Free • ~45 min • Medium difficulty</p>
-              <p style="margin: 0 0 12px 0; font-size: 14px;">Crossy-road style minigame. Your mobility stat affects traffic density.</p>
+            <div style="background: #4a3a2a; border: 3px solid #3a2817; border-radius: 0; padding: 12px; margin-bottom: 12px; box-shadow: 4px 4px 0 rgba(0,0,0,0.3);">
+              <h3 style="margin-top: 0; color: #d4f0d4; font-family: 'Press Start 2P', monospace; font-size: 11px;">🚶 Walk Home</h3>
+              <p style="margin: 6px 0; color: #fbe9cf; font-size: 9px; line-height: 1.6;">Free • 45 min • Medium</p>
+              <p style="margin: 0 0 10px 0; font-size: 8px; color: #d4a574; line-height: 1.6;">Crossy-road minigame</p>
               <button id="walk-btn" style="
                 width: 100%;
-                padding: 12px;
-                background: #4ac94a;
-                border: none;
-                border-radius: 6px;
-                color: #000;
+                padding: 8px;
+                background: #6a9e6a;
+                border: 3px solid #4a7a4a;
+                border-radius: 0;
+                color: #fbe9cf;
                 font-weight: bold;
                 cursor: pointer;
-                font-size: 14px;
-              ">Choose Walk</button>
+                font-size: 9px;
+                font-family: 'Press Start 2P', monospace;
+                box-shadow: 3px 3px 0 rgba(0,0,0,0.3);
+              ">Walk</button>
             </div>
             
-            <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-              <h3 style="margin-top: 0; color: #4ac94a;">🚌 Bus/Tram Home</h3>
-              <p style="margin: 8px 0; color: #999;">$5 • ~35 min • Easy</p>
-              <p style="margin: 0 0 12px 0; font-size: 14px;">Balance minigame. Your aura stat affects stability.</p>
+            <div style="background: #5a4a35; border: 3px solid #3a2817; border-radius: 0; padding: 12px; margin-bottom: 12px; box-shadow: 4px 4px 0 rgba(0,0,0,0.3);">
+              <h3 style="margin-top: 0; color: #d4f0d4; font-family: 'Press Start 2P', monospace; font-size: 11px;">🚌 Bus/Tram</h3>
+              <p style="margin: 6px 0; color: #fbe9cf; font-size: 9px; line-height: 1.6;">$5 • 35 min • Easy</p>
+              <p style="margin: 0 0 10px 0; font-size: 8px; color: #d4a574; line-height: 1.6;">Balance minigame</p>
               <button id="bus-btn" style="
                 width: 100%;
-                padding: 12px;
-                background: ${currentState.money >= 5 ? '#4ac94a' : '#666'};
-                border: none;
-                border-radius: 6px;
-                color: ${currentState.money >= 5 ? '#000' : '#999'};
+                padding: 8px;
+                background: ${currentState.money >= 5 ? '#6a9e6a' : '#4a4a4a'};
+                border: 3px solid ${currentState.money >= 5 ? '#4a7a4a' : '#2a2a2a'};
+                border-radius: 0;
+                color: ${currentState.money >= 5 ? '#fbe9cf' : '#888'};
                 font-weight: bold;
                 cursor: ${currentState.money >= 5 ? 'pointer' : 'not-allowed'};
-                font-size: 14px;
-              ">${currentState.money >= 5 ? 'Choose Bus' : 'Insufficient Funds ($5)'}</button>
+                font-size: 9px;
+                font-family: 'Press Start 2P', monospace;
+                box-shadow: 3px 3px 0 rgba(0,0,0,0.3);
+              ">${currentState.money >= 5 ? 'Bus' : 'Need $5'}</button>
             </div>
             
-            <div style="background: #2a2a2a; border-radius: 8px; padding: 16px;">
-              <h3 style="margin-top: 0; color: #4ac94a;">🚗 Drive Home</h3>
-              <p style="margin: 8px 0; color: #999;">$12 • ~30 min • Hard</p>
-              <p style="margin: 0 0 12px 0; font-size: 14px;">Two-phase: traffic dodging + parking. Organisation/Aura affects difficulty.</p>
+            <div style="background: #6a5a3a; border: 3px solid #3a2817; border-radius: 0; padding: 12px; margin-bottom: 12px; box-shadow: 4px 4px 0 rgba(0,0,0,0.3);">
+              <h3 style="margin-top: 0; color: #d4f0d4; font-family: 'Press Start 2P', monospace; font-size: 11px;">🚗 Drive</h3>
+              <p style="margin: 6px 0; color: #fbe9cf; font-size: 9px; line-height: 1.6;">$12 • 30 min • Hard</p>
+              <p style="margin: 0 0 10px 0; font-size: 8px; color: #d4a574; line-height: 1.6;">Traffic + Parking</p>
               <button id="drive-btn" style="
                 width: 100%;
-                padding: 12px;
-                background: ${currentState.money >= 12 ? '#4ac94a' : '#666'};
-                border: none;
-                border-radius: 6px;
-                color: ${currentState.money >= 12 ? '#000' : '#999'};
+                padding: 8px;
+                background: ${currentState.money >= 12 ? '#6a9e6a' : '#4a4a4a'};
+                border: 3px solid ${currentState.money >= 12 ? '#4a7a4a' : '#2a2a2a'};
+                border-radius: 0;
+                color: ${currentState.money >= 12 ? '#fbe9cf' : '#888'};
                 font-weight: bold;
                 cursor: ${currentState.money >= 12 ? 'pointer' : 'not-allowed'};
-                font-size: 14px;
-              ">${currentState.money >= 12 ? 'Choose Drive' : 'Insufficient Funds ($12)'}</button>
-            </div>
-            
-            <div style="background: #3a2a1a; border-radius: 8px; padding: 12px; margin-top: 16px; border-left: 3px solid #fbbf24;">
-              <p style="margin: 0; font-size: 13px; color: #fbbf24;">💡 Tip: Select your transport, then close the phone to begin!</p>
+                font-size: 9px;
+                font-family: 'Press Start 2P', monospace;
+                box-shadow: 3px 3px 0 rgba(0,0,0,0.3);
+              ">${currentState.money >= 12 ? 'Drive' : 'Need $12'}</button>
             </div>
           `;
           
@@ -356,59 +367,61 @@ const renderPhoneContent = (store: GameStore) => {
         } else {
           // Morning commute - show transport options
           content.innerHTML = `
-            <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-              <h3 style="margin-top: 0; color: #4ac94a;">🚶 Walk</h3>
-              <p style="margin: 8px 0; color: #999;">Free • ~45 min • Medium difficulty</p>
-              <p style="margin: 0 0 12px 0; font-size: 14px;">Crossy-road style minigame. Your mobility stat affects traffic density.</p>
+            <div style="background: #4a3a2a; border: 3px solid #3a2817; border-radius: 0; padding: 12px; margin-bottom: 12px; box-shadow: 4px 4px 0 rgba(0,0,0,0.3);">
+              <h3 style="margin-top: 0; color: #d4f0d4; font-family: 'Press Start 2P', monospace; font-size: 11px;">🚶 Walk</h3>
+              <p style="margin: 6px 0; color: #fbe9cf; font-size: 9px; line-height: 1.6;">Free • 45 min • Medium</p>
+              <p style="margin: 0 0 10px 0; font-size: 8px; color: #d4a574; line-height: 1.6;">Crossy-road minigame</p>
               <button id="walk-btn" style="
                 width: 100%;
-                padding: 12px;
-                background: #4ac94a;
-                border: none;
-                border-radius: 6px;
-                color: #000;
+                padding: 8px;
+                background: #6a9e6a;
+                border: 3px solid #4a7a4a;
+                border-radius: 0;
+                color: #fbe9cf;
                 font-weight: bold;
                 cursor: pointer;
-                font-size: 14px;
-              ">Start Walking Commute</button>
+                font-size: 9px;
+                font-family: 'Press Start 2P', monospace;
+                box-shadow: 3px 3px 0 rgba(0,0,0,0.3);
+              ">Walk</button>
             </div>
             
-            <div style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-              <h3 style="margin-top: 0; color: #4ac94a;">🚌 Bus/Tram</h3>
-              <p style="margin: 8px 0; color: #999;">$5 • ~35 min • Easy</p>
-              <p style="margin: 0 0 12px 0; font-size: 14px;">Balance minigame. Your aura stat affects stability. Bus may arrive late (random).</p>
+            <div style="background: #5a4a35; border: 3px solid #3a2817; border-radius: 0; padding: 12px; margin-bottom: 12px; box-shadow: 4px 4px 0 rgba(0,0,0,0.3);">
+              <h3 style="margin-top: 0; color: #d4f0d4; font-family: 'Press Start 2P', monospace; font-size: 11px;">🚌 Bus/Tram</h3>
+              <p style="margin: 6px 0; color: #fbe9cf; font-size: 9px; line-height: 1.6;">$5 • 35 min • Easy</p>
+              <p style="margin: 0 0 10px 0; font-size: 8px; color: #d4a574; line-height: 1.6;">Balance minigame</p>
               <button id="bus-btn" style="
                 width: 100%;
-                padding: 12px;
-                background: ${currentState.money >= 5 ? '#4ac94a' : '#666'};
-                border: none;
-                border-radius: 6px;
-                color: ${currentState.money >= 5 ? '#000' : '#999'};
+                padding: 8px;
+                background: ${currentState.money >= 5 ? '#6a9e6a' : '#4a4a4a'};
+                border: 3px solid ${currentState.money >= 5 ? '#4a7a4a' : '#2a2a2a'};
+                border-radius: 0;
+                color: ${currentState.money >= 5 ? '#fbe9cf' : '#888'};
                 font-weight: bold;
                 cursor: ${currentState.money >= 5 ? 'pointer' : 'not-allowed'};
-                font-size: 14px;
-              ">${currentState.money >= 5 ? 'Start Bus Commute' : 'Insufficient Funds ($5)'}</button>
+                font-size: 9px;
+                font-family: 'Press Start 2P', monospace;
+                box-shadow: 3px 3px 0 rgba(0,0,0,0.3);
+              ">${currentState.money >= 5 ? 'Bus' : 'Need $5'}</button>
             </div>
             
-            <div style="background: #2a2a2a; border-radius: 8px; padding: 16px;">
-              <h3 style="margin-top: 0; color: #4ac94a;">🚗 Drive</h3>
-              <p style="margin: 8px 0; color: #999;">$12 • ~30 min • Hard</p>
-              <p style="margin: 0 0 12px 0; font-size: 14px;">Two-phase: traffic dodging + parking. Organisation/Aura affects difficulty.</p>
+            <div style="background: #6a5a3a; border: 3px solid #3a2817; border-radius: 0; padding: 12px; margin-bottom: 12px; box-shadow: 4px 4px 0 rgba(0,0,0,0.3);">
+              <h3 style="margin-top: 0; color: #d4f0d4; font-family: 'Press Start 2P', monospace; font-size: 11px;">🚗 Drive</h3>
+              <p style="margin: 6px 0; color: #fbe9cf; font-size: 9px; line-height: 1.6;">$12 • 30 min • Hard</p>
+              <p style="margin: 0 0 10px 0; font-size: 8px; color: #d4a574; line-height: 1.6;">Traffic + Parking</p>
               <button id="drive-btn" style="
                 width: 100%;
-                padding: 12px;
-                background: ${currentState.money >= 12 ? '#4ac94a' : '#666'};
-                border: none;
-                border-radius: 6px;
-                color: ${currentState.money >= 12 ? '#000' : '#999'};
+                padding: 8px;
+                background: ${currentState.money >= 12 ? '#6a9e6a' : '#4a4a4a'};
+                border: 3px solid ${currentState.money >= 12 ? '#4a7a4a' : '#2a2a2a'};
+                border-radius: 0;
+                color: ${currentState.money >= 12 ? '#fbe9cf' : '#888'};
                 font-weight: bold;
                 cursor: ${currentState.money >= 12 ? 'pointer' : 'not-allowed'};
-                font-size: 14px;
-              ">${currentState.money >= 12 ? 'Start Driving Commute' : 'Insufficient Funds ($12)'}</button>
-            </div>
-            
-            <div style="background: #3a2a1a; border-radius: 8px; padding: 12px; margin-top: 16px; border-left: 3px solid #fbbf24;">
-              <p style="margin: 0; font-size: 13px; color: #fbbf24;">💡 Tip: Choose your transport to begin your morning commute!</p>
+                font-size: 9px;
+                font-family: 'Press Start 2P', monospace;
+                box-shadow: 3px 3px 0 rgba(0,0,0,0.3);
+              ">${currentState.money >= 12 ? 'Drive' : 'Need $12'}</button>
             </div>
           `;
           
@@ -499,36 +512,37 @@ const renderPhoneContent = (store: GameStore) => {
         content.innerHTML = '';
 
         const intro = document.createElement('p');
-        intro.style.cssText = 'margin: 0 0 16px; color: #bbb; font-size: 14px; line-height: 1.5;';
-        intro.textContent = 'Save your progress so you can continue later. Saves live in your browser on this device.';
+        intro.style.cssText = 'margin: 0 0 16px; color: #fbe9cf; font-size: 9px; line-height: 1.8; font-family: "Press Start 2P", monospace;';
+        intro.textContent = 'Save progress. Stored in browser.';
 
         const metadataCard = document.createElement('div');
         metadataCard.style.cssText = `
-          background: #262626;
-          border: 1px solid #333;
-          border-radius: 10px;
+          background: #4a3a2a;
+          border: 3px solid #3a2817;
+          border-radius: 0;
           padding: 12px 16px;
           margin-bottom: 16px;
-          font-size: 13px;
-          color: #ddd;
-          line-height: 1.5;
+          font-size: 9px;
+          color: #fbe9cf;
+          line-height: 1.8;
+          font-family: 'Press Start 2P', monospace;
         `;
 
         const renderMetadata = () => {
           const metadata = getSaveMetadata();
           if (!metadata) {
             metadataCard.innerHTML = `
-              <strong style="color: #60a5fa;">No manual save found.</strong>
-              <div style="margin-top: 8px; color: #888;">Create a save to remember your Day 1 progress.</div>
+              <strong style="color: #d4f0d4;">No save found</strong>
+              <div style="margin-top: 8px; color: #d4a574;">Create a save</div>
             `;
             return;
           }
 
           const savedAt = new Date(metadata.timestamp);
           metadataCard.innerHTML = `
-            <strong style="color: #60a5fa;">Last save:</strong>
-            <div style="margin-top: 4px;">${savedAt.toLocaleDateString()} ${savedAt.toLocaleTimeString()}</div>
-            <div style="margin-top: 4px; color: #888; font-size: 12px;">Scene: ${metadata.scene} • Major: ${metadata.major}</div>
+            <strong style="color: #d4f0d4;">Last save:</strong>
+            <div style="margin-top: 4px; color: #fbe9cf;">${savedAt.toLocaleDateString()} ${savedAt.toLocaleTimeString()}</div>
+            <div style="margin-top: 4px; color: #d4a574; font-size: 7px;">${metadata.scene} • ${metadata.major}</div>
           `;
         };
 
@@ -539,29 +553,35 @@ const renderPhoneContent = (store: GameStore) => {
         saveBtn.style.cssText = `
           width: 100%;
           padding: 12px;
-          border: none;
-          border-radius: 8px;
-          background: #60a5fa;
-          color: #0f172a;
+          border: 3px solid #8b6f47;
+          border-radius: 0;
+          background: #8b8b6a;
+          color: #fbe9cf;
           font-weight: 600;
-          font-size: 15px;
+          font-size: 10px;
           cursor: pointer;
-          transition: transform 0.2s;
+          transition: all 0.1s;
+          font-family: 'Press Start 2P', monospace;
+          box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
         `;
-        saveBtn.textContent = 'Save Progress';
+        saveBtn.textContent = 'Save';
 
         saveBtn.addEventListener('mouseenter', () => {
           if (!saveBtn.disabled) {
-            saveBtn.style.transform = 'translateY(-1px) scale(1.01)';
+            saveBtn.style.transform = 'translate(-2px, -2px)';
+            saveBtn.style.boxShadow = '6px 6px 0 rgba(0, 0, 0, 0.3)';
+            saveBtn.style.background = '#9b9b7a';
           }
         });
 
         saveBtn.addEventListener('mouseleave', () => {
-          saveBtn.style.transform = 'translateY(0) scale(1)';
+          saveBtn.style.transform = 'translate(0, 0)';
+          saveBtn.style.boxShadow = '4px 4px 0 rgba(0, 0, 0, 0.3)';
+          saveBtn.style.background = '#8b8b6a';
         });
 
         const statusMessage = document.createElement('div');
-        statusMessage.style.cssText = 'min-height: 20px; margin-top: 12px; font-size: 13px;';
+        statusMessage.style.cssText = 'min-height: 20px; margin-top: 12px; font-size: 8px; font-family: "Press Start 2P", monospace;';
 
         const postSaveActions = document.createElement('div');
         postSaveActions.style.cssText = `
@@ -575,24 +595,29 @@ const renderPhoneContent = (store: GameStore) => {
         quitButton.type = 'button';
         quitButton.style.cssText = `
           padding: 10px;
-          border: 1px solid #ef4444;
-          border-radius: 8px;
-          background: transparent;
-          color: #ef4444;
+          border: 3px solid #8b3a3a;
+          border-radius: 0;
+          background: #5a4a35;
+          color: #fbe9cf;
           font-weight: 600;
           cursor: pointer;
-          transition: background 0.2s, color 0.2s;
+          transition: all 0.1s;
+          font-family: 'Press Start 2P', monospace;
+          font-size: 9px;
+          box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
         `;
-        quitButton.textContent = 'Quit to Main Menu';
+        quitButton.textContent = 'Quit';
 
         quitButton.addEventListener('mouseenter', () => {
-          quitButton.style.background = '#ef4444';
-          quitButton.style.color = '#000';
+          quitButton.style.background = '#6a5a3a';
+          quitButton.style.transform = 'translate(-2px, -2px)';
+          quitButton.style.boxShadow = '6px 6px 0 rgba(0, 0, 0, 0.3)';
         });
 
         quitButton.addEventListener('mouseleave', () => {
-          quitButton.style.background = 'transparent';
-          quitButton.style.color = '#ef4444';
+          quitButton.style.background = '#5a4a35';
+          quitButton.style.transform = 'translate(0, 0)';
+          quitButton.style.boxShadow = '4px 4px 0 rgba(0, 0, 0, 0.3)';
         });
 
         quitButton.addEventListener('click', () => {
@@ -604,24 +629,29 @@ const renderPhoneContent = (store: GameStore) => {
         continueButton.type = 'button';
         continueButton.style.cssText = `
           padding: 10px;
-          border: 1px solid #4ac94a;
-          border-radius: 8px;
-          background: transparent;
-          color: #4ac94a;
+          border: 3px solid #8b6f47;
+          border-radius: 0;
+          background: #6a9e6a;
+          color: #fbe9cf;
           font-weight: 600;
           cursor: pointer;
-          transition: background 0.2s, color 0.2s;
+          transition: all 0.1s;
+          font-family: 'Press Start 2P', monospace;
+          font-size: 9px;
+          box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
         `;
-        continueButton.textContent = 'Continue Playing';
+        continueButton.textContent = 'Continue';
 
         continueButton.addEventListener('mouseenter', () => {
-          continueButton.style.background = '#4ac94a';
-          continueButton.style.color = '#000';
+          continueButton.style.background = '#7aae7a';
+          continueButton.style.transform = 'translate(-2px, -2px)';
+          continueButton.style.boxShadow = '6px 6px 0 rgba(0, 0, 0, 0.3)';
         });
 
         continueButton.addEventListener('mouseleave', () => {
-          continueButton.style.background = 'transparent';
-          continueButton.style.color = '#4ac94a';
+          continueButton.style.background = '#6a9e6a';
+          continueButton.style.transform = 'translate(0, 0)';
+          continueButton.style.boxShadow = '4px 4px 0 rgba(0, 0, 0, 0.3)';
         });
 
         continueButton.addEventListener('click', () => {
@@ -643,17 +673,17 @@ const renderPhoneContent = (store: GameStore) => {
 
           saveBtn.disabled = false;
           saveBtn.style.cursor = 'pointer';
-          saveBtn.textContent = originalLabel ?? 'Save Progress';
+          saveBtn.textContent = originalLabel ?? 'Save';
 
           if (success) {
             renderMetadata();
             const savedAt = new Date();
-            statusMessage.textContent = `Game saved at ${savedAt.toLocaleTimeString()}.`;
-            statusMessage.style.color = '#4ac94a';
+            statusMessage.textContent = `Saved ${savedAt.toLocaleTimeString()}`;
+            statusMessage.style.color = '#d4f0d4';
             postSaveActions.style.display = 'flex';
           } else {
-            statusMessage.textContent = 'Something went wrong while saving. Please try again.';
-            statusMessage.style.color = '#ef4444';
+            statusMessage.textContent = 'Save failed';
+            statusMessage.style.color = '#f0a0a0';
             postSaveActions.style.display = 'none';
           }
         });
@@ -708,18 +738,18 @@ const renderPhoneContent = (store: GameStore) => {
                   margin-right: 8px;
                 ">🎵 Start Music</button>
               ` : ''}
-              <span style="color: #999; font-size: 12px;">${audioSettings.isPlaying ? 'Music: Playing' : 'Music: Ready to Play'}</span>
+              <span style="color: #d4a574; font-size: 10px; font-family: 'Press Start 2P', monospace;">${audioSettings.isPlaying ? 'Music: Playing' : 'Music: Ready to Play'}</span>
             </div>
             <div style="margin-bottom: 8px;">
-              <label style="color: #999; font-size: 12px; display: block; margin-bottom: 4px;">Master Volume: ${Math.round(audioSettings.masterVolume * 100)}%</label>
+              <label style="color: #d4a574; font-size: 10px; font-family: 'Press Start 2P', monospace; display: block; margin-bottom: 4px;">Master Volume: ${Math.round(audioSettings.masterVolume * 100)}%</label>
               <input type="range" id="master-volume" min="0" max="100" value="${Math.round(audioSettings.masterVolume * 100)}" style="width: 100%;">
             </div>
             <div style="margin-bottom: 8px;">
-              <label style="color: #999; font-size: 12px; display: block; margin-bottom: 4px;">Music Volume: ${Math.round(audioSettings.musicVolume * 100)}%</label>
+              <label style="color: #d4a574; font-size: 10px; font-family: 'Press Start 2P', monospace; display: block; margin-bottom: 4px;">Music Volume: ${Math.round(audioSettings.musicVolume * 100)}%</label>
               <input type="range" id="music-volume" min="0" max="100" value="${Math.round(audioSettings.musicVolume * 100)}" style="width: 100%;">
             </div>
             <div>
-              <label style="color: #999; font-size: 12px; display: block; margin-bottom: 4px;">SFX Volume: ${Math.round(audioSettings.sfxVolume * 100)}%</label>
+              <label style="color: #d4a574; font-size: 10px; font-family: 'Press Start 2P', monospace; display: block; margin-bottom: 4px;">SFX Volume: ${Math.round(audioSettings.sfxVolume * 100)}%</label>
               <input type="range" id="sfx-volume" min="0" max="100" value="${Math.round(audioSettings.sfxVolume * 100)}" style="width: 100%;">
             </div>
           </div>
@@ -865,12 +895,15 @@ function renderActivitiesApp(
   // Stats display
   const statsDisplay = document.createElement('div');
   statsDisplay.style.cssText = `
-    background: #2a2a2a;
-    border-radius: 8px;
+    background: #4a3a2a;
+    border-radius: 0;
+    border: 3px solid #3a2817;
     padding: 12px;
     margin-bottom: 16px;
-    font-size: 14px;
-    color: #999;
+    font-size: 10px;
+    color: #fbe9cf;
+    font-family: 'Press Start 2P', monospace;
+    line-height: 1.8;
   `;
   statsDisplay.innerHTML = `
     <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
@@ -884,13 +917,15 @@ function renderActivitiesApp(
   // Instructions
   const instructions = document.createElement('div');
   instructions.style.cssText = `
-    background: #1e3a5f;
-    border-radius: 8px;
+    background: #6a5a3a;
+    border-radius: 0;
     padding: 12px;
     margin-bottom: 16px;
-    border-left: 3px solid #3b82f6;
-    font-size: 13px;
-    color: #93c5fd;
+    border: 3px solid #8b6f47;
+    font-size: 8px;
+    color: #fbe9cf;
+    font-family: 'Press Start 2P', monospace;
+    line-height: 1.8;
   `;
   instructions.innerHTML = `
     <p style="margin: 0;">💡 Choose an evening activity before heading to bed.</p>
@@ -903,14 +938,15 @@ function renderActivitiesApp(
     
     const activityCard = document.createElement('div');
     activityCard.style.cssText = `
-      background: ${isAvailable ? '#2a2a2a' : '#1a1a1a'};
-      border-radius: 8px;
+      background: ${isAvailable ? '#5a4a35' : '#3a2817'};
+      border-radius: 0;
+      border: 3px solid ${isAvailable ? '#8b6f47' : '#5a4a35'};
       padding: 16px;
       margin-bottom: 12px;
       cursor: ${isAvailable ? 'pointer' : 'not-allowed'};
       opacity: ${isAvailable ? '1' : '0.5'};
-      border: 2px solid ${isAvailable ? 'transparent' : '#333'};
-      transition: all 0.2s;
+      transition: all 0.1s;
+      box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
     `;
 
     const activityIcon = getActivityIcon(activity.id as any);
@@ -918,20 +954,23 @@ function renderActivitiesApp(
     activityTitle.textContent = `${activityIcon} ${activity.label}`;
     activityTitle.style.cssText = `
       margin: 0 0 8px 0;
-      color: ${isAvailable ? '#4ac94a' : '#666'};
-      font-size: 16px;
+      color: ${isAvailable ? '#d4f0d4' : '#8b8b8b'};
+      font-size: 11px;
+      font-family: 'Press Start 2P', monospace;
     `;
 
     const activityDesc = document.createElement('p');
     activityDesc.textContent = activity.description;
     activityDesc.style.cssText = `
       margin: 0 0 8px 0;
-      color: #999;
-      font-size: 14px;
+      color: #d4a574;
+      font-size: 9px;
+      font-family: 'Press Start 2P', monospace;
+      line-height: 1.6;
     `;
 
     const activityReqs = document.createElement('div');
-    activityReqs.style.cssText = 'font-size: 13px; color: #666;';
+    activityReqs.style.cssText = 'font-size: 8px; color: #b8956a; font-family: "Press Start 2P", monospace;';
     
     const reqParts: string[] = [];
     if (activity.requirements.money) {
@@ -972,13 +1011,17 @@ function renderActivitiesApp(
     // Add hover effect for available activities
     if (isAvailable) {
       activityCard.addEventListener('mouseenter', () => {
-        activityCard.style.background = '#3a3a3a';
-        activityCard.style.borderColor = '#4ac94a';
+        activityCard.style.background = '#6a5a3a';
+        activityCard.style.borderColor = '#a08560';
+        activityCard.style.transform = 'translate(-2px, -2px)';
+        activityCard.style.boxShadow = '6px 6px 0 rgba(0, 0, 0, 0.3)';
       });
 
       activityCard.addEventListener('mouseleave', () => {
-        activityCard.style.background = '#2a2a2a';
-        activityCard.style.borderColor = 'transparent';
+        activityCard.style.background = '#5a4a35';
+        activityCard.style.borderColor = '#8b6f47';
+        activityCard.style.transform = 'translate(0, 0)';
+        activityCard.style.boxShadow = '4px 4px 0 rgba(0, 0, 0, 0.3)';
       });
 
       activityCard.addEventListener('click', () => {
@@ -1041,17 +1084,20 @@ function renderNPCSelection(
   content.innerHTML = '';
 
   const backButton = document.createElement('button');
-  backButton.textContent = '← Back to Activities';
+  backButton.textContent = '← Back';
   backButton.style.cssText = `
     width: 100%;
     padding: 12px;
-    background: #2a2a2a;
-    color: #4ac94a;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
+    background: #5a4a35;
+    color: #fbe9cf;
+    border: 3px solid #3a2817;
+    border-radius: 0;
+    font-size: 8px;
     cursor: pointer;
     margin-bottom: 16px;
+    font-family: 'Press Start 2P', monospace;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
+    transition: all 0.1s;
   `;
   backButton.addEventListener('click', () => {
     renderActivitiesApp(appTitle, content, store, renderHomeScreen);
@@ -1060,7 +1106,7 @@ function renderNPCSelection(
 
   const instruction = document.createElement('p');
   instruction.textContent = 'Choose a teammate to send a message to:';
-  instruction.style.cssText = 'color: #999; font-size: 14px; margin-bottom: 16px;';
+  instruction.style.cssText = 'color: #fbe9cf; font-size: 11px; margin-bottom: 16px; font-family: "Press Start 2P", monospace;';
   content.appendChild(instruction);
 
   // Show all NPCs

@@ -89,15 +89,15 @@ export const createCutscene = (root: HTMLElement, options: CutsceneOptions) => {
   const textElement = document.createElement('div');
   textElement.className = 'cutscene-text';
   textElement.style.cssText = `
-    font-size: 32px;
-    color: white;
+    font-size: 24px;
+    color: #fbe9cf;
     font-weight: bold;
     margin-bottom: 20px;
     opacity: 0;
     transform: translateY(20px);
     transition: all 0.6s ease;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
-    line-height: 1.4;
+    text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.8);
+    line-height: 1.6;
     font-family: 'Press Start 2P', 'Courier New', monospace;
   `;
 
@@ -105,13 +105,13 @@ export const createCutscene = (root: HTMLElement, options: CutsceneOptions) => {
   const subtextElement = document.createElement('div');
   subtextElement.className = 'cutscene-subtext';
   subtextElement.style.cssText = `
-    font-size: 18px;
-    color: #bbb;
+    font-size: 14px;
+    color: #d4a574;
     opacity: 0;
     transform: translateY(20px);
     transition: all 0.6s ease 0.2s;
-    text-shadow: 0 1px 5px rgba(0, 0, 0, 0.8);
-    line-height: 1.6;
+    text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.8);
+    line-height: 1.8;
     font-family: 'Press Start 2P', 'Courier New', monospace;
   `;
 
@@ -123,8 +123,8 @@ export const createCutscene = (root: HTMLElement, options: CutsceneOptions) => {
     bottom: 40px;
     left: 50%;
     transform: translateX(-50%);
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 14px;
+    color: #d4a574;
+    font-size: 10px;
     animation: pulse 2s ease-in-out infinite;
     font-family: 'Press Start 2P', 'Courier New', monospace;
   `;
@@ -139,23 +139,28 @@ export const createCutscene = (root: HTMLElement, options: CutsceneOptions) => {
     top: 20px;
     right: 20px;
     padding: 8px 16px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 6px;
-    color: white;
-    font-size: 14px;
+    background: #8b6f47;
+    border: 3px solid #5a4a35;
+    border-radius: 0;
+    color: #fbe9cf;
+    font-size: 10px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.1s;
     display: ${options.canSkip !== false ? 'block' : 'none'};
     font-family: 'Press Start 2P', 'Courier New', monospace;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.5);
   `;
 
   skipButton.addEventListener('mouseenter', () => {
-    skipButton.style.background = 'rgba(255, 255, 255, 0.2)';
+    skipButton.style.background = '#a08560';
+    skipButton.style.transform = 'translate(-1px, -1px)';
+    skipButton.style.boxShadow = '5px 5px 0 rgba(0, 0, 0, 0.5)';
   });
 
   skipButton.addEventListener('mouseleave', () => {
-    skipButton.style.background = 'rgba(255, 255, 255, 0.1)';
+    skipButton.style.background = '#8b6f47';
+    skipButton.style.transform = 'translate(0, 0)';
+    skipButton.style.boxShadow = '4px 4px 0 rgba(0, 0, 0, 0.5)';
   });
 
   skipButton.addEventListener('click', (e) => {

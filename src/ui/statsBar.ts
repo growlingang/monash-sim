@@ -5,17 +5,19 @@ export const createStatsBar = (state: GameState): HTMLElement => {
   const statsBar = document.createElement('div');
   statsBar.className = 'stats-bar';
   statsBar.style.cssText = `
-    background: #2a2a2a;
-    border: 2px solid #333;
-    border-radius: 8px;
+    background: #d4a574;
+    border: 3px solid #8b6f47;
+    border-radius: 0;
     padding: 12px 20px;
     margin-bottom: 16px;
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 32px;
-    font-family: monospace;
-    font-size: 14px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 12px;
+    box-shadow: 4px 4px 0 #5a4a35;
+    image-rendering: pixelated;
   `;
 
   const stats = [
@@ -28,9 +30,9 @@ export const createStatsBar = (state: GameState): HTMLElement => {
     const statDiv = document.createElement('div');
     statDiv.style.cssText = 'display: flex; align-items: center; gap: 8px;';
     statDiv.innerHTML = `
-      <span style="font-size: 18px;">${stat.label}</span>
-      <span style="color: #999; font-size: 13px;">${stat.name}:</span>
-      <span style="color: #4ac94a; font-weight: bold;">${stat.value}</span>
+      <span style="font-size: 16px;">${stat.label}</span>
+      <span style="color: #5a4a35; font-size: 11px;">${stat.name}:</span>
+      <span style="color: #2d1f0f; font-weight: bold;">${stat.value}</span>
     `;
     statsBar.appendChild(statDiv);
   });

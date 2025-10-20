@@ -52,31 +52,36 @@ export const renderMainMenu = (root: HTMLElement, store: GameStore) => {
       position: absolute;
       top: 20px;
       right: 20px;
-      background: rgba(59, 130, 246, 0.8);
-      color: white;
-      border: none;
+      background: #8b6f47;
+      color: #fbe9cf;
+      border: 3px solid #5a4a35;
       padding: 12px 20px;
-      border-radius: 8px;
+      border-radius: 0;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 10px;
       font-weight: bold;
-      backdrop-filter: blur(10px);
-      transition: all 0.3s ease;
+      font-family: 'Press Start 2P', monospace;
+      box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.5);
+      transition: all 0.1s ease;
+      image-rendering: pixelated;
     `;
     musicButton.innerHTML = '🎵 Start Music';
     musicButton.addEventListener('mouseenter', () => {
-      musicButton.style.background = 'rgba(59, 130, 246, 1)';
-      musicButton.style.transform = 'scale(1.05)';
+      musicButton.style.background = '#a08560';
+      musicButton.style.transform = 'translate(-2px, -2px)';
+      musicButton.style.boxShadow = '6px 6px 0 rgba(0, 0, 0, 0.5)';
     });
     musicButton.addEventListener('mouseleave', () => {
-      musicButton.style.background = 'rgba(59, 130, 246, 0.8)';
-      musicButton.style.transform = 'scale(1)';
+      musicButton.style.background = '#8b6f47';
+      musicButton.style.transform = 'translate(0, 0)';
+      musicButton.style.boxShadow = '4px 4px 0 rgba(0, 0, 0, 0.5)';
     });
     musicButton.addEventListener('click', async () => {
       try {
         await startBackgroundMusic();
-        musicButton.innerHTML = '🎵 Music Playing';
-        musicButton.style.background = 'rgba(16, 185, 129, 0.8)';
+        musicButton.innerHTML = '🎵 Playing';
+        musicButton.style.background = '#6a9e6a';
+        musicButton.style.border = '3px solid #4a7a4a';
         musicButton.disabled = true;
         console.log('🎵 Background music started from main menu');
       } catch (error) {
@@ -179,12 +184,6 @@ export const renderMainMenu = (root: HTMLElement, store: GameStore) => {
       subtitle: `${saveMetadata.scene} • ${saveDate.toLocaleDateString()} ${saveDate.toLocaleTimeString()}`,
     });
   }
-
-  addMenuItem('multiplayer', 'Multiplayer', () => {
-    alert('Multiplayer mode is under development! Stay tuned for future updates.');
-  }, {
-    subtitle: 'Connect with friends (coming soon)',
-  });
 
   addMenuItem('settings', 'Settings', () => {
     alert('Settings menu is under development! Stay tuned for future updates.');
