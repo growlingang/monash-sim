@@ -7,6 +7,7 @@ import { ANIMATION_FRAMES } from '../sprites/animationFrames';
 import { Tileset } from '../utils/tilesetLoader';
 import { createPhoneOverlay } from '../ui/phoneOverlay';
 import { custom } from 'zod';
+import { DEFAULT_PLAYER } from '../sprites/playerSprite';
 
 const TILE_SIZE = 32;
 const ROOM_WIDTH = 20; // tiles
@@ -63,21 +64,21 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
   }
 
   // If there's a custom player sprite in the game state, try to build its composite
-  const customSprite = store.getState().playerSprite;
-  if (customSprite) {
-    try {
-      // frame size here should match your sprite sheets; using 64x64 as preview/demo
-      customSprite.accessories.beard = null;
-      customSprite.accessories.hat = null;
-      customSprite.accessories.earring = null;
-      customSprite.hair ='ponytail_darkbrown.png';
-      customSprite.shoes = 'shoes_red.png';
-      await buildCompositeSprite(customSprite, 32, 32);
-      console.log('✅ Built composite for custom player sprite');
-    } catch (err) {
-      console.warn('⚠️ Failed to build composite for custom player', err);
-    }
-  } else {console.warn('⚠️ No custom player sprite found in game state');}
+  let customSprite = store.getState().playerSprite;
+
+  if (!customSprite) {
+    console.log('⚠️ No custom player sprite found in game state, using default.');
+    customSprite = DEFAULT_PLAYER;
+
+    // Optional but recommended: store it so future logic sees it
+    store.setState(prev => ({
+      ...prev,
+      playerSprite: DEFAULT_PLAYER,
+    }));
+  }
+
+  await buildCompositeSprite(customSprite, 32, 32);
+
   
 
   try {
