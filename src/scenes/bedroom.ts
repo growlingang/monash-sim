@@ -418,6 +418,9 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
   let playerFrames = ANIMATION_FRAMES[currentAnimation];
   let lastDirection: 'forward' | 'backward' | 'left' | 'right' = 'forward';
   let wasMoving = false;
+  // Animation frame timing
+  let frameTimer = 0;
+  const FRAME_DURATION = 0.15; // seconds per frame (e.g., 0.15s = ~6.7 FPS)
 
   const drawPlayer = () => {
     if (!customSprite || !customSprite.compositedImage) return;
@@ -432,7 +435,7 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
       sourceWidth: 32,
       sourceHeight: 32,
     });
-    frameIndex = (frameIndex + 1) % playerFrames.length;
+    // frameIndex is now advanced in update()
   };
 
   // Input handling
@@ -542,9 +545,17 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
       currentAnimation = desiredAnimation;
       playerFrames = ANIMATION_FRAMES[currentAnimation];
       frameIndex = 0;
+      frameTimer = 0;
     }
     lastDirection = newDirection;
     wasMoving = moving;
+
+    // Animation frame timing
+    frameTimer += deltaTime;
+    if (playerFrames.length > 1 && frameTimer >= FRAME_DURATION) {
+      frameIndex = (frameIndex + 1) % playerFrames.length;
+      frameTimer = 0;
+    }
   };
 
   const render = () => {
