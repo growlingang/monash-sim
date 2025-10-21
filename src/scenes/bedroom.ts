@@ -481,15 +481,35 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
 
   // Collision detection
   const isWalkable = (x: number, y: number): boolean => {
-    const tileX = Math.floor(x / TILE_SIZE);
-    const tileY = Math.floor(y / TILE_SIZE);
+    // Treat x,y as the player's top-left coordinates.
+    // We only consider the bottom middle "feet" area for collisions: bottom 4px and the central ~50% width.
+    const footHeight = 4; // pixels tall region at the bottom considered for collisions
+    const footWidth = Math.max(8, Math.floor(playerSize * 0.5)); // ensure a minimum width
+    const footOffsetX = Math.floor((playerSize - footWidth) / 2);
+    const footTop = y + (playerSize - footHeight);
+    const footBottom = y + playerSize - 1;
+    const footLeft = x + footOffsetX;
+    const footRight = footLeft + footWidth - 1;
 
-    // Room boundaries - only walls block movement
-    if (tileX < 0.5 || tileX >= ROOM_WIDTH - 0.5 || tileY < 0.5 || tileY >= ROOM_HEIGHT - 2) {
+    // Convert to tile coordinates
+    const leftTile = Math.floor(footLeft / TILE_SIZE);
+    const rightTile = Math.floor(footRight / TILE_SIZE);
+    const topTile = Math.floor(footTop / TILE_SIZE);
+    const bottomTile = Math.floor(footBottom / TILE_SIZE);
+
+    // Bounds check: if foot area is outside the room, it's not walkable
+    if (leftTile < 0 || rightTile >= ROOM_WIDTH || topTile < 0 || bottomTile >= ROOM_HEIGHT) {
       return false;
     }
 
-    // All floor tiles are walkable now
+    // If any tile that the foot area overlaps is a wall (1), block movement.
+    for (let ty = topTile; ty <= bottomTile; ty++) {
+      for (let tx = leftTile; tx <= rightTile; tx++) {
+        const val = roomData[ty][tx];
+        if (val === 1) return false;
+      }
+    }
+
     return true;
   };
 
@@ -523,12 +543,8 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
       moving = true;
     }
 
-    // Check collision for all 4 corners of player
-    const canMove =
-      isWalkable(newX, newY) &&
-      isWalkable(newX + playerSize, newY) &&
-      isWalkable(newX, newY + playerSize) &&
-      isWalkable(newX + playerSize, newY + playerSize);
+  // Collide based on the bottom-middle "feet" area only
+  const canMove = isWalkable(newX, newY);
 
     if (canMove) {
       playerX = newX;

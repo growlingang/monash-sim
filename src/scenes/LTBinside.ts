@@ -7,11 +7,11 @@ import { ANIMATION_FRAMES } from '../sprites/animationFrames';
 import { buildCompositeSprite } from '../sprites/playerSpriteOptimizer';
 import { DEFAULT_PLAYER } from '../sprites/playerSprite';
 
-const TILE_SIZE = 32;
-const MAP_WIDTH = 20;
-const MAP_HEIGHT = 12;
-const CANVAS_WIDTH = MAP_WIDTH * TILE_SIZE;
-const CANVAS_HEIGHT = MAP_HEIGHT * TILE_SIZE;
+const TILE_SIZE = 32; // tiles
+const ROOM_WIDTH = 20; // tiles
+const ROOM_HEIGHT = 12; // tiles
+const CANVAS_WIDTH = ROOM_WIDTH * TILE_SIZE;
+const CANVAS_HEIGHT = ROOM_HEIGHT * TILE_SIZE;
 
 type Hotspot = {
     id: 'group-room';
@@ -91,12 +91,10 @@ export const renderLTBinside = async (root: HTMLElement, store: GameStore) => {
     const mapFrom = (pattern: string[]) => pattern.map(row => row.split('').map(ch => (T as any)[ch] ?? -1));
     let mapData = mapFrom(insidePattern);
 
-    const hotspots: Hotspot[] = [
-        { id: 'group-room', x: 9, y: 4, w: 1, h: 1, label: 'Group Room', interactable: true },
-    ];
+    const hotspots: Hotspot[] = [{ id: 'group-room', x: 9, y: 4, w: 1, h: 1, label: 'Group Room', interactable: true }];
 
-    // Player state
-    const playerSize = TILE_SIZE - 6;
+    // Player state (match bedroom: 2 tiles tall)
+    const playerSize = TILE_SIZE * 2;
     // Use the position the outside scene placed us at
     let playerX = 10 * TILE_SIZE;
     let playerY = 10 * TILE_SIZE;
@@ -123,7 +121,7 @@ export const renderLTBinside = async (root: HTMLElement, store: GameStore) => {
 
     const isWall = (gx: number, gy: number) => {
         // Only canvas borders
-        return gx < 0 || gx >= MAP_WIDTH || gy < 0 || gy >= MAP_HEIGHT;
+        return gx < 0 || gx >= ROOM_WIDTH || gy < 0 || gy >= ROOM_HEIGHT;
     };
     const isWalkable = (nx: number, ny: number) => {
         const gx1 = Math.floor(nx / TILE_SIZE);
@@ -140,8 +138,7 @@ export const renderLTBinside = async (root: HTMLElement, store: GameStore) => {
         const hs = hotspots.find(h => px >= h.x && px < h.x + h.w && py >= h.y && py < h.y + h.h && h.interactable);
         if (!hs) return;
 
-        const state = store.getState();
-        switch (hs.id) {
+    switch (hs.id) {
             case 'group-room': {
                 interactionCooldownUntil = performance.now() + 250;
                 // Clear any saved outside/inside state and transition to meeting
@@ -209,8 +206,8 @@ export const renderLTBinside = async (root: HTMLElement, store: GameStore) => {
         ctx.fillStyle = '#000'; ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
         // Tilemap
-        for (let y = 0; y < MAP_HEIGHT; y++) {
-            for (let x = 0; x < MAP_WIDTH; x++) {
+        for (let y = 0; y < ROOM_HEIGHT; y++) {
+            for (let x = 0; x < ROOM_WIDTH; x++) {
                 const idx = mapData[y][x];
                 if (idx >= 0) tileset.drawTile(ctx, idx, x * TILE_SIZE, y * TILE_SIZE);
             }
