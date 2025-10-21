@@ -559,24 +559,27 @@ const renderPhoneContent = (store: GameStore) => {
         break;
 
         case 'character':
-          appTitle.textContent = 'Character';
-          const playerData = store.getState().playerSprite || DEFAULT_PLAYER;
-          const customizer = new CharacterCustomizer(content, playerData);
+        appTitle.textContent = 'Character';
+        const playerData = store.getState().playerSprite || DEFAULT_PLAYER;
+        const customizer = new CharacterCustomizer(content, playerData);
 
-          const handleUpdate = ((e: CustomEvent) => {
-            // Persist new sprite into game state
-            store.setState((prev) => ({
-              ...prev,
-              playerSprite: e.detail.player,
-            }));
-          }) as EventListener;
+        const handleUpdate = ((e: CustomEvent) => {
+          store.setState((prev) => ({
+            ...prev,
+            playerSprite: e.detail.player,
+          }));
+        }) as EventListener;
 
-          window.addEventListener('character-updated', handleUpdate);
-        
-          return () => {
-            window.removeEventListener('character-updated', handleUpdate);
-            customizer.cleanup();
-          };
+        window.addEventListener('character-updated', handleUpdate);
+
+        // ✅ Append content before return
+        appContent.appendChild(content);
+
+        return () => {
+          window.removeEventListener('character-updated', handleUpdate);
+          customizer.cleanup();
+        };
+
 
       case 'notes':
         appTitle.textContent = 'Notes - Tasks';
