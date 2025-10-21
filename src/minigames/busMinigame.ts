@@ -1,3 +1,5 @@
+
+import { playBackgroundMusic, stopBackgroundMusic } from '../utils/audioManager';
 import type { Minigame, MinigameConfig, MinigameResult } from './types';
 
 const CANVAS_WIDTH = 640;
@@ -9,6 +11,8 @@ const TIME_LIMIT = 25; // seconds
 
 export const busMinigame: Minigame = {
   mount: async (container: HTMLElement, config: MinigameConfig): Promise<MinigameResult> => {
+    // Play bus minigame music
+    await playBackgroundMusic('/audio/ambience/Melbourne_Bus_Loop.mp3', { loop: true, volume: 0.7 });
     return new Promise((resolve) => {
       container.innerHTML = '';
       
@@ -97,6 +101,9 @@ export const busMinigame: Minigame = {
         document.removeEventListener('keydown', handleKeyDown);
         document.removeEventListener('keyup', handleKeyUp);
         gameActive = false;
+        // Stop bus minigame music and restore default background music
+        stopBackgroundMusic();
+        playBackgroundMusic('/audio/music/background.mp3', { loop: true, volume: 0.6, autoplay: true });
       };
 
       const update = (deltaTime: number) => {

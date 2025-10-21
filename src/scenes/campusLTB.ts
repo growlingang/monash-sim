@@ -1,3 +1,4 @@
+import { playBackgroundMusic, stopBackgroundMusic } from '../utils/audioManager';
 import type { GameStore } from '../core/store';
 import { createStatsBar } from '../ui/statsBar';
 import { Tileset } from '../utils/tilesetLoader';
@@ -23,6 +24,8 @@ type Hotspot = {
 type Env = 'outside' | 'inside';
 
 export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
+    // Play campus ambience
+    await playBackgroundMusic('/audio/ambience/Outdoor_ambience_loop.mp3', { loop: true, volume: 0.7 });
     root.innerHTML = '';
 
     const container = document.createElement('div');
@@ -494,5 +497,12 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
     requestAnimationFrame(loop);
 
     // Ensure cleanup if scene changes
-    store.subscribe((next, prev) => { if (next.currentScene !== prev.currentScene) cleanup(); });
+    store.subscribe((next, prev) => {
+        if (next.currentScene !== prev.currentScene) {
+            cleanup();
+            // Stop ambience and restore default background music
+            stopBackgroundMusic();
+            playBackgroundMusic('/audio/music/background.mp3', { loop: true, volume: 0.6, autoplay: true });
+        }
+    });
 };
