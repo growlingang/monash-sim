@@ -10,6 +10,10 @@ import type { CommuteDefinition, CommuteOutcome } from '../data/commute';
 import type { GameState, GameStateDeltas } from '../core/types';
 import { createStatsBar } from '../ui/statsBar';
 import { walkMinigame, busMinigame, driveMinigame, type MinigameConfig } from '../minigames';
+import { drawSubSprite } from '../utils/spriteLoader';
+import { ANIMATION_FRAMES } from '../sprites/animationFrames';
+import { buildCompositeSprite } from '../sprites/playerSpriteOptimizer';
+import { DEFAULT_PLAYER } from '../sprites/playerSprite';
 
 const TILE_SIZE = 32;
 const BUS_BAY_WIDTH = 24; // tiles - wider to fill more screen
@@ -162,7 +166,7 @@ const processMinigameResult = (
     });
 };
 
-export const renderEveningCommute = (root: HTMLElement, store: GameStore) => {
+export const renderEveningCommute = async (root: HTMLElement, store: GameStore) => {
     // Check if a transport was pre-selected from phone
     const preSelectedTransport = (window as any).__selectedTransport;
     if (preSelectedTransport) {
@@ -225,6 +229,19 @@ export const renderEveningCommute = (root: HTMLElement, store: GameStore) => {
     let lastTime = performance.now();
     let gameActive = true;
 
+    // Composite sprite / animation state
+    let frameIndex = 0;
+    let currentAnimation: keyof typeof ANIMATION_FRAMES = 'idle_forward';
+    let playerFrames = ANIMATION_FRAMES[currentAnimation];
+    let lastDirection: 'forward' | 'backward' | 'left' | 'right' = 'forward';
+    // Get custom sprite from game state
+    let customSprite = store.getState().playerSprite;
+    if (!customSprite) {
+        customSprite = DEFAULT_PLAYER;
+        store.setState(prev => ({ ...prev, playerSprite: DEFAULT_PLAYER }));
+    }
+    await buildCompositeSprite(customSprite, 32, 32);
+
     // Input handling
     const keys: Record<string, boolean> = {};
 
@@ -244,22 +261,43 @@ export const renderEveningCommute = (root: HTMLElement, store: GameStore) => {
         const deltaTime = currentTime - lastTime;
         lastTime = currentTime;
 
-        // Update player position
+        // Update player position and compute movement/direction
         const moveSpeed = 100; // pixels per second
         const moveDistance = (moveSpeed * deltaTime) / 1000;
-
-        if (keys['arrowleft'] || keys['a']) {
-            playerX = Math.max(0, playerX - moveDistance);
-        }
-        if (keys['arrowright'] || keys['d']) {
-            playerX = Math.min(CANVAS_WIDTH - playerSize, playerX + moveDistance);
-        }
+        let moving = false;
+        let newDirection = lastDirection;
         if (keys['arrowup'] || keys['w']) {
             playerY = Math.max(0, playerY - moveDistance);
-        }
-        if (keys['arrowdown'] || keys['s']) {
+            newDirection = 'backward'; // up = look backward
+            moving = true;
+        } else if (keys['arrowdown'] || keys['s']) {
             playerY = Math.min(CANVAS_HEIGHT - playerSize, playerY + moveDistance);
+            newDirection = 'forward'; // down = look forward
+            moving = true;
         }
+        if (keys['arrowleft'] || keys['a']) {
+            playerX = Math.max(0, playerX - moveDistance);
+            newDirection = 'left';
+            moving = true;
+        } else if (keys['arrowright'] || keys['d']) {
+            playerX = Math.min(CANVAS_WIDTH - playerSize, playerX + moveDistance);
+            newDirection = 'right';
+            moving = true;
+        }
+
+        // Animation switching
+        let desiredAnimation: keyof typeof ANIMATION_FRAMES;
+        if (moving) {
+            desiredAnimation = (`walk_${newDirection}` as keyof typeof ANIMATION_FRAMES);
+        } else {
+            desiredAnimation = (`idle_${lastDirection}` as keyof typeof ANIMATION_FRAMES);
+        }
+        if (desiredAnimation !== currentAnimation) {
+            currentAnimation = desiredAnimation;
+            playerFrames = ANIMATION_FRAMES[currentAnimation];
+            frameIndex = 0;
+        }
+        lastDirection = newDirection;
 
         // Render
         render();
@@ -301,17 +339,31 @@ export const renderEveningCommute = (root: HTMLElement, store: GameStore) => {
         ctx.fillRect(1 * TILE_SIZE, 14 * TILE_SIZE, TILE_SIZE, TILE_SIZE);
         ctx.fillRect(22 * TILE_SIZE, 14 * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 
-        // Draw player
-        ctx.fillStyle = '#4169e1';
-        ctx.fillRect(playerX, playerY, playerSize, playerSize);
-
-        // Player face
-        ctx.fillStyle = '#ffdbac';
-        ctx.fillRect(playerX + 4, playerY + 4, 8, 8);
-        ctx.fillStyle = '#000';
-        ctx.fillRect(playerX + 6, playerY + 6, 2, 2); // left eye
-        ctx.fillRect(playerX + 10, playerY + 6, 2, 2); // right eye
-        ctx.fillRect(playerX + 7, playerY + 10, 6, 1); // mouth
+        // Draw player composite sprite (animated)
+        if (customSprite?.compositedImage) {
+            const frame = playerFrames[frameIndex];
+            drawSubSprite(ctx, customSprite.compositedImage, {
+                x: playerX,
+                y: playerY,
+                width: playerSize,
+                height: playerSize,
+                sourceX: (frame.col - 1) * 32,
+                sourceY: (frame.row - 1) * 32,
+                sourceWidth: 32,
+                sourceHeight: 32,
+            });
+            frameIndex = (frameIndex + 1) % playerFrames.length;
+        } else {
+            // Fallback to rectangle if sprite not loaded
+            ctx.fillStyle = '#4169e1';
+            ctx.fillRect(playerX, playerY, playerSize, playerSize);
+            ctx.fillStyle = '#ffdbac';
+            ctx.fillRect(playerX + 4, playerY + 4, 8, 8);
+            ctx.fillStyle = '#000';
+            ctx.fillRect(playerX + 6, playerY + 6, 2, 2); // left eye
+            ctx.fillRect(playerX + 10, playerY + 6, 2, 2); // right eye
+            ctx.fillRect(playerX + 7, playerY + 10, 6, 1); // mouth
+        }
     };
 
     // Event listeners
