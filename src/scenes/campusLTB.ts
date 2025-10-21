@@ -156,8 +156,9 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
     
     // Animation state
     let frameIndex = 0;
-    const currentAnimation = 'idle_forward';
-    const playerFrames = ANIMATION_FRAMES[currentAnimation];
+    let currentAnimation: keyof typeof ANIMATION_FRAMES = 'idle_forward';
+    let playerFrames = ANIMATION_FRAMES[currentAnimation];
+    let lastDirection: 'forward' | 'backward' | 'left' | 'right' = 'forward';
     
     // Get custom sprite from game state
     let customSprite = store.getState().playerSprite;
@@ -277,11 +278,47 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
     const update = (dt: number) => {
         const speed = 150 * dt;
         let nx = playerX, ny = playerY;
-        if (keys['arrowup'] || keys['w']) ny -= speed;
-        if (keys['arrowdown'] || keys['s']) ny += speed;
-        if (keys['arrowleft'] || keys['a']) nx -= speed;
-        if (keys['arrowright'] || keys['d']) nx += speed;
+        let moving = false;
+        let newDirection = lastDirection;
+        if (keys['arrowup'] || keys['w']) {
+            ny -= speed;
+            newDirection = 'backward';
+            moving = true;
+        } else if (keys['arrowdown'] || keys['s']) {
+            ny += speed;
+            newDirection = 'forward';
+            moving = true;
+        }
+        if (keys['arrowleft'] || keys['a']) {
+            nx -= speed;
+            newDirection = 'left';
+            moving = true;
+        } else if (keys['arrowright'] || keys['d']) {
+            nx += speed;
+            newDirection = 'right';
+            moving = true;
+        }
         if (isWalkable(nx, ny)) { playerX = nx; playerY = ny; }
+
+        // Animation switching
+        let desiredAnimation: keyof typeof ANIMATION_FRAMES;
+        if (moving) {
+            if (newDirection === 'forward') desiredAnimation = 'walk_forward';
+            else if (newDirection === 'backward') desiredAnimation = 'walk_backward';
+            else if (newDirection === 'left') desiredAnimation = 'walk_left';
+            else desiredAnimation = 'walk_right';
+        } else {
+            if (lastDirection === 'forward') desiredAnimation = 'idle_forward';
+            else if (lastDirection === 'backward') desiredAnimation = 'idle_backward';
+            else if (lastDirection === 'left') desiredAnimation = 'idle_left';
+            else desiredAnimation = 'idle_right';
+        }
+        if (desiredAnimation !== currentAnimation) {
+            currentAnimation = desiredAnimation;
+            playerFrames = ANIMATION_FRAMES[currentAnimation];
+            frameIndex = 0;
+        }
+        lastDirection = newDirection;
 
         // Show tooltip if near hotspot
         const px = Math.floor((playerX + playerSize / 2) / TILE_SIZE);

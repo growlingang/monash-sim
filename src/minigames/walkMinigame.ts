@@ -105,15 +105,17 @@ export const walkMinigame: Minigame = {
       let elapsedTime = 0; // Track time since game start
 
       // Composite sprite/animation state
-      let frameIndex = 0;
-      let currentAnimation: keyof typeof ANIMATION_FRAMES = 'walk_forward';
-      let playerFrames = ANIMATION_FRAMES[currentAnimation];
-      // Get custom sprite from game state (if available)
-      let customSprite = (window as any).gameStore?.getState?.().playerSprite;
-      if (!customSprite) {
-        customSprite = DEFAULT_PLAYER;
-      }
-      await buildCompositeSprite(customSprite, 32, 32);
+        let frameIndex = 0;
+        let currentAnimation: keyof typeof ANIMATION_FRAMES = 'idle_forward';
+        let playerFrames = ANIMATION_FRAMES[currentAnimation];
+        let lastMoveDirection: 'forward' | 'backward' | 'left' | 'right' = 'forward';
+        let isMoving = false;
+        // Get custom sprite from game state (if available)
+        let customSprite = (window as any).gameStore?.getState?.().playerSprite;
+        if (!customSprite) {
+          customSprite = DEFAULT_PLAYER;
+        }
+        await buildCompositeSprite(customSprite, 32, 32);
 
       // Calculate spawn rate based on mobility stat
       const mobility = config.playerStats.mobility;
@@ -254,23 +256,27 @@ export const walkMinigame: Minigame = {
 
         // Player movement
         const moveSpeed = 150 * deltaTime; // pixels per second
-        
+        isMoving = false;
         // Horizontal movement (smooth, not lane-restricted)
         if (keys['arrowleft'] || keys['a']) {
           playerX = Math.max(0, playerX - moveSpeed);
+          lastMoveDirection = 'left';
+          isMoving = true;
         }
         if (keys['arrowright'] || keys['d']) {
           playerX = Math.min(CANVAS_WIDTH - PLAYER_SIZE, playerX + moveSpeed);
+          lastMoveDirection = 'right';
+          isMoving = true;
         }
-
         // Vertical movement - one press = one lane (absolute lane tracking)
         if (keysPressed['arrowup'] || keysPressed['w']) {
           if (playerAbsoluteLane > 0) {
             playerAbsoluteLane--;
-            
+            // Up = player moves up the screen -> they should look backward
+            lastMoveDirection = 'backward';
+            isMoving = true;
             // Calculate player's position relative to target camera (use target for smoother feel)
             const relativeLane = playerAbsoluteLane - targetCameraOffset;
-            
             // Only scroll camera if player reaches middle of screen (lane 9 or less)
             if (relativeLane <= 9 && targetCameraOffset > 0) {
               targetCameraOffset = Math.max(0, targetCameraOffset - 1);
@@ -287,10 +293,11 @@ export const walkMinigame: Minigame = {
         if (keysPressed['arrowdown'] || keysPressed['s']) {
           if (playerAbsoluteLane < TOTAL_LANES - 1) {
             playerAbsoluteLane++;
-            
+            // Down = player moves down the screen -> they should look forward
+            lastMoveDirection = 'forward';
+            isMoving = true;
             // Calculate player's position relative to target camera
             const relativeLane = playerAbsoluteLane - targetCameraOffset;
-            
             // Only scroll camera if player reaches middle going down (lane 9 or more)
             if (relativeLane >= 9 && targetCameraOffset < TOTAL_LANES - VISIBLE_LANES) {
               targetCameraOffset = Math.min(TOTAL_LANES - VISIBLE_LANES, targetCameraOffset + 1);
@@ -306,6 +313,19 @@ export const walkMinigame: Minigame = {
         } else {
           const relativeLane = playerAbsoluteLane - cameraOffset;
           playerScreenY = relativeLane * TILE_SIZE + 32 + (TILE_SIZE - PLAYER_SIZE) / 2;
+        }
+
+        // Animation switching
+        let desiredAnimation: keyof typeof ANIMATION_FRAMES;
+        if (isMoving) {
+          desiredAnimation = `walk_${lastMoveDirection}` as keyof typeof ANIMATION_FRAMES;
+        } else {
+          desiredAnimation = `idle_${lastMoveDirection}` as keyof typeof ANIMATION_FRAMES;
+        }
+        if (desiredAnimation !== currentAnimation) {
+          currentAnimation = desiredAnimation;
+          playerFrames = ANIMATION_FRAMES[currentAnimation];
+          frameIndex = 0;
         }
 
         // Check if reached campus
