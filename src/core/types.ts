@@ -98,6 +98,8 @@ export interface GameState {
     rapport: RapportMap;
     flags: Set<MemoryFlagId>;
     activityLog: ActivityEntry[];
+    // Records the player's in-class dialogue choice per NPC (to tailor evening DMs)
+    classReplies?: Partial<Record<NpcId, 'friendly' | 'dismissive' | 'major'>>;
     phoneAppsOpened?: {
         texts: boolean;
         map: boolean;

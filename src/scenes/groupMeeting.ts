@@ -734,8 +734,15 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
         // Wait for user click to apply effects and close dialogue
         await waitForAdvance(reactionBubble);
 
-        // Apply deltas
+        // Apply deltas and record class dialogue choice for evening tailoring
         let next = applyDeltas(state, deltas);
+        next = {
+            ...next,
+            classReplies: {
+                ...(next.classReplies ?? {}),
+                [npcId]: key,
+            },
+        };
         next = logActivity(next, {
             segment: 'group-meeting',
             choiceId: `${npcId}-${key}${isMatch ? '-match' : ''}`,
