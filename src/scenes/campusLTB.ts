@@ -56,61 +56,75 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Simple procedural tileset for outdoor/indoor
-    const tilesetCanvas = document.createElement('canvas');
-    tilesetCanvas.width = 8 * TILE_SIZE;
-    tilesetCanvas.height = 2 * TILE_SIZE;
-    const tctx = tilesetCanvas.getContext('2d')!;
-    const colors = [
-        '#2d5a27', // 0 grass
-        '#7d7d7d', // 1 pavement
-        '#8B7355', // 2 exterior wall
-        '#bfb06a', // 3 doorway
-        '#3a3a3a', // 4 interior floor
-        '#6b5b45', // 5 interior wall
-        '#4ac94a', // 6 signage/accent
-        '#87ceeb', // 7 glass
-        '#2a2a2a', // 8 dark floor
-        '#444444', // 9 darker wall
-        '#c94444', // 10 warning accent
-        '#25D366', // 11 success accent
-        '#fbbf24', // 12 highlight
-        '#1f2937', // 13 shadow wall top
-        '#94a3b8', // 14 light concrete
-        '#334155', // 15 slate
-    ];
-    colors.forEach((c, i) => {
-        const col = i % 8; const row = Math.floor(i / 8);
-        tctx.fillStyle = c; tctx.fillRect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-        tctx.strokeStyle = 'rgba(0,0,0,0.3)'; tctx.strokeRect(col * TILE_SIZE + 0.5, row * TILE_SIZE + 0.5, TILE_SIZE - 1, TILE_SIZE - 1);
+    // LTB image rectangle (computed after image load)
+    let ltbRectX = 0;
+    let ltbRectY = 0;
+    let ltbRectW = 0;
+    let ltbRectH = 0;
+
+    // Load road.png tileset
+    const roadImage = new Image();
+    roadImage.src = '/sprites/cargame/road.png';
+    await new Promise((resolve, reject) => {
+        roadImage.onload = resolve;
+        roadImage.onerror = reject;
     });
-    const tileset = new Tileset({ imagePath: tilesetCanvas.toDataURL(), tileWidth: TILE_SIZE, tileHeight: TILE_SIZE, columns: 8, rows: 2 });
+    
+    // Load pavement image
+    const pavementImage = new Image();
+    pavementImage.src = '/sprites/ltb_scene/LTB PAVEMENT.png';
+    await new Promise((resolve, reject) => {
+        pavementImage.onload = resolve;
+        pavementImage.onerror = reject;
+    });
+    
+    // Load LTB building image
+    const ltbImage = new Image();
+    ltbImage.src = '/sprites/ltb_scene/ltb.png';
+    await new Promise((resolve, reject) => {
+        ltbImage.onload = resolve;
+        ltbImage.onerror = reject;
+    });
+    // Compute and cache LTB rectangle for rendering and collision
+    ltbRectW = ltbImage.width;
+    ltbRectH = ltbImage.height;
+    ltbRectX = (CANVAS_WIDTH - ltbRectW) / 2;
+    ltbRectY = 0;
+    
+    // Create tileset from road.png (assuming it's a single tile that we'll use for everything)
+    const tileset = new Tileset({ 
+        imagePath: '/sprites/cargame/road.png', 
+        tileWidth: TILE_SIZE, 
+        tileHeight: TILE_SIZE, 
+        columns: 1, 
+        rows: 1 
+    });
     await tileset.load();
 
-    // Maps: use chars => tileIndex mapping
+    // Maps: use chars => tileIndex mapping (all use road tile)
     const T = {
-        G: 0, // grass
-        P: 1, // pavement
-        X: 2, // building exterior wall
-        D: 3, // entrance door
-        F: 4, // interior floor
-        W: 5, // interior wall
-        S: 6, // sign/accent
-        L: 7, // glass
+        G: 0, // grass -> road
+        P: 0, // pavement -> road
+        X: 0, // building exterior wall -> road
+        D: 0, // entrance door -> road
+        F: 0, // interior floor -> road
+        W: 0, // interior wall -> road
+        S: 0, // sign/accent -> road
+        L: 0, // glass -> road
     } as const;
 
     const outsidePattern = [
         'GGGGGGGGGGGGGGGGGGGG',
         'GGGGGGGGGGGGGGGGGGGG',
-        'GGGGGGPPPPPPPPGGGGGG',
-        'GGGGGGPPXXXXPPGGGGGG',
-        'GGGGGGPPXLLXPPGGGGGG',
-        'GGGGGGPPXLLXPPGGGGGG',
-        'GGGGGGPPXLLXPPGGGGGG',
-        'GGGGGGPPXDDXPPGGGGGG',
+        'GGGGGGGGGGGGGGGGGGGG',
+        'GGGGGGGGGGGGGGGGGGGG',
+        'GGGGGGGGGGGGGGGGGGGG',
+        'GGGGGGGGGGGGGGGGGGGG',
+        'GGGGGGGGGGGGGGGGGGGG',
+        'GGGGGGGGGGGGGGGGGGGG',
         // Open a walkway directly below the door so the player can reach it
-        'GGGGGGPPXPPXPPGGGGGG',
-        'GGGGGGPPPPPPPPGGGGGG',
+        'GGGGGGGGGGGGGGGGGGGG',
+        'GGGGGGGGGGGGGGGGGGGG',
         'GGGGGGGGGGGGGGGGGGGG',
         'GGGGGGGGGGGGGGGGGGGG',
     ];
@@ -138,17 +152,20 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
     const hotspotsOutside: Hotspot[] = [
         { id: 'cafeteria', x: 6, y: 3, w: 3, h: 2, label: 'Cafeteria', interactable: true },
         { id: 'library', x: 12, y: 3, w: 2, h: 2, label: 'Library', interactable: true },
-        // Entrance spans both door tiles (columns 9 and 10 on row 7)
-        { id: 'entrance', x: 9, y: 7, w: 2, h: 1, label: 'Enter LTB', interactable: true },
+        // Entrance at bottom middle, directly below LTB (converted to tile coordinates)
+        { id: 'entrance', x: 9, y: 9, w: 2, h: 1, label: 'Enter LTB', interactable: true },
     ];
     const hotspotsInside: Hotspot[] = [
         { id: 'group-room', x: 9, y: 4, w: 1, h: 1, label: 'Group Room', interactable: true },
     ];
 
     // Player state (restored from window if present)
-    let playerX = 9 * TILE_SIZE;
-    let playerY = 9 * TILE_SIZE;
     const playerSize = TILE_SIZE - 6; // slight inset for nicer collision
+    // Default spawn: bottom of 3rd left column (col index 2) of the second last row
+    const spawnCol = 2;
+    const spawnRow = MAP_HEIGHT - 2; // second last row (0-based)
+    let playerX = spawnCol * TILE_SIZE + (TILE_SIZE - playerSize) / 2;
+    let playerY = (spawnRow + 1) * TILE_SIZE - playerSize;
     let running = true;
     let last = performance.now();
     const keys: Record<string, boolean> = {};
@@ -184,10 +201,8 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
 
     const currentHotspots = () => (env === 'outside' ? hotspotsOutside : hotspotsInside);
     const isWall = (gx: number, gy: number) => {
-        const val = mapData[gy]?.[gx];
-        if (val == null || val < 0) return true;
-        // Exterior/interior walls are blocked, glass counts as wall
-        return val === T.X || val === T.W || val === T.L;
+        // Only check for border collisions, no internal walls
+        return gx < 0 || gx >= MAP_WIDTH || gy < 0 || gy >= MAP_HEIGHT;
     };
     const isWalkable = (nx: number, ny: number) => {
         const gx1 = Math.floor(nx / TILE_SIZE);
@@ -298,7 +313,60 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
             newDirection = 'right';
             moving = true;
         }
-        if (isWalkable(nx, ny)) { playerX = nx; playerY = ny; }
+        // Middle of feet collision against LTB image
+        const feetOverlapLTB = (px: number, py: number) => {
+            const feetCenterX = px + playerSize / 2; // center of player horizontally
+            const feetCenterY = py + playerSize - 2; // middle of bottom 4px (2px from bottom)
+            return (
+                feetCenterX >= ltbRectX &&
+                feetCenterX <= ltbRectX + ltbRectW &&
+                feetCenterY >= ltbRectY &&
+                feetCenterY <= ltbRectY + ltbRectH
+            );
+        };
+
+        // Helper: is player box inside any hotspot (in pixels)?
+        const isInsideHotspot = (px: number, py: number) => {
+            const hsList = currentHotspots();
+            const boxLeft = px;
+            const boxTop = py;
+            const boxRight = px + playerSize;
+            const boxBottom = py + playerSize;
+            return hsList.some(h => {
+                const left = h.x * TILE_SIZE;
+                const top = h.y * TILE_SIZE;
+                const right = (h.x + h.w) * TILE_SIZE;
+                const bottom = (h.y + h.h) * TILE_SIZE;
+                // Overlap test between player box and hotspot rect
+                return boxLeft < right && boxRight > left && boxTop < bottom && boxBottom > top;
+            });
+        };
+
+        // First apply world walkability (borders only)
+        if (isWalkable(nx, ny)) {
+            // If inside a hotspot, ignore collisions for free movement
+            if (isInsideHotspot(nx, ny)) {
+                playerX = nx;
+                playerY = ny;
+            } else {
+                // Only prevent movement if the center of feet would be inside LTB image
+                if (feetOverlapLTB(nx, ny)) {
+                    // Try allowing partial movement if possible
+                    if (!feetOverlapLTB(nx, playerY)) {
+                        // Allow horizontal movement
+                        playerX = nx;
+                    } else if (!feetOverlapLTB(playerX, ny)) {
+                        // Allow vertical movement
+                        playerY = ny;
+                    }
+                    // If both directions would cause collision, don't move
+                } else {
+                    // No collision, allow full movement
+                    playerX = nx;
+                    playerY = ny;
+                }
+            }
+        }
 
         // Animation switching
         let desiredAnimation: keyof typeof ANIMATION_FRAMES;
@@ -319,6 +387,34 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
             frameIndex = 0;
         }
         lastDirection = newDirection;
+
+        // Auto-enter if the center of the player's feet overlaps the entrance hotspot (outside only)
+        if (env === 'outside') {
+            const feetCenterX = playerX + playerSize / 2;
+            const feetCenterY = playerY + playerSize - 2; // middle of bottom 4px
+            const entrance = hotspotsOutside.find(h => h.id === 'entrance' && h.interactable);
+            if (entrance) {
+                const left = entrance.x * TILE_SIZE;
+                const top = entrance.y * TILE_SIZE;
+                const right = (entrance.x + entrance.w) * TILE_SIZE;
+                const bottom = (entrance.y + entrance.h) * TILE_SIZE;
+                const inEntrance = feetCenterX >= left && feetCenterX < right && feetCenterY >= top && feetCenterY < bottom;
+                if (inEntrance && performance.now() >= interactionCooldownUntil) {
+                    const state = store.getState();
+                    env = 'inside';
+                    mapData = mapFrom(insidePattern);
+                    // Place player near inside door (not on group-room tile)
+                    playerX = 9 * TILE_SIZE; playerY = 5 * TILE_SIZE;
+                    // Persist scene state so remounts keep us inside
+                    (window as any).__ltb_state = { env, x: playerX, y: playerY };
+                    setStatus('You entered LTB. Find the Group Room.');
+                    // Small cooldown to avoid accidental double-trigger
+                    interactionCooldownUntil = performance.now() + 250;
+                    // Log the action (will remount, but our state persists)
+                    store.setState(logActivity(state, { segment: 'campus-ltb', choiceId: 'enter-ltb', summary: 'Entered LTB building', deltas: {} }));
+                }
+            }
+        }
 
         // Show tooltip if near hotspot
         const px = Math.floor((playerX + playerSize / 2) / TILE_SIZE);
@@ -342,6 +438,16 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
                 if (idx >= 0) tileset.drawTile(ctx, idx, x * TILE_SIZE, y * TILE_SIZE);
             }
         }
+
+        // Render pavement layer (aligned to top, centered vertically)
+        const pavementWidth = pavementImage.width;
+        const pavementHeight = pavementImage.height;
+        const pavementX = (CANVAS_WIDTH - pavementWidth) / 2; // Center horizontally
+        const pavementY = 0; // Align to top
+        ctx.drawImage(pavementImage, pavementX, pavementY, pavementWidth, pavementHeight);
+
+        // Render LTB building (centered on canvas)
+        ctx.drawImage(ltbImage, ltbRectX, ltbRectY, ltbRectW, ltbRectH);
 
         // Draw hotspot outlines (subtle)
         const hsList = currentHotspots();
