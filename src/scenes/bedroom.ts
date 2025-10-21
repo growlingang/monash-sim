@@ -401,27 +401,28 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
   let gameActive = true;
   let phoneOpen = false;
 
+
   let frameIndex = 0;
-  const currentAnimation = 'idle_forward';
-  const playerFrames = ANIMATION_FRAMES[currentAnimation];
+  let currentAnimation: keyof typeof ANIMATION_FRAMES = 'idle_forward';
+  let playerFrames = ANIMATION_FRAMES[currentAnimation];
+  let lastDirection: 'forward' | 'backward' | 'left' | 'right' = 'forward';
+  let wasMoving = false;
 
   const drawPlayer = () => {
-  if (!customSprite || !customSprite.compositedImage) return;
-
-  const frame = playerFrames[frameIndex];
-  drawSubSprite(ctx, customSprite.compositedImage, {
-    x: playerX,
-    y: playerY,
-    width: playerSize,
-    height: playerSize,
-    sourceX: (frame.col - 1) * 32, // match frameW you used in buildCompositeSprite
-    sourceY: (frame.row - 1) * 32,
-    sourceWidth: 32,
-    sourceHeight: 32,
-  });
-
-  frameIndex = (frameIndex + 1) % playerFrames.length;
-};
+    if (!customSprite || !customSprite.compositedImage) return;
+    const frame = playerFrames[frameIndex];
+    drawSubSprite(ctx, customSprite.compositedImage, {
+      x: playerX,
+      y: playerY,
+      width: playerSize,
+      height: playerSize,
+      sourceX: (frame.col - 1) * 32,
+      sourceY: (frame.row - 1) * 32,
+      sourceWidth: 32,
+      sourceHeight: 32,
+    });
+    frameIndex = (frameIndex + 1) % playerFrames.length;
+  };
 
   // Input handling
   const keys: Record<string, boolean> = {};
@@ -471,6 +472,7 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
     return true;
   };
 
+
   const update = (deltaTime: number) => {
     if (!gameActive) return;
 
@@ -478,17 +480,26 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
     let newX = playerX;
     let newY = playerY;
 
+    let moving = false;
+    let newDirection = lastDirection;
+
     if (keys['arrowup'] || keys['w']) {
       newY -= moveSpeed;
-    }
-    if (keys['arrowdown'] || keys['s']) {
+      newDirection = 'backward';
+      moving = true;
+    } else if (keys['arrowdown'] || keys['s']) {
       newY += moveSpeed;
+      newDirection = 'forward';
+      moving = true;
     }
     if (keys['arrowleft'] || keys['a']) {
       newX -= moveSpeed;
-    }
-    if (keys['arrowright'] || keys['d']) {
+      newDirection = 'left';
+      moving = true;
+    } else if (keys['arrowright'] || keys['d']) {
       newX += moveSpeed;
+      newDirection = 'right';
+      moving = true;
     }
 
     // Check collision for all 4 corners of player
@@ -502,6 +513,27 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
       playerX = newX;
       playerY = newY;
     }
+
+    // Animation switching
+    let desiredAnimation: keyof typeof ANIMATION_FRAMES;
+    if (moving) {
+      if (newDirection === 'forward') desiredAnimation = 'walk_forward';
+      else if (newDirection === 'backward') desiredAnimation = 'walk_backward';
+      else if (newDirection === 'left') desiredAnimation = 'walk_left';
+      else desiredAnimation = 'walk_right';
+    } else {
+      if (lastDirection === 'forward') desiredAnimation = 'idle_forward';
+      else if (lastDirection === 'backward') desiredAnimation = 'idle_backward';
+      else if (lastDirection === 'left') desiredAnimation = 'idle_left';
+      else desiredAnimation = 'idle_right';
+    }
+    if (desiredAnimation !== currentAnimation) {
+      currentAnimation = desiredAnimation;
+      playerFrames = ANIMATION_FRAMES[currentAnimation];
+      frameIndex = 0;
+    }
+    lastDirection = newDirection;
+    wasMoving = moving;
   };
 
   const render = () => {
