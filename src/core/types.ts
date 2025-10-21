@@ -83,6 +83,8 @@ export interface GameStateDeltas {
     flagsGained: MemoryFlagId[];
 }
 
+import type { PlayerSprite } from '../sprites/playerSprite';
+
 export interface GameState {
     playerName: string;
     onboardingStep: number;
@@ -104,4 +106,6 @@ export interface GameState {
         inventory: boolean;
     };
     doomscrollUsed?: boolean;
+    // Optional runtime player sprite (customisation saved here)
+    playerSprite?: PlayerSprite;
 }

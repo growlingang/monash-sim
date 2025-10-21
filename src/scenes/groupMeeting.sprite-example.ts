@@ -1,7 +1,12 @@
+
 import type { GameStore } from '../core/store';
 import { createStatsBar } from '../ui/statsBar';
 import { NPC_DEFINITIONS } from '../data/npcs';
 import type { NpcId } from '../core/types';
+import { drawSubSprite } from '../utils/spriteLoader';
+import { ANIMATION_FRAMES } from '../sprites/animationFrames';
+import { buildCompositeSprite } from '../sprites/playerSpriteOptimizer';
+import { DEFAULT_PLAYER } from '../sprites/playerSprite';
 
 /**
  * EXAMPLE: Group Meeting with Custom NPC Sprites & Background Tileset
@@ -24,8 +29,8 @@ const imageCache = {
     playerSprite: null as HTMLImageElement | null,
 };
 
-// Preload images
-export const preloadMeetingAssets = () => {
+// Preload images (now async to support composite sprite)
+export const preloadMeetingAssets = async (gameStore?: any) => {
     // Load NPC sprites
     const npcIds: NpcId[] = ['bonsen', 'zahir', 'jiun', 'anika', 'jiawen'];
     npcIds.forEach(id => {
@@ -41,10 +46,11 @@ export const preloadMeetingAssets = () => {
     tileset.onerror = () => console.warn('Failed to load meeting room tileset');
     imageCache.tileset = tileset;
 
-    // Optional: Player sprite
-    const playerSprite = new Image();
-    playerSprite.src = '/sprites/player/player-idle.png';
-    imageCache.playerSprite = playerSprite;
+    // Composite player sprite
+    let customSprite = gameStore?.getState?.().playerSprite;
+    if (!customSprite) customSprite = DEFAULT_PLAYER;
+    await buildCompositeSprite(customSprite, 32, 32);
+    imageCache.playerSprite = customSprite.compositedImage;
 };
 
 // Example: Render NPC with sprite
@@ -252,17 +258,21 @@ export const exampleRenderLoop = (
         renderNpcSprite(ctx, npc.npcId, npc.x, npc.y, npc.talked);
     });
 
-    // 4. Render player (you can add player sprite similarly)
+    // 4. Render player (composite sprite with animation frame)
     const playerImg = imageCache.playerSprite;
+    const size = 32;
+    const playerFrame = ANIMATION_FRAMES['idle_forward'][0];
     if (playerImg && playerImg.complete && playerImg.naturalWidth > 0) {
-        const size = 32;
-        ctx.drawImage(
-            playerImg,
-            meetingState.playerX - size / 2,
-            meetingState.playerY - size / 2,
-            size,
-            size
-        );
+        drawSubSprite(ctx, playerImg, {
+            x: meetingState.playerX - size / 2,
+            y: meetingState.playerY - size / 2,
+            width: size,
+            height: size,
+            sourceX: (playerFrame.col - 1) * 32,
+            sourceY: (playerFrame.row - 1) * 32,
+            sourceWidth: 32,
+            sourceHeight: 32,
+        });
     } else {
         // Fallback: circle (keep your existing code)
     }
