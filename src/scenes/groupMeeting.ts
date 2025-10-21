@@ -8,6 +8,7 @@ import { drawSubSprite } from '../utils/spriteLoader';
 import { ANIMATION_FRAMES } from '../sprites/animationFrames';
 import { buildCompositeSprite } from '../sprites/playerSpriteOptimizer';
 import { DEFAULT_PLAYER } from '../sprites/playerSprite';
+import { createAssignmentMinigame } from '../minigames/assignmentMinigame';
 
 type ChoiceKey = 'friendly' | 'dismissive' | 'major';
 
@@ -616,19 +617,58 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
         clearDialogue();
         const reveal = document.createElement('div');
         reveal.className = 'meeting__bubble';
-        reveal.innerHTML = `<span class="speaker">Facilitator</span>Assignment Topic: <em>Digital Privacy vs. Convenience — Okta Verify Debate</em>. Notes updated. You'll explore your phone later this evening.`;
+        reveal.innerHTML = `<span class="speaker">Facilitator</span>Assignment Topic: <em>Melbourne PTV & Travel to Monash</em>. Time to complete the assignment tasks together!`;
         dialogueLayer.appendChild(reveal);
         nextBtn.disabled = false;
-        hint.textContent = 'All teammates met!';
+        hint.textContent = 'Ready to start assignment tasks!';
         status.textContent = 'Assignment revealed';
     };
 
-    nextBtn.onclick = () => {
+    nextBtn.onclick = async () => {
         if (meetingState.finished) {
-            // Cleanup before transitioning
+            // Cleanup before starting assignment
             if (animFrame) cancelAnimationFrame(animFrame);
             document.removeEventListener('keydown', handleKeyDown);
             document.removeEventListener('keyup', handleKeyUp);
+
+            // Launch assignment minigame
+            root.innerHTML = '';
+            const assignmentGame = createAssignmentMinigame();
+            const state = store.getState();
+
+            const result = await assignmentGame.mount(root, {
+                playerStats: {
+                    mobility: state.stats.M,
+                    organisation: state.stats.O,
+                    networking: state.stats.N,
+                    aura: state.stats.A,
+                    skills: state.stats.S
+                }
+            });
+
+            // After completing assignment, apply rewards and continue
+            if (result.completed) {
+                const deltas = {
+                    stats: {
+                        O: 3,  // Organisation from completing structured tasks
+                        S: 5,  // Skills from learning about PTV
+                        N: 2   // Networking from group collaboration
+                    },
+                    time: 60  // Assignment took time
+                };
+
+                let next = applyDeltas(state, deltas);
+                next = logActivity(next, {
+                    segment: 'group-meeting',
+                    choiceId: 'assignment-complete',
+                    summary: 'Completed PTV & Travel assignment with group',
+                    deltas
+                });
+
+                store.setState(next);
+            }
+
+            // Cleanup and transition
             delete (window as any).__gm_state;
             delete (window as any).__gm_cleanup;
             store.setState((prev) => transitionScene(prev, 'evening-commute'));
