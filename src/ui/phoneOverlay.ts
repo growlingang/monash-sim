@@ -359,28 +359,8 @@ const renderPhoneContent = (store: GameStore) => {
       case 'maps':
         const isEveningCommute = currentState.currentScene === 'evening-commute';
           appTitle.textContent = isEveningCommute ? 'Maps - Evening Transport' : 'Maps - Morning Transport';
-          break;
 
-        case 'character':
-          appTitle.textContent = 'Character';
-          const playerData = store.getState().playerSprite || DEFAULT_PLAYER;
-          const customizer = new CharacterCustomizer(content, playerData);
-
-          const handleUpdate = ((e: CustomEvent) => {
-            // Persist new sprite into game state
-            store.setState((prev) => ({
-              ...prev,
-              playerSprite: e.detail.player,
-            }));
-          }) as EventListener;
-
-          window.addEventListener('character-updated', handleUpdate);
-        
-          return () => {
-            window.removeEventListener('character-updated', handleUpdate);
-            customizer.cleanup();
-          };
-        
+          
         if (isEveningCommute) {
           // Evening commute - show transport options
           content.innerHTML = `
@@ -577,6 +557,26 @@ const renderPhoneContent = (store: GameStore) => {
           }, 0);
         }
         break;
+
+        case 'character':
+          appTitle.textContent = 'Character';
+          const playerData = store.getState().playerSprite || DEFAULT_PLAYER;
+          const customizer = new CharacterCustomizer(content, playerData);
+
+          const handleUpdate = ((e: CustomEvent) => {
+            // Persist new sprite into game state
+            store.setState((prev) => ({
+              ...prev,
+              playerSprite: e.detail.player,
+            }));
+          }) as EventListener;
+
+          window.addEventListener('character-updated', handleUpdate);
+        
+          return () => {
+            window.removeEventListener('character-updated', handleUpdate);
+            customizer.cleanup();
+          };
 
       case 'notes':
         appTitle.textContent = 'Notes - Tasks';
