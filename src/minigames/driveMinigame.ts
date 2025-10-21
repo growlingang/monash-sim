@@ -113,7 +113,7 @@ export const driveMinigame: Minigame = {
       let spawnTimer = 0;
       const spawnInterval = 1.0; // Faster attempts since we now limit to 2 lanes occupied
       let survivalTime = 0; // Track how long player has survived (seconds)
-      const SURVIVAL_GOAL = 5; // TEMPORARY: Changed from 60s to 5s for testing - CHANGE BACK LATER
+      const SURVIVAL_GOAL = 60; // TEMPORARY: Changed from 60s to 5s for testing - CHANGE BACK LATER
       const LANE_CHANGE_SPEED = 600; // Pixels per second for smooth lane transitions
       
       // Parking phase state
