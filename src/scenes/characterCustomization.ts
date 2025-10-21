@@ -1,20 +1,15 @@
 import { buildCompositeSprite, loadPlayerImages } from '../sprites/playerSpriteOptimizer';
-import { createAnimationLoop } from '../sprites/playerRenderer';
 import { EQUIPMENT } from '../sprites/playerSprite';
 import type { PlayerSprite } from '../sprites/playerSprite';
 
-const PREVIEW_SIZE = {
-  width: 64,
-  height: 64,
-  frameW: 32,
-  frameH: 32,
-};
+const SPRITE_SIZE = 32; // Original sprite size
+const SCALE = 4; // Scale factor for display
+const PREVIEW_SIZE = SPRITE_SIZE * SCALE; // 128px displayed size
 
 export class CharacterCustomizer {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private player: PlayerSprite;
-  private previewAnim?: ReturnType<typeof createAnimationLoop>;
   private currentCategory: 'skin' | 'hair' | 'eyes' | 'lipstick' | 'shirt' | 'bottom' | 'shoes' | 'beard' | 'earring' | 'glasses' | 'hat' = 'skin';
   private indices: Record<string, number> = {
     skin: 0,
@@ -31,92 +26,269 @@ export class CharacterCustomizer {
   };
 
   constructor(container: HTMLElement, initialPlayer: PlayerSprite) {
-    // Create preview canvas
-    this.canvas = document.createElement('canvas');
-    this.canvas.width = PREVIEW_SIZE.width;
-    this.canvas.height = PREVIEW_SIZE.height;
-    this.ctx = this.canvas.getContext('2d')!;
-    container.appendChild(this.canvas);
-
     // Deep clone the player to avoid modifying the original
     this.player = JSON.parse(JSON.stringify(initialPlayer));
 
-    // Create customization UI
-    this.createUI(container);
+    // Create main wrapper - centered vertical layout
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = `
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      max-width: 360px;
+      margin: 0 auto;
+      padding: 0.5rem;
+    `;
+
+    // Title
+    const title = document.createElement('h2');
+    title.style.cssText = `
+      margin: 0;
+      font-size: 0.65rem;
+      color: #2d1f0f;
+      font-family: 'Press Start 2P', monospace;
+      text-align: center;
+      line-height: 1.2;
+    `;
+    title.textContent = 'CUSTOMIZE';
+    wrapper.appendChild(title);
     
-    // Start preview animation
+    // Create preview canvas
+    const canvasWrapper = document.createElement('div');
+    canvasWrapper.style.cssText = `
+      background: #c9a876;
+      border: 3px solid #8b6f47;
+      padding: 0.75rem;
+      box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
+    `;
+    
+    this.canvas = document.createElement('canvas');
+    this.canvas.width = PREVIEW_SIZE;
+    this.canvas.height = PREVIEW_SIZE;
+    this.canvas.style.cssText = `
+      display: block;
+      width: 120px;
+      height: 120px;
+      border: 2px solid #8b6f47;
+      background: #fbe9cf;
+      image-rendering: pixelated;
+      image-rendering: -moz-crisp-edges;
+      image-rendering: crisp-edges;
+    `;
+    this.ctx = this.canvas.getContext('2d')!;
+    
+    canvasWrapper.appendChild(this.canvas);
+    wrapper.appendChild(canvasWrapper);
+    
+    // Create customization UI
+    this.createUI(wrapper);
+    
+    container.appendChild(wrapper);
+    
+    // Start preview
     this.updatePreview();
   }
 
   private async updatePreview() {
-    // Stop existing animation if any
-    this.previewAnim?.stop();
-
     // Rebuild composited sprite with current options
     await loadPlayerImages(this.player);
-    await buildCompositeSprite(this.player, PREVIEW_SIZE.frameW, PREVIEW_SIZE.frameH);
+    await buildCompositeSprite(this.player, SPRITE_SIZE, SPRITE_SIZE);
 
-    // Create new preview animation
-    this.previewAnim = createAnimationLoop({
-      ctx: this.ctx,
-      player: this.player,
-      animationName: 'idle_forward',
-      frameW: PREVIEW_SIZE.frameW,
-      frameH: PREVIEW_SIZE.frameH,
-      x: (PREVIEW_SIZE.width - PREVIEW_SIZE.frameW) / 2,
-      y: (PREVIEW_SIZE.height - PREVIEW_SIZE.frameH) / 2,
-      fps: 4,
-    });
-
-    this.previewAnim.start();
+    // Clear canvas
+    this.ctx.clearRect(0, 0, PREVIEW_SIZE, PREVIEW_SIZE);
+    
+    // Draw single frame (idle_forward, row 1 col 1) scaled up
+    if (this.player.compositedImage) {
+      // Disable smoothing for crisp pixel art
+      this.ctx.imageSmoothingEnabled = false;
+      
+      // Draw the idle forward sprite (row 1, col 1 = position 0,0 in sprite sheet)
+      this.ctx.drawImage(
+        this.player.compositedImage,
+        0, 0, // Source position (first frame)
+        SPRITE_SIZE, SPRITE_SIZE, // Source size
+        0, 0, // Destination position
+        PREVIEW_SIZE, PREVIEW_SIZE // Destination size (scaled up)
+      );
+    }
   }
 
   private createUI(container: HTMLElement) {
-    const ui = document.createElement('div');
-    ui.className = 'character-customizer';
+    // Row 1: Category and Select Part side by side
+    const topRow = document.createElement('div');
+    topRow.style.cssText = `
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.4rem;
+      width: 100%;
+    `;
     
-    // Category tabs
+    // Category card
+    const tabsCard = document.createElement('div');
+    tabsCard.style.cssText = `
+      background: #c9a876;
+      border: 2px solid #8b6f47;
+      padding: 0.4rem;
+      box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+    `;
+    
+    const tabsLabel = document.createElement('div');
+    tabsLabel.style.cssText = `
+      margin-bottom: 0.3rem;
+      font-size: 0.5rem;
+      color: #2d1f0f;
+      font-family: 'Press Start 2P', monospace;
+      text-align: center;
+    `;
+    tabsLabel.textContent = 'CATEGORY';
+    tabsCard.appendChild(tabsLabel);
+    
     const tabs = document.createElement('div');
-    tabs.className = 'customizer-tabs';
-    ['Basic', 'Clothes', 'Accessories'].forEach(category => {
+    tabs.style.cssText = `
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.3rem;
+    `;
+    
+    ['Basic', 'Clothes', 'Access'].forEach((category, idx) => {
+      const fullName = ['Basic', 'Clothes', 'Accessories'][idx];
       const tab = document.createElement('button');
       tab.textContent = category;
-      tab.onclick = () => this.showCategory(category);
+      tab.style.cssText = `
+        border: 2px solid #8b6f47;
+        padding: 0.4rem 0.2rem;
+        font-size: 0.5rem;
+        background: #b8956a;
+        color: #2d1f0f;
+        cursor: pointer;
+        box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+        font-family: 'Press Start 2P', monospace;
+        white-space: nowrap;
+        overflow: hidden;
+      `;
+      tab.onclick = () => {
+        this.showCategory(fullName);
+        tabs.querySelectorAll('button').forEach(b => {
+          (b as HTMLElement).style.background = '#b8956a';
+        });
+        tab.style.background = '#e0c095';
+      };
       tabs.appendChild(tab);
     });
-    ui.appendChild(tabs);
+    tabsCard.appendChild(tabs);
+    topRow.appendChild(tabsCard);
 
-  // Options panel (store a local reference so we don't query the whole document)
-  const options = document.createElement('div');
-  options.className = 'customizer-options';
-  ui.appendChild(options);
-  // Attach to instance so other methods reference the correct node
-  (this as any)._optionsContainer = options;
+    // Select Part card
+    const optionsCard = document.createElement('div');
+    optionsCard.style.cssText = `
+      background: #c9a876;
+      border: 2px solid #8b6f47;
+      padding: 0.4rem;
+      box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+    `;
+    
+    const optionsLabel = document.createElement('div');
+    optionsLabel.style.cssText = `
+      margin-bottom: 0.3rem;
+      font-size: 0.5rem;
+      color: #2d1f0f;
+      font-family: 'Press Start 2P', monospace;
+      text-align: center;
+    `;
+    optionsLabel.textContent = 'SELECT PART';
+    optionsCard.appendChild(optionsLabel);
+    
+    const options = document.createElement('div');
+    options.style.cssText = `
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.3rem;
+      min-height: 110px;
+      align-content: start;
+    `;
+    optionsCard.appendChild(options);
+    (this as any)._optionsContainer = options;
+    topRow.appendChild(optionsCard);
+    
+    container.appendChild(topRow);
 
-    // Navigation buttons
+    // Row 2: Change buttons
+    const navCard = document.createElement('div');
+    navCard.style.cssText = `
+      background: #c9a876;
+      border: 2px solid #8b6f47;
+      padding: 0.4rem;
+      box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+      width: 100%;
+    `;
+    
+    const navLabel = document.createElement('div');
+    navLabel.style.cssText = `
+      margin-bottom: 0.3rem;
+      font-size: 0.5rem;
+      color: #2d1f0f;
+      font-family: 'Press Start 2P', monospace;
+      text-align: center;
+    `;
+    navLabel.textContent = 'CHANGE';
+    navCard.appendChild(navLabel);
+    
     const nav = document.createElement('div');
-    nav.className = 'customizer-nav';
+    nav.style.cssText = `
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.4rem;
+    `;
     
     const prevBtn = document.createElement('button');
-    prevBtn.textContent = '←';
+    prevBtn.textContent = '◄';
+    prevBtn.style.cssText = `
+      border: 2px solid #8b6f47;
+      padding: 0.5rem;
+      font-size: 0.9rem;
+      background: #b8956a;
+      color: #2d1f0f;
+      cursor: pointer;
+      box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+      font-family: 'Press Start 2P', monospace;
+    `;
     prevBtn.onclick = () => this.cycleOption(-1);
     
     const nextBtn = document.createElement('button');
-    nextBtn.textContent = '→';
+    nextBtn.textContent = '►';
+    nextBtn.style.cssText = prevBtn.style.cssText;
     nextBtn.onclick = () => this.cycleOption(1);
     
     nav.appendChild(prevBtn);
     nav.appendChild(nextBtn);
-    ui.appendChild(nav);
+    navCard.appendChild(nav);
+    container.appendChild(navCard);
 
-    // Apply button
+    // Row 3: Save button
     const applyBtn = document.createElement('button');
-    applyBtn.className = 'customizer-apply';
-    applyBtn.textContent = 'Save Changes';
+    applyBtn.textContent = 'SAVE';
+    applyBtn.style.cssText = `
+      border: 2px solid #4a7a4a;
+      padding: 0.6rem;
+      font-size: 0.65rem;
+      background: #6a9e6a;
+      color: #fbe9cf;
+      cursor: pointer;
+      box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+      font-family: 'Press Start 2P', monospace;
+      font-weight: bold;
+      width: 100%;
+    `;
     applyBtn.onclick = () => this.applyChanges();
-    ui.appendChild(applyBtn);
-
-    container.appendChild(ui);
+    container.appendChild(applyBtn);
+    
+    // Initialize with Basic category and select first button
+    setTimeout(() => {
+      const firstTab = tabs.querySelector('button') as HTMLElement;
+      if (firstTab) firstTab.style.background = '#e0c095';
+    }, 0);
+    this.showCategory('Basic');
   }
 
   private showCategory(category: string) {
@@ -134,22 +306,44 @@ export class CharacterCustomizer {
   }
 
   private showOptions(options: string[]) {
-  // Use the locally stored options container to avoid collisions
-  const containerEl: HTMLElement = (this as any)._optionsContainer as HTMLElement;
-  if (!containerEl) return;
-  containerEl.innerHTML = '';
+    const containerEl: HTMLElement = (this as any)._optionsContainer as HTMLElement;
+    if (!containerEl) return;
+    containerEl.innerHTML = '';
 
     options.forEach(opt => {
       const btn = document.createElement('button');
       btn.textContent = opt.charAt(0).toUpperCase() + opt.slice(1);
+      btn.style.cssText = `
+        border: 2px solid #8b6f47;
+        padding: 0.4rem 0.2rem;
+        font-size: 0.5rem;
+        background: #b8956a;
+        color: #2d1f0f;
+        cursor: pointer;
+        box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+        font-family: 'Press Start 2P', monospace;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      `;
       btn.onclick = () => {
         this.currentCategory = opt as any;
-        // Limit query to our options container
-        containerEl.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        containerEl.querySelectorAll('button').forEach(b => {
+          (b as HTMLElement).style.background = '#b8956a';
+        });
+        btn.style.background = '#e0c095';
       };
       containerEl.appendChild(btn);
     });
+    
+    // Set first option as active by default
+    if (options.length > 0) {
+      const firstBtn = containerEl.querySelector('button') as HTMLElement;
+      if (firstBtn) {
+        this.currentCategory = options[0] as any;
+        firstBtn.style.background = '#e0c095';
+      }
+    }
   }
 
   private async cycleOption(direction: 1 | -1) {
@@ -216,7 +410,6 @@ export class CharacterCustomizer {
   }
 
   public cleanup() {
-    this.previewAnim?.stop();
-    this.canvas.remove();
+    // Nothing to cleanup anymore since we're not animating
   }
 }
