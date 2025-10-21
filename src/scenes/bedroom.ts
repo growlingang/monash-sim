@@ -428,10 +428,17 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
   const keys: Record<string, boolean> = {};
 
   const handleKeyDown = (e: KeyboardEvent) => {
-    keys[e.key.toLowerCase()] = true;
+    const key = e.key.toLowerCase();
+    
+    // Prevent arrow keys from scrolling the page
+    if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
+      e.preventDefault();
+    }
+    
+    keys[key] = true;
 
     // Press P to open evening activities phone
-    if (e.key.toLowerCase() === 'p' && !phoneOpen) {
+    if (key === 'p' && !phoneOpen) {
       phoneOpen = true;
       createPhoneOverlay(root, store, () => {
         phoneOpen = false;
@@ -439,7 +446,7 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
     }
 
     // Test shortcut: Press T to open tileset test scene
-    if (e.key.toLowerCase() === 't') {
+    if (key === 't') {
       cleanup();
       store.setState((prev) => ({ ...prev, currentScene: 'tileset-test' }));
     }
