@@ -10,7 +10,7 @@ import type {
   SceneId,
 } from './types';
 
-export const START_OF_DAY_MINUTES = 0; // minutes since 07:00
+export const START_OF_DAY_MINUTES = 15; // minutes since 07:00 (start at 07:15)
 export const RECAP_TRIGGER_MINUTES = 15 * ((22 - 7) * 4); // 15 min increments up to 22:00
 
 export const RAPPORT_MIN = -3;

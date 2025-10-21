@@ -103,7 +103,7 @@ export async function buildCompositeSprite(
   imgEl.src = canvas.toDataURL('image/png');
 
   // For debugging. Triggers a download of the composited sprite sheet.
-  // Commented out to prevent automatic downloads
+  // COMMENTED OUT: Auto-download disabled for normal gameplay
   // const a = document.createElement('a');
   // a.href = imgEl.src;
   // a.download = 'composited_sprite.png';
@@ -112,8 +112,6 @@ export async function buildCompositeSprite(
   // Store on player
   player.compositedImage = imgEl;
   return imgEl;
-
-  
 }
 
 /**
