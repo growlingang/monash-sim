@@ -10,6 +10,7 @@ import { ANIMATION_FRAMES } from '../sprites/animationFrames';
 import { buildCompositeSprite } from '../sprites/playerSpriteOptimizer';
 import { DEFAULT_PLAYER } from '../sprites/playerSprite';
 import { createAssignmentMinigame } from '../minigames/assignmentMinigame';
+import { Tileset } from '../utils/tilesetLoader';
 
 type ChoiceKey = 'friendly' | 'dismissive' | 'major';
 
@@ -331,10 +332,13 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
     const canvasWrap = document.createElement('div');
     canvasWrap.className = 'meeting__canvasWrap';
 
+    const TILE_SIZE = 32;
+    const ROOM_WIDTH = 20;
+    const ROOM_HEIGHT = 12;
     const canvas = document.createElement('canvas');
     canvas.className = 'meeting__canvas';
-    canvas.width = 640;
-    canvas.height = 360;
+    canvas.width = ROOM_WIDTH * TILE_SIZE; // 640
+    canvas.height = ROOM_HEIGHT * TILE_SIZE; // 384
     const ctx = canvas.getContext('2d')!;
 
     const status = document.createElement('div');
@@ -369,20 +373,86 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
     root.appendChild(container);
 
     // Restore or initialize state
-    let meetingState: MeetingState = (window as any).__gm_state || {
-        playerX: 320,
-        playerY: 280,
-        npcs: [
-            { npcId: 'bonsen' as NpcId, x: 180, y: 120, talked: false },
-            { npcId: 'zahir' as NpcId, x: 320, y: 100, talked: false },
-            { npcId: 'jiun' as NpcId, x: 460, y: 120, talked: false },
-            { npcId: 'anika' as NpcId, x: 460, y: 240, talked: false },
-            { npcId: 'jiawen' as NpcId, x: 180, y: 240, talked: false },
-        ],
-        activeDialogue: null,
-        finished: false,
-        talkedCount: 0,
-    };
+    // compute default spawn: middle column, third-last row (player position is center coordinates)
+    const defaultSpawnTileX = Math.floor(ROOM_WIDTH / 2);
+    const defaultSpawnTileY = ROOM_HEIGHT - 4; // moved up one tile from 3rd-last to 4th-last
+    const playerSize = TILE_SIZE * 2; // use same 2-tile-tall player as LTBinside/bedroom
+    // To have the feet centered on the tile row, the player's y (center) should be tileY * TILE_SIZE + TILE_SIZE - (footHeight/2)
+    const footHeight = 4;
+    const defaultSpawnX = defaultSpawnTileX * TILE_SIZE + TILE_SIZE / 2;
+    const defaultSpawnY = defaultSpawnTileY * TILE_SIZE + TILE_SIZE - (footHeight / 2) - (playerSize - TILE_SIZE) / 2;
+
+    // Hotspots overlay (like LTBinside) - single tile below spawn to go back outside
+    type Hotspot = { x: number; y: number; scene: string };
+    const hotspots: Hotspot[] = [
+        // moved one tile lower than before
+        { x: defaultSpawnTileX, y: defaultSpawnTileY + 2, scene: 'ltb-inside' },
+    ];
+
+    // ...existing code...
+
+    // Restore or initialize state. If previous saved state places the player on a hotspot
+    // (for example, when the player left via the hotspot), clear it and use the default spawn
+    // so we don't immediately re-trigger the hotspot on re-entry.
+    const savedGm = (window as any).__gm_state as MeetingState | undefined;
+    let meetingState: MeetingState;
+    if (savedGm) {
+        // compute player's bbox from saved center coords
+        const pxLeft = savedGm.playerX - playerSize / 2;
+        const pxTop = savedGm.playerY - playerSize / 2;
+        const pxRight = pxLeft + playerSize;
+        const pxBottom = pxTop + playerSize;
+        let overlapsHotspot = false;
+        for (const h of hotspots) {
+            const left = h.x * TILE_SIZE;
+            const top = h.y * TILE_SIZE;
+            const right = left + TILE_SIZE;
+            const bottom = top + TILE_SIZE;
+            if (pxLeft < right && pxRight > left && pxTop < bottom && pxBottom > top) {
+                overlapsHotspot = true;
+                break;
+            }
+        }
+        if (overlapsHotspot) {
+            // clear saved state and fall back to default spawn
+            delete (window as any).__gm_state;
+            meetingState = {
+                playerX: defaultSpawnX,
+                playerY: defaultSpawnY,
+                npcs: [
+                    { npcId: 'bonsen' as NpcId, x: 180, y: 120, talked: false },
+                    { npcId: 'zahir' as NpcId, x: 320, y: 100, talked: false },
+                    { npcId: 'jiun' as NpcId, x: 460, y: 120, talked: false },
+                    { npcId: 'anika' as NpcId, x: 460, y: 240, talked: false },
+                    { npcId: 'jiawen' as NpcId, x: 180, y: 240, talked: false },
+                ],
+                activeDialogue: null,
+                finished: false,
+                talkedCount: 0,
+            };
+        } else {
+            meetingState = savedGm;
+        }
+    } else {
+        meetingState = {
+            playerX: defaultSpawnX,
+            playerY: defaultSpawnY,
+            npcs: [
+                { npcId: 'bonsen' as NpcId, x: 180, y: 120, talked: false },
+                { npcId: 'zahir' as NpcId, x: 320, y: 100, talked: false },
+                { npcId: 'jiun' as NpcId, x: 460, y: 120, talked: false },
+                { npcId: 'anika' as NpcId, x: 460, y: 240, talked: false },
+                { npcId: 'jiawen' as NpcId, x: 180, y: 240, talked: false },
+            ],
+            activeDialogue: null,
+            finished: false,
+            talkedCount: 0,
+        };
+    }
+
+    // ...existing code...
+
+    // ...existing code...
 
     const persistState = () => {
         (window as any).__gm_state = meetingState;
@@ -403,14 +473,144 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
     document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('keyup', handleKeyUp);
 
-    // Collision/bounds
-    const isWalkable = (x: number, y: number): boolean => {
-        // Keep player in bounds
-        if (x < 20 || x > 620 || y < 20 || y > 340) return false;
-        // Table area (central rectangle)
-        if (x > 200 && x < 440 && y > 140 && y < 220) return false;
-        return true;
-    };
+        // Tilesets & room data (hardwood floors + smart walls) — visual layer only
+        let roomTileset: Tileset;
+        let hardwoodTileset: Tileset;
+        let wallTileset: Tileset;
+
+        try {
+                roomTileset = new Tileset({ imagePath: '/sprites/tiles/room-tileset.png', tileWidth: 32, tileHeight: 32, columns: 8, rows: 2 });
+                await roomTileset.load();
+        } catch (error) {
+                const c = document.createElement('canvas'); c.width = 8 * TILE_SIZE; c.height = 2 * TILE_SIZE; const t = c.getContext('2d')!;
+                t.fillStyle = '#3a3a3a'; t.fillRect(0,0,c.width,c.height);
+                roomTileset = new Tileset({ imagePath: c.toDataURL(), tileWidth: 32, tileHeight: 32, columns: 8, rows: 2 });
+                await roomTileset.load();
+        }
+
+        try {
+                hardwoodTileset = new Tileset({ imagePath: '/sprites/tiles/carpet.png', tileWidth: 32, tileHeight: 32, columns: 3, rows: 2 });
+                await hardwoodTileset.load();
+        } catch (err) {
+                const c = document.createElement('canvas'); c.width = 3 * TILE_SIZE; c.height = 2 * TILE_SIZE; const t = c.getContext('2d')!;
+                t.fillStyle = '#8B4513'; t.fillRect(0,0,c.width,c.height);
+                hardwoodTileset = new Tileset({ imagePath: c.toDataURL(), tileWidth: 32, tileHeight: 32, columns: 3, rows: 2 });
+                await hardwoodTileset.load();
+        }
+
+        try {
+                wallTileset = new Tileset({ imagePath: '/sprites/tiles/creamy_walls.png', tileWidth: 32, tileHeight: 32, columns: 8, rows: 7 });
+                await wallTileset.load();
+        } catch (err) {
+                const c = document.createElement('canvas'); c.width = 4 * TILE_SIZE; c.height = 3 * TILE_SIZE; const t = c.getContext('2d')!;
+                t.fillStyle = '#8B7355'; t.fillRect(0,0,c.width,c.height);
+                wallTileset = new Tileset({ imagePath: c.toDataURL(), tileWidth: 32, tileHeight: 32, columns: 4, rows: 3 });
+                await wallTileset.load();
+        }
+
+        // room layout: top 2 rows walls, side walls and hardwood interior, bottom 2 rows walls
+        const roomData: (number | 'H')[][] = [
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,'H','H','H','H','H','H','H','H','H','H','H','H','H','H','H','H','H','H',1],
+                [1,'H','H','H','H','H','H','H','H','H','H','H','H','H','H','H','H','H','H',1],
+                [1,'H','H','H','H','H','H','H','H','H','H','H','H','H','H','H','H','H','H',1],
+                [1,'H','H','H','H','H','H','H','H','H','H','H','H','H','H','H','H','H','H',1],
+                [1,'H','H','H','H','H','H','H','H','H','H','H','H','H','H','H','H','H','H',1],
+                [1,'H','H','H','H','H','H','H','H','H','H','H','H','H','H','H','H','H','H',1],
+                [1,'H','H','H','H','H','H','H','H','H','H','H','H','H','H','H','H','H','H',1],
+                [1,'H','H','H','H','H','H','H','H','H','H','H','H','H','H','H','H','H','H',1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        ];
+
+        const getWallTileIndex = (x: number, y: number): number => {
+                const isLeftSideWall = x === 0;
+                const isRightSideWall = x === roomData[y].length - 1;
+                const isBottomWall = y === roomData.length - 1;
+                const hasWallAbove = y > 0 && roomData[y - 1][x] === 1;
+                const hasWallBelow = y < roomData.length - 1 && roomData[y + 1][x] === 1;
+                const hasWallLeft = x > 0 && roomData[y][x - 1] === 1;
+                const hasWallRight = x < roomData[y].length - 1 && roomData[y][x + 1] === 1;
+                const hasWallDiagonalDownLeft = y < roomData.length - 1 && x > 0 && roomData[y + 1][x - 1] === 1;
+                const hasWallDiagonalDownRight = y < roomData.length - 1 && x < roomData[y].length - 1 && roomData[y + 1][x + 1] === 1;
+                if (!hasWallAbove && hasWallBelow && !hasWallLeft && hasWallRight) { 
+                    return 9; 
+                } else if (hasWallAbove && hasWallBelow && !hasWallLeft && hasWallRight && hasWallDiagonalDownRight) { 
+                    return 1; 
+                } else if (hasWallAbove && hasWallBelow && hasWallLeft && !hasWallRight && hasWallDiagonalDownLeft) { 
+                    return 6; 
+                } else if (hasWallAbove && hasWallBelow && !hasWallLeft && hasWallRight && !hasWallDiagonalDownRight) { 
+                    return 11;
+                } else if (hasWallAbove && hasWallBelow && hasWallLeft && !hasWallRight && !hasWallDiagonalDownLeft) { 
+                    return 12;
+                } else if (!hasWallAbove && hasWallBelow && hasWallLeft && !hasWallRight) { 
+                    return 14; 
+                } else if (isLeftSideWall &&hasWallAbove && hasWallBelow && !hasWallLeft && !hasWallRight) { 
+                        return 41;
+                } else if (isRightSideWall &&hasWallAbove && hasWallBelow && !hasWallLeft && !hasWallRight) { 
+                    return 46;
+                } else if (!hasWallAbove && hasWallBelow && hasWallLeft && hasWallRight) {
+                    return 20
+                } else if (isBottomWall && !hasWallLeft && hasWallRight) {
+                    return 11;
+                } else if (isBottomWall && hasWallLeft && !hasWallRight) {
+                    return 12;
+                } else if (isBottomWall) { 
+                    return 36;
+                } else { 
+                    return 27;
+                }
+        };
+
+        const getHardwoodTileIndex = (x: number, y: number): number => {
+                const hasWallAbove = y > 0 && roomData[y - 1][x] === 1;
+                const hasWallBelow = y < roomData.length - 1 && roomData[y + 1][x] === 1;
+                const hasWallLeft = x > 0 && roomData[y][x - 1] === 1;
+                const hasWallRight = x < roomData[y].length - 1 && roomData[y][x + 1] === 1;
+                const hasWallDiagonalUpLeft = y > 0 && x > 0 && roomData[y - 1][x - 1] === 1;
+                if (hasWallAbove && hasWallLeft) {
+                    return 0;
+                } else if (hasWallAbove && hasWallBelow && hasWallLeft && hasWallRight) {
+                    return 5;
+                } else if (hasWallAbove) {
+                    return 1;
+                } else if (hasWallDiagonalUpLeft && !hasWallLeft) {
+                    return 2;
+                } else if (hasWallLeft) {
+                    return 3;
+                } else {
+                    return 4;
+                }
+        };
+
+        const renderRoomWithSmartTiles = (ctx: CanvasRenderingContext2D) => {
+                for (let y = 0; y < roomData.length; y++) {
+                    for (let x = 0; x < roomData[y].length; x++) {
+                        const tileValue = roomData[y][x];
+                        const screenX = x * TILE_SIZE;
+                        const screenY = y * TILE_SIZE;
+                        if (tileValue === 'H') {
+                            const hardwoodTileIndex = getHardwoodTileIndex(x, y);
+                            hardwoodTileset.drawTile(ctx, hardwoodTileIndex, screenX, screenY);
+                        } else if (tileValue === 1) {
+                            const wallTileIndex = getWallTileIndex(x, y);
+                            wallTileset.drawTile(ctx, wallTileIndex, screenX, screenY);
+                        } else {
+                            roomTileset.drawTile(ctx, tileValue as number, screenX, screenY);
+                        }
+                    }
+                }
+        };
+
+        // Collision/bounds (preserve original table blocking and margins)
+        const isWalkable = (x: number, y: number): boolean => {
+                // Keep player in bounds with 20px margin
+                if (x < 20 || x > (ROOM_WIDTH * TILE_SIZE) - 20 || y < 20 || y > (ROOM_HEIGHT * TILE_SIZE) - 20) return false;
+                // Table area (central rectangle) - still blocks movement
+                if (x > 200 && x < 440 && y > 140 && y < 220) return false;
+                return true;
+        };
 
     const tryInteract = () => {
         if (meetingState.activeDialogue) return;
@@ -422,6 +622,24 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
             if (dist < 50) {
                 startDialogue(npc.npcId);
                 return;
+            }
+        }
+        // Check hotspot under player (simple bbox overlap)
+        for (const h of hotspots) {
+            const left = h.x * TILE_SIZE;
+            const top = h.y * TILE_SIZE;
+            const right = left + TILE_SIZE;
+            const bottom = top + TILE_SIZE;
+            const pxLeft = meetingState.playerX - playerSize / 2;
+            const pxTop = meetingState.playerY - playerSize / 2;
+            const pxRight = pxLeft + playerSize;
+            const pxBottom = pxTop + playerSize;
+            if (pxLeft < right && pxRight > left && pxTop < bottom && pxBottom > top) {
+                    // going back to LTB inside - persist spawn so LTB can place player outside
+                    (window as any).__ltb_state = { env: 'outside', x: h.x * TILE_SIZE + (TILE_SIZE - playerSize) / 2, y: h.y * TILE_SIZE + (TILE_SIZE - playerSize) / 2 };
+                    store.setState(prev => transitionScene(prev, h.scene as any));
+                    if ((window as any).__gm_cleanup) (window as any).__gm_cleanup();
+                    return;
             }
         }
     };
@@ -843,11 +1061,29 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
         }
     };
 
+    // Draw player helper using composite sprite at playerSize
+    const drawPlayerAt = (px: number, py: number) => {
+        if (customSprite?.compositedImage) {
+            // composite sprite frames are 32x32 source; scale to playerSize
+            const frame = ANIMATION_FRAMES['idle_forward'][0];
+            drawSubSprite(ctx, customSprite.compositedImage, {
+                x: px - playerSize / 2,
+                y: py - playerSize / 2,
+                width: playerSize,
+                height: playerSize,
+                sourceX: (frame.col - 1) * 32,
+                sourceY: (frame.row - 1) * 32,
+                sourceWidth: 32,
+                sourceHeight: 32,
+            });
+        }
+    };
+
     // Game loop
     let animFrame: number;
     const loop = () => {
         // Update player position
-        if (!meetingState.activeDialogue) {
+    if (!meetingState.activeDialogue) {
             const speed = 2;
             let dx = 0, dy = 0;
             if (keys.has('w') || keys.has('arrowup')) dy -= speed;
@@ -855,13 +1091,43 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
             if (keys.has('a') || keys.has('arrowleft')) dx -= speed;
             if (keys.has('d') || keys.has('arrowright')) dx += speed;
 
-            const newX = meetingState.playerX + dx;
-            const newY = meetingState.playerY + dy;
-            if (isWalkable(newX, newY)) {
-                meetingState.playerX = newX;
-                meetingState.playerY = newY;
-                persistState();
-            }
+                        const newX = meetingState.playerX + dx;
+                        const newY = meetingState.playerY + dy;
+                        // Foot-based collision check like LTBinside: bottom 4px, middle ~50% width
+                        const isWalkableFeet = (cx: number, cy: number): boolean => {
+                                // cx/cy are the player's center coordinates
+                                const footHeight = 4;
+                                const footWidth = Math.max(8, Math.floor(playerSize * 0.5));
+                                const footOffsetX = Math.floor((playerSize - footWidth) / 2);
+                                // top-left of sprite
+                                const topLeftY = cy - (playerSize / 2);
+                                const topLeftX = cx - (playerSize / 2);
+                                const footTop = topLeftY + (playerSize - footHeight);
+                                const footBottom = topLeftY + playerSize - 1;
+                                const footLeft = topLeftX + footOffsetX;
+                                const footRight = footLeft + footWidth - 1;
+
+                                const leftTile = Math.floor(footLeft / TILE_SIZE);
+                                const rightTile = Math.floor(footRight / TILE_SIZE);
+                                const topTile = Math.floor(footTop / TILE_SIZE);
+                                const bottomTile = Math.floor(footBottom / TILE_SIZE);
+
+                                if (leftTile < 0 || rightTile >= ROOM_WIDTH || topTile < 0 || bottomTile >= ROOM_HEIGHT) return false;
+
+                                for (let ty = topTile; ty <= bottomTile; ty++) {
+                                    for (let tx = leftTile; tx <= rightTile; tx++) {
+                                        const val = roomData[ty][tx];
+                                        if (val === 1) return false;
+                                    }
+                                }
+                                return true;
+                        };
+
+                        if (isWalkable(newX, newY) && isWalkableFeet(newX, newY)) {
+                                meetingState.playerX = newX;
+                                meetingState.playerY = newY;
+                                persistState();
+                        }
 
             // Update status with nearest NPC
             let nearestNpc: NpcState | null = null;
@@ -881,43 +1147,40 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
             } else if (meetingState.talkedCount < 5) {
                 status.textContent = `Talked to ${meetingState.talkedCount}/5 teammates`;
             }
-        }
-
-        // Render with enhanced visuals
-        // Background gradient
-        const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        bgGradient.addColorStop(0, '#1e293b');
-        bgGradient.addColorStop(1, '#0f172a');
-        ctx.fillStyle = bgGradient;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Floor pattern with depth
-        for (let x = 0; x < canvas.width; x += 16) {
-            for (let y = 0; y < canvas.height; y += 16) {
-                if ((x / 16 + y / 16) % 2 === 0) {
-                    ctx.fillStyle = '#2a3347';
-                } else {
-                    ctx.fillStyle = '#1e293b';
+            // Auto-enter hotspots: if player's bbox overlaps any hotspot, transition immediately
+            for (const h of hotspots) {
+                const left = h.x * TILE_SIZE;
+                // move collision zone 1px upward for earlier detection
+                const top = h.y * TILE_SIZE - 1;
+                const right = left + TILE_SIZE;
+                const bottom = top + TILE_SIZE;
+                const pxLeft = meetingState.playerX - playerSize / 2;
+                const pxTop = meetingState.playerY - playerSize / 2;
+                const pxRight = pxLeft + playerSize;
+                const pxBottom = pxTop + playerSize;
+                // use inclusive comparisons so any edge-touch counts as collision
+                if (pxLeft <= right && pxRight >= left && pxTop <= bottom && pxBottom >= top) {
+                    // persist spawn so LTB can place player outside
+                    (window as any).__ltb_state = { env: 'outside', x: h.x * TILE_SIZE + (TILE_SIZE - playerSize) / 2, y: h.y * TILE_SIZE + (TILE_SIZE - playerSize) / 2 };
+                    // cleanup and transition
+                    if ((window as any).__gm_cleanup) (window as any).__gm_cleanup();
+                    store.setState(prev => transitionScene(prev, h.scene as any));
+                    return; // exit loop/frame since scene is changing
                 }
-                ctx.fillRect(x, y, 16, 16);
             }
         }
 
-        // Add floor grid lines for depth
-        ctx.strokeStyle = 'rgba(100, 116, 139, 0.15)';
-        ctx.lineWidth = 1;
-        for (let x = 0; x <= canvas.width; x += 32) {
-            ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, canvas.height);
-            ctx.stroke();
-        }
-        for (let y = 0; y <= canvas.height; y += 32) {
-            ctx.beginPath();
-            ctx.moveTo(0, y);
-            ctx.lineTo(canvas.width, y);
-            ctx.stroke();
-        }
+        // Render with enhanced visuals
+    // Tile-based room background (walls + hardwood)
+    renderRoomWithSmartTiles(ctx);
+
+    // Draw hotspot overlays (bright yellow)
+    ctx.save();
+    ctx.fillStyle = 'rgba(255, 223, 0, 0.85)';
+    for (const h of hotspots) {
+        ctx.fillRect(h.x * TILE_SIZE, h.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    }
+    ctx.restore();
 
         // Whiteboard at top with shadow and 3D effect
         ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
@@ -1094,20 +1357,9 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
         });
 
 
-        // Player composite sprite (idle_forward frame)
+        // Draw player with size consistent with bedroom/LTBinside
         if (customSprite?.compositedImage) {
-            const size = 32;
-            const playerFrame = ANIMATION_FRAMES['idle_forward'][0];
-            drawSubSprite(ctx, customSprite.compositedImage, {
-                x: meetingState.playerX - size / 2,
-                y: meetingState.playerY - size / 2,
-                width: size,
-                height: size,
-                sourceX: (playerFrame.col - 1) * 32,
-                sourceY: (playerFrame.row - 1) * 32,
-                sourceWidth: 32,
-                sourceHeight: 32,
-            });
+            drawPlayerAt(meetingState.playerX, meetingState.playerY);
             // YOU label with shadow
             ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
             ctx.shadowBlur = 4;
@@ -1115,28 +1367,29 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
             ctx.fillStyle = '#1e293b';
             ctx.font = 'bold 10px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText('YOU', meetingState.playerX, meetingState.playerY + 24);
+            ctx.fillText('YOU', meetingState.playerX, meetingState.playerY + (playerSize / 2) + 8);
             ctx.shadowBlur = 0;
             ctx.shadowOffsetY = 0;
         } else {
-            // Fallback: original circle
+            // Fallback: draw a proportional circle
             ctx.shadowColor = 'rgba(245, 158, 11, 0.6)';
             ctx.shadowBlur = 20;
             ctx.shadowOffsetX = 0;
             ctx.shadowOffsetY = 4;
+            const r = Math.max(12, playerSize / 4);
             const playerGradient = ctx.createRadialGradient(
                 meetingState.playerX,
                 meetingState.playerY - 2,
                 4,
                 meetingState.playerX,
                 meetingState.playerY,
-                14
+                r
             );
             playerGradient.addColorStop(0, '#fbbf24');
             playerGradient.addColorStop(1, '#f59e0b');
             ctx.fillStyle = playerGradient;
             ctx.beginPath();
-            ctx.arc(meetingState.playerX, meetingState.playerY, 14, 0, Math.PI * 2);
+            ctx.arc(meetingState.playerX, meetingState.playerY, r, 0, Math.PI * 2);
             ctx.fill();
             ctx.shadowBlur = 0;
             ctx.shadowOffsetY = 0;
@@ -1146,7 +1399,7 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
             ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.arc(meetingState.playerX, meetingState.playerY - 3, 10, Math.PI * 1.2, Math.PI * 1.8);
+            ctx.arc(meetingState.playerX, meetingState.playerY - (r / 4), Math.max(8, r - 4), Math.PI * 1.2, Math.PI * 1.8);
             ctx.stroke();
             ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
             ctx.shadowBlur = 4;

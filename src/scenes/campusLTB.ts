@@ -444,11 +444,12 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
         // Emphasize the entrance hotspot when outside
         if (env === 'outside') {
             const entrance = hsList.find(h => h.id === 'entrance');
-            if (entrance) {
-                ctx.strokeStyle = 'rgba(251,191,36,0.9)'; // amber
-                ctx.lineWidth = 2;
-                ctx.strokeRect(entrance.x * TILE_SIZE + 1, entrance.y * TILE_SIZE + 1, entrance.w * TILE_SIZE - 2, entrance.h * TILE_SIZE - 2);
-                ctx.lineWidth = 1;
+        if (entrance) {
+            ctx.strokeStyle = 'rgba(251,191,36,0.9)'; // amber
+            ctx.lineWidth = 2;
+            // Shift the emphasis box slightly lower (approx 6 pixels) to match visual alignment
+            ctx.strokeRect(entrance.x * TILE_SIZE + 1, entrance.y * TILE_SIZE + 1 + 6, entrance.w * TILE_SIZE - 2, entrance.h * TILE_SIZE - 2);
+            ctx.lineWidth = 1;
             }
         }
 
