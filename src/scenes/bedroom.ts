@@ -55,6 +55,15 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
   let entrywaySprite: HTMLImageElement | null = null;
   let openWindowSprite: HTMLImageElement | null = null;
   let bedSprite: HTMLImageElement | null = null;
+  let diningtableSprite: HTMLImageElement | null = null;
+  let wardrobeSprite: HTMLImageElement | null = null;
+  let drumkitSprite: HTMLImageElement | null = null;
+  let posterSprite: HTMLImageElement | null = null;
+  let poster1Sprite: HTMLImageElement | null = null;
+  let pumpkinSprite: HTMLImageElement | null = null;
+  let redcouchSprite_faceleft: HTMLImageElement | null = null;
+  let redcouchSprite_faceright: HTMLImageElement | null = null;
+  let carpetSprite  : HTMLImageElement | null = null;
   
   try {
     playerSprite = await loadSprite('/sprites/player/player-idle.png');
@@ -79,6 +88,12 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
 
   await buildCompositeSprite(customSprite, 32, 32);
 
+  try {
+    diningtableSprite = await loadSprite('/sprites/tiles/dining_table.png');
+    console.log('✅ Dining Table sprite loaded successfully!');
+  } catch (error) {
+    console.warn('⚠️ Failed to load Dining Table sprite, using rectangle fallback', error);
+  }
   
 
   try {
@@ -627,10 +642,18 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
         height: plantSprite.height,
       });
     }
+    if (diningtableSprite) {
+      drawSprite(ctx, diningtableSprite, {
+        x: 15 * TILE_SIZE,
+        y: 8 * TILE_SIZE,
+        width: diningtableSprite.width,
+        height: diningtableSprite.height,
+      });
+    }
 
     if (bedSprite) {
       drawSprite(ctx, bedSprite, {
-        x: 0.9 * TILE_SIZE,
+        x: 9 * TILE_SIZE,
         y: 0.9 * TILE_SIZE,
         width: bedSprite.width,
         height: bedSprite.height,
