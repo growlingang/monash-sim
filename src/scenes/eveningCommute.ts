@@ -14,6 +14,7 @@ import { drawSubSprite } from '../utils/spriteLoader';
 import { ANIMATION_FRAMES } from '../sprites/animationFrames';
 import { buildCompositeSprite } from '../sprites/playerSpriteOptimizer';
 import { DEFAULT_PLAYER } from '../sprites/playerSprite';
+import { createPhoneOverlay } from '../ui/phoneOverlay';
 
 const TILE_SIZE = 32;
 const BUS_BAY_WIDTH = 24; // tiles - wider to fill more screen
@@ -228,6 +229,7 @@ export const renderEveningCommute = async (root: HTMLElement, store: GameStore) 
     const playerSize = TILE_SIZE;
     let lastTime = performance.now();
     let gameActive = true;
+    let phoneOpen = false;
 
     // Composite sprite / animation state
     let frameIndex = 0;
@@ -247,7 +249,13 @@ export const renderEveningCommute = async (root: HTMLElement, store: GameStore) 
 
     const handleKeyDown = (e: KeyboardEvent) => {
         keys[e.key.toLowerCase()] = true;
-        // Phone shortcut (P key) is handled globally by phoneOverlay.ts
+        // Allow opening phone directly from evening commute scene
+        if (e.key.toLowerCase() === 'p' && !phoneOpen) {
+            phoneOpen = true;
+            createPhoneOverlay(root, store, () => {
+                phoneOpen = false;
+            });
+        }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {

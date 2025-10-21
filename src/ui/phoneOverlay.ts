@@ -245,11 +245,11 @@ const renderPhoneContent = (store: GameStore) => {
     const currentState = store.getState();
     const isBedroomScene = currentState.currentScene === 'bedroom';
     const isMorningPhone = currentState.currentScene === 'morning-phone';
-    
-    // Only show Activities in evening bedroom (after commute, timeMinutes > 60)
-    // Morning bedroom has low timeMinutes (0-60), evening has high timeMinutes (900+)
-    const isEveningBedroom = isBedroomScene && currentState.timeMinutes > 60;
-    const showActivities = isEveningBedroom && !isMorningPhone;
+
+    // Show Activities only after the evening commute ("bus loop") was triggered
+    // We infer this by checking the activity log for an 'evening-commute' entry
+    const hasEveningCommute = currentState.activityLog.some((e) => e.segment === 'evening-commute');
+    const showActivities = isBedroomScene && hasEveningCommute && !isMorningPhone;
 
     const apps = [
       { id: 'character', name: 'Character', icon: '👤', color: '#8b6f47' },

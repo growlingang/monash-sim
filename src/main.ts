@@ -9,11 +9,13 @@ import { playBackgroundMusic } from './utils/audioManager';
 
 const DEFAULT_MAJOR: MajorId = 'engineering';
 
-// Try to load autosave first, otherwise create new store
+// Try to load autosave only when explicitly requested (e.g. ?continue=1)
 let initialState: GameState | null = null;
-if (hasAutoSave()) {
+const params = new URLSearchParams(window.location.search);
+const shouldAutoLoad = hasAutoSave() && params.get('continue') === '1';
+if (shouldAutoLoad) {
   initialState = loadGame(true);
-  console.log('🔄 Auto-save detected and loaded');
+  console.log('🔄 Auto-save loaded via ?continue=1');
 }
 
 const store = initialState 

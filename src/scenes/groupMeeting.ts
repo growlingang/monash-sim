@@ -11,6 +11,9 @@ import { DEFAULT_PLAYER } from '../sprites/playerSprite';
 
 type ChoiceKey = 'friendly' | 'dismissive' | 'major';
 
+// Late threshold: 08:00 AM (minutes since 07:00)
+const CLASS_START_MINUTES = 60; // 8:00 AM relative to 7:00 base
+
 // Image cache for NPC sprites
 const imageCache = new Map<NpcId, HTMLImageElement>();
 
@@ -65,6 +68,23 @@ const typewriterEffect = (element: HTMLElement, text: string, speed = 30): Promi
                 resolve();
             }
         }, speed);
+    });
+};
+
+// Wait for user to click to advance; shows a subtle prompt inside the bubble
+const waitForAdvance = (bubble: HTMLElement, hintText = 'Click to continue'): Promise<void> => {
+    return new Promise((resolve) => {
+        const hint = document.createElement('div');
+        hint.className = 'meeting__advanceHint';
+        hint.textContent = hintText;
+        bubble.appendChild(hint);
+
+        const onClick = () => {
+            bubble.removeEventListener('click', onClick);
+            if (hint && hint.parentElement) hint.parentElement.removeChild(hint);
+            resolve();
+        };
+        bubble.addEventListener('click', onClick, { once: true });
     });
 };
 
@@ -274,6 +294,19 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
                 background: linear-gradient(135deg, #64748b 0%, #475569 100%);
                 box-shadow: none;
             }
+			@keyframes advanceFlicker {
+				0%, 100% { opacity: 0.4; }
+				50% { opacity: 1; }
+			}
+			.meeting__advanceHint {
+				margin-top: 8px;
+				color: #94a3b8;
+				font-size: 12px;
+				text-align: right;
+				animation: advanceFlicker 1.1s ease-in-out infinite;
+				user-select: none;
+				pointer-events: none; /* allow bubble to receive clicks */
+			}
         `;
         document.head.appendChild(style);
     }
@@ -443,11 +476,21 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
         bubble.appendChild(textWrap);
         dialogueLayer.appendChild(bubble);
 
-        // Typewriter greeting
-        await typewriterEffect(textSpan, npc.greeting, 25);
+        // Typewriter greeting (late-aware)
+        const currentStateForGreeting = store.getState();
+        const isLateForGreeting = currentStateForGreeting.timeMinutes >= CLASS_START_MINUTES;
+        const lateGreeting: Record<NpcId, string> = {
+            bonsen: "You're cutting it close. Need me to share the Wi‑Fi again?",
+            zahir: "Oh—you're here! We were getting a little worried.",
+            jiun: "You're late. I pencilled you into the sheet anyway.",
+            anika: "You're late. Let's keep it sharp from here on.",
+            jiawen: "Fashionably late? We saved you a seat!",
+        } as const;
+        const greetingText = isLateForGreeting ? (lateGreeting[npcId] ?? npc.greeting) : npc.greeting;
+        await typewriterEffect(textSpan, greetingText, 25);
 
-        // Wait a moment
-        await new Promise(resolve => setTimeout(resolve, 400));
+        // Wait for user click to proceed to choices
+        await waitForAdvance(bubble);
 
         // Show choices
         showChoices(npcId, bubble);
@@ -468,11 +511,11 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
         const options = document.createElement('div');
         options.className = 'meeting__options';
 
-        const buildButton = (key: ChoiceKey, label: string) => {
+        const buildButton = (key: ChoiceKey, label: string, overridePlayerText?: string) => {
             const btn = document.createElement('button');
             btn.className = 'meeting__optionBtn';
             btn.textContent = label;
-            btn.onclick = () => handleChoice(npcId, key, greetingBubble, optionsWrap);
+            btn.onclick = () => handleChoice(npcId, key, greetingBubble, optionsWrap, overridePlayerText ?? label);
             return btn;
         };
 
@@ -480,11 +523,107 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
         const rDismissive = npc.replies.find((r: any) => r.label === 'dismissive');
         const rMajor = npc.replies.find((r: any) => r.label === 'major');
 
-        if (rFriendly) options.appendChild(buildButton('friendly', rFriendly.line));
-        if (rDismissive) options.appendChild(buildButton('dismissive', rDismissive.line));
-        if (rMajor) {
-            const line = rMajor.line.replace('[player major]', state.major.charAt(0).toUpperCase() + state.major.slice(1));
-            options.appendChild(buildButton('major', line));
+        const isLateForOptions = state.timeMinutes >= CLASS_START_MINUTES;
+        const majorName = state.major.charAt(0).toUpperCase() + state.major.slice(1);
+        const currentRapport = state.rapport[npcId];
+        // Tiering by sign only: low (<0), neutral (=0), high (>0)
+        const rapportTier: 'low' | 'neutral' | 'high' = currentRapport < 0 ? 'low' : currentRapport === 0 ? 'neutral' : 'high';
+
+        if (isLateForOptions) {
+            // Show exactly one randomly-chosen late-specific variant per category, tuned by rapport tier
+            const pickOne = <T,>(arr: ReadonlyArray<T>): T => arr[Math.floor(Math.random() * arr.length)];
+            if (rFriendly) {
+                const friendlyVariantsByTier: Record<'low'|'neutral'|'high', string[]> = {
+                    low: [
+                        "I know I'm late—thanks for your patience. I’ll make it up.",
+                        "Sorry—rough morning. I’m ready to help right now.",
+                        "My bad for the delay—tell me what to pick up.",
+                    ],
+                    neutral: [
+                        "Hey—sorry I’m late. Won’t happen again.",
+                        "Apologies, tram delays. Thanks for waiting.",
+                        "My bad—alarm chaos. I’m ready to jump in now.",
+                    ],
+                    high: [
+                        "You legends—thanks for covering. I’ll take the next task.",
+                        "Appreciate the cover—let me handle the tricky bit.",
+                        "Thanks team. I’ll pull my weight right away.",
+                    ],
+                };
+                const v = pickOne(friendlyVariantsByTier[rapportTier] as ReadonlyArray<string>);
+                options.appendChild(buildButton('friendly', v, v));
+            }
+            if (rDismissive) {
+                const dismissiveVariantsByTier: Record<'low'|'neutral'|'high', string[]> = {
+                    low: [
+                        "Look, I’m here now—let’s just move forward.",
+                        "Not ideal, I get it—what’s next?",
+                        "Can we focus on the task? I’ll catch up.",
+                    ],
+                    neutral: [
+                        "Relax—I’m here now. Let’s just get this done.",
+                        "It’s fine, I caught up on the way.",
+                        "Let’s not dwell on it—what’s next?",
+                    ],
+                    high: [
+                        "All good—I skimmed the notes. Where do you want me?",
+                        "No stress—I’m synced. Point me at the next step.",
+                        "I’m across it—what should I pick up first?",
+                    ],
+                };
+                const v = pickOne(dismissiveVariantsByTier[rapportTier] as ReadonlyArray<string>);
+                options.appendChild(buildButton('dismissive', v, v));
+            }
+            if (rMajor) {
+                const majorVariantsByTier: Record<'low'|'neutral'|'high', string[]> = {
+                    low: [
+                        `I’m ${majorName}. I’ll catch up—happy to take the groundwork.`,
+                        `${majorName} student—sorry for the slip. Assign me a starting task.`,
+                        `${majorName} here. Let me do the basics first and sync in.`,
+                    ],
+                    neutral: [
+                        `I’m ${majorName}—earlier class ran over. I’ll catch up fast.`,
+                        `${majorName} student here—sorry for the delay, I’ve reviewed the brief.`,
+                        `${majorName} mode on. Point me where I’m needed first.`,
+                    ],
+                    high: [
+                        `${majorName} hat on—I can draft the plan right now.`,
+                        `${majorName} here—I’ll take the technical outline first.`,
+                        `${majorName} ready. I’ll write the first pass and share.`,
+                    ],
+                };
+                const v = pickOne(majorVariantsByTier[rapportTier] as ReadonlyArray<string>);
+                options.appendChild(buildButton('major', v, v));
+            }
+        } else {
+            // Not late: adapt single option text per category based on rapport tier
+            if (rFriendly) {
+                const friendlyByTier: Record<'low'|'neutral'|'high', string> = {
+                    low: "I know we got off on the wrong foot—let me help here.",
+                    neutral: rFriendly.line,
+                    high: "Hey! Want me to take this part off your plate?",
+                };
+                const v = friendlyByTier[rapportTier];
+                options.appendChild(buildButton('friendly', v, v));
+            }
+            if (rDismissive) {
+                const dismissiveByTier: Record<'low'|'neutral'|'high', string> = {
+                    low: "Let’s keep moving—no hard feelings.",
+                    neutral: rDismissive.line,
+                    high: "We’ve got this—no need to stress it.",
+                };
+                const v = dismissiveByTier[rapportTier];
+                options.appendChild(buildButton('dismissive', v, v));
+            }
+            if (rMajor) {
+                const majorByTier: Record<'low'|'neutral'|'high', string> = {
+                    low: `I’m ${majorName}. I can start with basics if that helps.`,
+                    neutral: rMajor.line.replace('[player major]', majorName),
+                    high: `As a ${majorName}, I can sketch a quick plan now.`,
+                };
+                const v = majorByTier[rapportTier];
+                options.appendChild(buildButton('major', v, v));
+            }
         }
 
         optionsWrap.appendChild(chooseLabel);
@@ -492,7 +631,7 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
         dialogueLayer.appendChild(optionsWrap);
     };
 
-    const handleChoice = async (npcId: NpcId, key: ChoiceKey, _greetingBubble: HTMLElement, optionsWrap: HTMLElement) => {
+    const handleChoice = async (npcId: NpcId, key: ChoiceKey, _greetingBubble: HTMLElement, optionsWrap: HTMLElement, playerLineOverride?: string) => {
         const npc = NPC_DEFINITIONS[npcId];
         const reply = npc.replies.find((r: any) => r.label === key)!;
         const isMatch = key === 'major' && matchesMajor(store.getState().major, npcId);
@@ -524,7 +663,23 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
         youLabel.className = 'speaker';
         youLabel.textContent = 'You';
         const playerText = document.createElement('span');
-        const playerLine = key === 'major' ? reply.line.replace('[player major]', state.major.charAt(0).toUpperCase() + state.major.slice(1)) : reply.line;
+        // Late-aware player line (keep deltas from data, only text changes)
+        const isLateForReply = state.timeMinutes >= CLASS_START_MINUTES;
+        const majorNameForReply = state.major.charAt(0).toUpperCase() + state.major.slice(1);
+        let playerLine: string;
+        if (playerLineOverride) {
+            playerLine = playerLineOverride;
+        } else if (isLateForReply) {
+            if (key === 'friendly') {
+                playerLine = "Hey—sorry I’m late. Won’t happen again.";
+            } else if (key === 'dismissive') {
+                playerLine = "Relax—I’m here now. Let’s just get this done.";
+            } else {
+                playerLine = `I’m ${majorNameForReply}—my earlier class ran over. I’ll catch up fast.`;
+            }
+        } else {
+            playerLine = key === 'major' ? reply.line.replace('[player major]', majorNameForReply) : reply.line;
+        }
         playerBubble.appendChild(youLabel);
         playerBubble.appendChild(playerText);
 
@@ -533,7 +688,8 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
         dialogueLayer.appendChild(playerBubble);
 
         await typewriterEffect(playerText, playerLine, 25);
-        await new Promise(resolve => setTimeout(resolve, 300));
+        // Wait for user click to show NPC reaction
+        await waitForAdvance(playerBubble);
 
         // Show NPC reaction
         const reactionBubble = document.createElement('div');
@@ -575,6 +731,8 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
         dialogueLayer.appendChild(reactionBubble);
 
         await typewriterEffect(reactionText, reply.flavor || 'You chat briefly.', 25);
+        // Wait for user click to apply effects and close dialogue
+        await waitForAdvance(reactionBubble);
 
         // Apply deltas
         let next = applyDeltas(state, deltas);
@@ -600,8 +758,7 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
         // Now update store (this may trigger re-render but state is already saved)
         store.setState(next);
 
-        // Clear after a moment
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        // Clear when user already clicked above
         clearDialogue();
 
         // Show reveal if all done
