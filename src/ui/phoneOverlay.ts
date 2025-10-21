@@ -393,7 +393,7 @@ const renderPhoneContent = (store: GameStore) => {
                 background: ${currentState.money >= 5 ? '#6a9e6a' : '#4a4a4a'};
                 border: 3px solid ${currentState.money >= 5 ? '#4a7a4a' : '#2a2a2a'};
                 border-radius: 0;
-                color: ${currentState.money >= 5 ? '#fbe9cf' : '#888'};
+                color: ${currentState.money >= 5 ? '#fbe9cf' : '#c0c0c0'};
                 font-weight: bold;
                 cursor: ${currentState.money >= 5 ? 'pointer' : 'not-allowed'};
                 font-size: 9px;
@@ -412,7 +412,7 @@ const renderPhoneContent = (store: GameStore) => {
                 background: ${currentState.money >= 12 ? '#6a9e6a' : '#4a4a4a'};
                 border: 3px solid ${currentState.money >= 12 ? '#4a7a4a' : '#2a2a2a'};
                 border-radius: 0;
-                color: ${currentState.money >= 12 ? '#fbe9cf' : '#888'};
+                color: ${currentState.money >= 12 ? '#fbe9cf' : '#c0c0c0'};
                 font-weight: bold;
                 cursor: ${currentState.money >= 12 ? 'pointer' : 'not-allowed'};
                 font-size: 9px;
@@ -487,7 +487,7 @@ const renderPhoneContent = (store: GameStore) => {
                 background: ${currentState.money >= 5 ? '#6a9e6a' : '#4a4a4a'};
                 border: 3px solid ${currentState.money >= 5 ? '#4a7a4a' : '#2a2a2a'};
                 border-radius: 0;
-                color: ${currentState.money >= 5 ? '#fbe9cf' : '#888'};
+                color: ${currentState.money >= 5 ? '#fbe9cf' : '#c0c0c0'};
                 font-weight: bold;
                 cursor: ${currentState.money >= 5 ? 'pointer' : 'not-allowed'};
                 font-size: 9px;
@@ -506,7 +506,7 @@ const renderPhoneContent = (store: GameStore) => {
                 background: ${currentState.money >= 12 ? '#6a9e6a' : '#4a4a4a'};
                 border: 3px solid ${currentState.money >= 12 ? '#4a7a4a' : '#2a2a2a'};
                 border-radius: 0;
-                color: ${currentState.money >= 12 ? '#fbe9cf' : '#888'};
+                color: ${currentState.money >= 12 ? '#fbe9cf' : '#c0c0c0'};
                 font-weight: bold;
                 cursor: ${currentState.money >= 12 ? 'pointer' : 'not-allowed'};
                 font-size: 9px;

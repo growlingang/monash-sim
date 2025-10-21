@@ -78,7 +78,7 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
     // Build composite player sprite
     let customSprite = store.getState().playerSprite;
     if (!customSprite) customSprite = DEFAULT_PLAYER;
-    await buildCompositeSprite(customSprite, 32, 32);
+    await buildCompositeSprite(customSprite, 64, 64);
 
     // Prevent multiple instances - cleanup any existing state
     if ((window as any).__gm_cleanup) {

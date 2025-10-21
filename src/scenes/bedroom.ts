@@ -394,9 +394,20 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
   };
 
   // Player state
-  let playerX = 5 * TILE_SIZE;
-  let playerY = 9 * TILE_SIZE;
-  const playerSize = TILE_SIZE;
+  // Player state
+  // Player sprite occupies 2x tile height by default; compute size first so
+  // we can position the player centered in the room.
+  const playerSize = TILE_SIZE * 2;
+  // Tile-centered spawn: place the player's center on the room's center tile.
+  // For ROOM_WIDTH=20 and ROOM_HEIGHT=12 this will pick tile (10, 6) (0-indexed).
+  const spawnTileX = Math.floor(ROOM_WIDTH / 2);
+  const spawnTileY = Math.floor(ROOM_HEIGHT / 2);
+  const spawnCenterX = spawnTileX * TILE_SIZE + TILE_SIZE / 2;
+  const spawnCenterY = spawnTileY * TILE_SIZE + TILE_SIZE / 2;
+  // Subtract half the player size so the player's top-left coordinates align
+  // such that the player's center sits directly over the tile center.
+  let playerX = spawnCenterX - (playerSize / 2);
+  let playerY = spawnCenterY - (playerSize / 2);
   let lastTime = performance.now();
   let gameActive = true;
   let phoneOpen = false;
@@ -407,6 +418,9 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
   let playerFrames = ANIMATION_FRAMES[currentAnimation];
   let lastDirection: 'forward' | 'backward' | 'left' | 'right' = 'forward';
   let wasMoving = false;
+  // Animation frame timing
+  let frameTimer = 0;
+  const FRAME_DURATION = 0.15; // seconds per frame (e.g., 0.15s = ~6.7 FPS)
 
   const drawPlayer = () => {
     if (!customSprite || !customSprite.compositedImage) return;
@@ -421,17 +435,24 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
       sourceWidth: 32,
       sourceHeight: 32,
     });
-    frameIndex = (frameIndex + 1) % playerFrames.length;
+    // frameIndex is now advanced in update()
   };
 
   // Input handling
   const keys: Record<string, boolean> = {};
 
   const handleKeyDown = (e: KeyboardEvent) => {
-    keys[e.key.toLowerCase()] = true;
+    const key = e.key.toLowerCase();
+    
+    // Prevent arrow keys from scrolling the page
+    if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
+      e.preventDefault();
+    }
+    
+    keys[key] = true;
 
     // Press P to open evening activities phone
-    if (e.key.toLowerCase() === 'p' && !phoneOpen) {
+    if (key === 'p' && !phoneOpen) {
       phoneOpen = true;
       createPhoneOverlay(root, store, () => {
         phoneOpen = false;
@@ -439,7 +460,7 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
     }
 
     // Test shortcut: Press T to open tileset test scene
-    if (e.key.toLowerCase() === 't') {
+    if (key === 't') {
       cleanup();
       store.setState((prev) => ({ ...prev, currentScene: 'tileset-test' }));
     }
@@ -531,9 +552,17 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
       currentAnimation = desiredAnimation;
       playerFrames = ANIMATION_FRAMES[currentAnimation];
       frameIndex = 0;
+      frameTimer = 0;
     }
     lastDirection = newDirection;
     wasMoving = moving;
+
+    // Animation frame timing
+    frameTimer += deltaTime;
+    if (playerFrames.length > 1 && frameTimer >= FRAME_DURATION) {
+      frameIndex = (frameIndex + 1) % playerFrames.length;
+      frameTimer = 0;
+    }
   };
 
   const render = () => {
