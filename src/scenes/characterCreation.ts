@@ -80,7 +80,7 @@ export const renderCharacterCreation = (root: HTMLElement, store: GameStore) => 
 
     const heading = document.createElement('h2');
     heading.className = 'character-create__title';
-    heading.textContent = `Hey ${state.playerName}! Pick your Day 1 major.`;
+    heading.textContent = `Hey ${state.playerName}! Pick your major.`;
 
     const description = document.createElement('p');
     description.className = 'character-create__copy';
