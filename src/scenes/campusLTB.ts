@@ -2,6 +2,10 @@ import type { GameStore } from '../core/store';
 import { createStatsBar } from '../ui/statsBar';
 import { Tileset } from '../utils/tilesetLoader';
 import { applyDeltas, logActivity, transitionScene } from '../core/gameState';
+import { drawSubSprite } from '../utils/spriteLoader';
+import { ANIMATION_FRAMES } from '../sprites/animationFrames';
+import { buildCompositeSprite } from '../sprites/playerSpriteOptimizer';
+import { DEFAULT_PLAYER } from '../sprites/playerSprite';
 
 const TILE_SIZE = 32;
 const MAP_WIDTH = 20;
@@ -149,6 +153,24 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
     let last = performance.now();
     const keys: Record<string, boolean> = {};
     let interactionCooldownUntil = 0;
+    
+    // Animation state
+    let frameIndex = 0;
+    let currentAnimation: keyof typeof ANIMATION_FRAMES = 'idle_forward';
+    let playerFrames = ANIMATION_FRAMES[currentAnimation];
+    let lastDirection: 'forward' | 'backward' | 'left' | 'right' = 'forward';
+    
+    // Get custom sprite from game state
+    let customSprite = store.getState().playerSprite;
+    if (!customSprite) {
+        console.log('⚠️ No custom player sprite found in game state, using default.');
+        customSprite = DEFAULT_PLAYER;
+        store.setState(prev => ({
+            ...prev,
+            playerSprite: DEFAULT_PLAYER,
+        }));
+    }
+    await buildCompositeSprite(customSprite, 32, 32);
 
     const saved = (window as any).__ltb_state as { env: Env; x: number; y: number } | undefined;
     if (saved) {
@@ -256,11 +278,47 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
     const update = (dt: number) => {
         const speed = 150 * dt;
         let nx = playerX, ny = playerY;
-        if (keys['arrowup'] || keys['w']) ny -= speed;
-        if (keys['arrowdown'] || keys['s']) ny += speed;
-        if (keys['arrowleft'] || keys['a']) nx -= speed;
-        if (keys['arrowright'] || keys['d']) nx += speed;
+        let moving = false;
+        let newDirection = lastDirection;
+        if (keys['arrowup'] || keys['w']) {
+            ny -= speed;
+            newDirection = 'backward';
+            moving = true;
+        } else if (keys['arrowdown'] || keys['s']) {
+            ny += speed;
+            newDirection = 'forward';
+            moving = true;
+        }
+        if (keys['arrowleft'] || keys['a']) {
+            nx -= speed;
+            newDirection = 'left';
+            moving = true;
+        } else if (keys['arrowright'] || keys['d']) {
+            nx += speed;
+            newDirection = 'right';
+            moving = true;
+        }
         if (isWalkable(nx, ny)) { playerX = nx; playerY = ny; }
+
+        // Animation switching
+        let desiredAnimation: keyof typeof ANIMATION_FRAMES;
+        if (moving) {
+            if (newDirection === 'forward') desiredAnimation = 'walk_forward';
+            else if (newDirection === 'backward') desiredAnimation = 'walk_backward';
+            else if (newDirection === 'left') desiredAnimation = 'walk_left';
+            else desiredAnimation = 'walk_right';
+        } else {
+            if (lastDirection === 'forward') desiredAnimation = 'idle_forward';
+            else if (lastDirection === 'backward') desiredAnimation = 'idle_backward';
+            else if (lastDirection === 'left') desiredAnimation = 'idle_left';
+            else desiredAnimation = 'idle_right';
+        }
+        if (desiredAnimation !== currentAnimation) {
+            currentAnimation = desiredAnimation;
+            playerFrames = ANIMATION_FRAMES[currentAnimation];
+            frameIndex = 0;
+        }
+        lastDirection = newDirection;
 
         // Show tooltip if near hotspot
         const px = Math.floor((playerX + playerSize / 2) / TILE_SIZE);
@@ -304,12 +362,28 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
         }
 
         // Draw player
-        ctx.fillStyle = '#4ac94a';
-        ctx.fillRect(playerX, playerY, playerSize, playerSize);
-        ctx.fillStyle = '#1a3f1a';
-        ctx.fillRect(playerX + 6, playerY + 6, 6, 6);
-        ctx.fillRect(playerX + playerSize - 12, playerY + 6, 6, 6);
-        ctx.fillRect(playerX + 6, playerY + playerSize - 10, playerSize - 12, 4);
+        if (customSprite?.compositedImage) {
+            const frame = playerFrames[frameIndex];
+            drawSubSprite(ctx, customSprite.compositedImage, {
+                x: playerX,
+                y: playerY,
+                width: playerSize,
+                height: playerSize,
+                sourceX: (frame.col - 1) * 32,
+                sourceY: (frame.row - 1) * 32,
+                sourceWidth: 32,
+                sourceHeight: 32,
+            });
+            frameIndex = (frameIndex + 1) % playerFrames.length;
+        } else {
+            // Fallback to rectangle if sprite not loaded
+            ctx.fillStyle = '#4ac94a';
+            ctx.fillRect(playerX, playerY, playerSize, playerSize);
+            ctx.fillStyle = '#1a3f1a';
+            ctx.fillRect(playerX + 6, playerY + 6, 6, 6);
+            ctx.fillRect(playerX + playerSize - 12, playerY + 6, 6, 6);
+            ctx.fillRect(playerX + 6, playerY + playerSize - 10, playerSize - 12, 4);
+        }
 
         // Labels
         ctx.fillStyle = 'rgba(0,0,0,0.6)';

@@ -1,8 +1,13 @@
+
 import type { GameStore } from '../core/store';
 import { createStatsBar } from '../ui/statsBar';
 import { NPC_DEFINITIONS } from '../data/npcs';
 import type { MajorId, NpcId } from '../core/types';
 import { applyDeltas, logActivity, transitionScene } from '../core/gameState';
+import { drawSubSprite } from '../utils/spriteLoader';
+import { ANIMATION_FRAMES } from '../sprites/animationFrames';
+import { buildCompositeSprite } from '../sprites/playerSpriteOptimizer';
+import { DEFAULT_PLAYER } from '../sprites/playerSprite';
 
 type ChoiceKey = 'friendly' | 'dismissive' | 'major';
 
@@ -66,8 +71,14 @@ const typewriterEffect = (element: HTMLElement, text: string, speed = 30): Promi
 export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) => {
     root.innerHTML = '';
 
-    // Preload sprites
+
+    // Preload NPC sprites
     preloadNpcSprites();
+
+    // Build composite player sprite
+    let customSprite = store.getState().playerSprite;
+    if (!customSprite) customSprite = DEFAULT_PLAYER;
+    await buildCompositeSprite(customSprite, 32, 32);
 
     // Prevent multiple instances - cleanup any existing state
     if ((window as any).__gm_cleanup) {
@@ -874,53 +885,71 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
             ctx.shadowOffsetY = 0;
         });
 
-        // Player with glow and shadow
-        ctx.shadowColor = 'rgba(245, 158, 11, 0.6)';
-        ctx.shadowBlur = 20;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 4;
 
-        // Player gradient
-        const playerGradient = ctx.createRadialGradient(
-            meetingState.playerX,
-            meetingState.playerY - 2,
-            4,
-            meetingState.playerX,
-            meetingState.playerY,
-            14
-        );
-        playerGradient.addColorStop(0, '#fbbf24');
-        playerGradient.addColorStop(1, '#f59e0b');
-        ctx.fillStyle = playerGradient;
-        ctx.beginPath();
-        ctx.arc(meetingState.playerX, meetingState.playerY, 14, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.shadowBlur = 0;
-        ctx.shadowOffsetY = 0;
-
-        // Border
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 3;
-        ctx.stroke();
-
-        // Inner highlight
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(meetingState.playerX, meetingState.playerY - 3, 10, Math.PI * 1.2, Math.PI * 1.8);
-        ctx.stroke();
-
-        // YOU label with shadow
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-        ctx.shadowBlur = 4;
-        ctx.shadowOffsetY = 1;
-        ctx.fillStyle = '#1e293b';
-        ctx.font = 'bold 10px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('YOU', meetingState.playerX, meetingState.playerY + 4);
-        ctx.shadowBlur = 0;
-        ctx.shadowOffsetY = 0;
+        // Player composite sprite (idle_forward frame)
+        if (customSprite?.compositedImage) {
+            const size = 32;
+            const playerFrame = ANIMATION_FRAMES['idle_forward'][0];
+            drawSubSprite(ctx, customSprite.compositedImage, {
+                x: meetingState.playerX - size / 2,
+                y: meetingState.playerY - size / 2,
+                width: size,
+                height: size,
+                sourceX: (playerFrame.col - 1) * 32,
+                sourceY: (playerFrame.row - 1) * 32,
+                sourceWidth: 32,
+                sourceHeight: 32,
+            });
+            // YOU label with shadow
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetY = 1;
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('YOU', meetingState.playerX, meetingState.playerY + 24);
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
+        } else {
+            // Fallback: original circle
+            ctx.shadowColor = 'rgba(245, 158, 11, 0.6)';
+            ctx.shadowBlur = 20;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 4;
+            const playerGradient = ctx.createRadialGradient(
+                meetingState.playerX,
+                meetingState.playerY - 2,
+                4,
+                meetingState.playerX,
+                meetingState.playerY,
+                14
+            );
+            playerGradient.addColorStop(0, '#fbbf24');
+            playerGradient.addColorStop(1, '#f59e0b');
+            ctx.fillStyle = playerGradient;
+            ctx.beginPath();
+            ctx.arc(meetingState.playerX, meetingState.playerY, 14, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(meetingState.playerX, meetingState.playerY - 3, 10, Math.PI * 1.2, Math.PI * 1.8);
+            ctx.stroke();
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetY = 1;
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('YOU', meetingState.playerX, meetingState.playerY + 4);
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
+        }
 
         animFrame = requestAnimationFrame(loop);
     };
