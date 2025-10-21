@@ -1,4 +1,9 @@
+
 import type { Minigame, MinigameConfig, MinigameResult } from './types';
+import { drawSubSprite } from '../utils/spriteLoader';
+import { ANIMATION_FRAMES } from '../sprites/animationFrames';
+import { buildCompositeSprite } from '../sprites/playerSpriteOptimizer';
+import { DEFAULT_PLAYER } from '../sprites/playerSprite';
 
 interface Vehicle {
   x: number;
@@ -84,6 +89,7 @@ export const walkMinigame: Minigame = {
         return;
       }
 
+
       // Game state
       let playerX = CANVAS_WIDTH / 2 - PLAYER_SIZE / 2; // Center horizontally
       let playerAbsoluteLane = TOTAL_LANES - 1; // Start in the last lane (bottom)
@@ -97,6 +103,17 @@ export const walkMinigame: Minigame = {
       let lastTime = performance.now();
       let spawnTimer = 0;
       let elapsedTime = 0; // Track time since game start
+
+      // Composite sprite/animation state
+      let frameIndex = 0;
+      let currentAnimation: keyof typeof ANIMATION_FRAMES = 'walk_forward';
+      let playerFrames = ANIMATION_FRAMES[currentAnimation];
+      // Get custom sprite from game state (if available)
+      let customSprite = (window as any).gameStore?.getState?.().playerSprite;
+      if (!customSprite) {
+        customSprite = DEFAULT_PLAYER;
+      }
+      await buildCompositeSprite(customSprite, 32, 32);
 
       // Calculate spawn rate based on mobility stat
       const mobility = config.playerStats.mobility;
@@ -445,15 +462,30 @@ export const walkMinigame: Minigame = {
           ctx.restore();
         });
 
-        // Draw player
-        ctx.fillStyle = '#4ac94a';
-        ctx.fillRect(playerX, playerScreenY, PLAYER_SIZE, PLAYER_SIZE);
-        
-        // Player face
-        ctx.fillStyle = '#2d5016';
-        ctx.fillRect(playerX + 8, playerScreenY + 8, 6, 6);
-        ctx.fillRect(playerX + 18, playerScreenY + 8, 6, 6);
-        ctx.fillRect(playerX + 8, playerScreenY + 18, 16, 4);
+
+        // Draw player composite sprite (animated)
+        if (customSprite?.compositedImage) {
+          const frame = playerFrames[frameIndex];
+          drawSubSprite(ctx, customSprite.compositedImage, {
+            x: playerX,
+            y: playerScreenY,
+            width: PLAYER_SIZE,
+            height: PLAYER_SIZE,
+            sourceX: (frame.col - 1) * 32,
+            sourceY: (frame.row - 1) * 32,
+            sourceWidth: 32,
+            sourceHeight: 32,
+          });
+          frameIndex = (frameIndex + 1) % playerFrames.length;
+        } else {
+          // Fallback to rectangle if sprite not loaded
+          ctx.fillStyle = '#4ac94a';
+          ctx.fillRect(playerX, playerScreenY, PLAYER_SIZE, PLAYER_SIZE);
+          ctx.fillStyle = '#2d5016';
+          ctx.fillRect(playerX + 8, playerScreenY + 8, 6, 6);
+          ctx.fillRect(playerX + 18, playerScreenY + 8, 6, 6);
+          ctx.fillRect(playerX + 8, playerScreenY + 18, 16, 4);
+        }
 
         // Update header
         const lanesRemaining = playerAbsoluteLane + 1; // +1 because lane 0 is still one to cross
