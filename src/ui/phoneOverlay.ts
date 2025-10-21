@@ -1355,29 +1355,28 @@ function renderTailoredDM(
   header.innerHTML = `<div style="font-size:11px; color:#d4a574;">Texting ${npc.name}</div>`;
   content.appendChild(header);
 
-  // Build options based on how you spoke in class
-  const makeUpOptions: string[] = [
-    'Hey about earlier—I should’ve phrased that better. Want to sync?',
-    'I didn’t mean to be blunt in class. Can we align on next steps?',
-    'Sorry if I came off wrong—keen to make progress together.',
-  ];
-  const reinforceOptions: string[] = [
-    'Loved your point in class—want to build that into our plan?',
-    'Thanks for the teamwork today. I can draft the next bit.',
-    'Great energy earlier. Free later to refine roles?',
-  ];
-
+  // Build GOOD / NEUTRAL / BAD options so players can fix, keep neutral, or double down
   let options: Array<{ label: string; rapportDelta: number }>; 
   if (classChoice === 'dismissive') {
-    options = makeUpOptions.map((label) => ({ label, rapportDelta: 2 }));
-  } else if (classChoice === 'friendly') {
-    options = reinforceOptions.map((label) => ({ label, rapportDelta: 1 }));
-  } else {
-    // Major-linked: modest positive by default
+    // Player was dismissive in class
     options = [
-      { label: 'I can apply my major angle to our outline tonight—keen to help.', rapportDelta: 1 },
-      { label: 'Want me to write the first draft section from my major’s lens?', rapportDelta: 1 },
-      { label: 'I’ll prep notes tied to my major skills for us to review.', rapportDelta: 1 },
+      { label: 'Hey about earlier—I should’ve phrased that better. Want to sync?', rapportDelta: 2 }, // GOOD: make up
+      { label: 'Let’s lock next steps—what do you want me to pick up?', rapportDelta: 0 },             // NEUTRAL
+      { label: 'Look, it wasn’t a big deal. Let’s just move on.', rapportDelta: -1 },                 // BAD: double down
+    ];
+  } else if (classChoice === 'friendly') {
+    // Player was friendly in class
+    options = [
+      { label: 'Loved your point—want me to draft that section tonight?', rapportDelta: 1 },          // GOOD: reinforce constructively
+      { label: 'Nice work today. Free to chat tomorrow?', rapportDelta: 0 },                           // NEUTRAL
+      { label: 'I think I’ll just handle things my way—chat later.', rapportDelta: -1 },              // BAD: cool down rapport
+    ];
+  } else {
+    // Player used major-linked line in class
+    options = [
+      { label: 'I can apply my major angle and deliver a draft tonight.', rapportDelta: 1 },          // GOOD: concrete help
+      { label: 'I’ll read through notes again—touch base later?', rapportDelta: 0 },                  // NEUTRAL
+      { label: 'My approach is probably best—let me lead this solo.', rapportDelta: -1 },             // BAD: overconfident
     ];
   }
 
@@ -1411,6 +1410,30 @@ function renderTailoredDM(
       const frames = getEveningActivityCutscene('text', npcId);
       if (frames.length) {
         frames[0] = { ...frames[0], subtext: `You text: “${opt.label}”` };
+        if (frames.length > 1) {
+          if (opt.rapportDelta > 0) {
+            frames[1] = {
+              ...frames[1],
+              text: 'Connection strengthened',
+              subtext: `Your conversation with ${npc.name} went well. You feel closer.`,
+              emoji: '🤝',
+            };
+          } else if (opt.rapportDelta === 0) {
+            frames[1] = {
+              ...frames[1],
+              text: 'Kept things steady',
+              subtext: `You and ${npc.name} stay aligned. No change, but communication helps.`,
+              emoji: '💬',
+            };
+          } else {
+            frames[1] = {
+              ...frames[1],
+              text: 'Tension lingers',
+              subtext: `The exchange with ${npc.name} felt strained. Rapport may have dipped.`,
+              emoji: '😕',
+            };
+          }
+        }
       }
       createCutscene(document.body, {
         frames,
