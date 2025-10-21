@@ -2,6 +2,10 @@ import type { GameStore } from '../core/store';
 import { createStatsBar } from '../ui/statsBar';
 import { Tileset } from '../utils/tilesetLoader';
 import { applyDeltas, logActivity, transitionScene } from '../core/gameState';
+import { drawSubSprite } from '../utils/spriteLoader';
+import { ANIMATION_FRAMES } from '../sprites/animationFrames';
+import { buildCompositeSprite } from '../sprites/playerSpriteOptimizer';
+import { DEFAULT_PLAYER } from '../sprites/playerSprite';
 
 const TILE_SIZE = 32;
 const MAP_WIDTH = 20;
@@ -149,6 +153,23 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
     let last = performance.now();
     const keys: Record<string, boolean> = {};
     let interactionCooldownUntil = 0;
+    
+    // Animation state
+    let frameIndex = 0;
+    const currentAnimation = 'idle_forward';
+    const playerFrames = ANIMATION_FRAMES[currentAnimation];
+    
+    // Get custom sprite from game state
+    let customSprite = store.getState().playerSprite;
+    if (!customSprite) {
+        console.log('⚠️ No custom player sprite found in game state, using default.');
+        customSprite = DEFAULT_PLAYER;
+        store.setState(prev => ({
+            ...prev,
+            playerSprite: DEFAULT_PLAYER,
+        }));
+    }
+    await buildCompositeSprite(customSprite, 32, 32);
 
     const saved = (window as any).__ltb_state as { env: Env; x: number; y: number } | undefined;
     if (saved) {
@@ -304,12 +325,28 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
         }
 
         // Draw player
-        ctx.fillStyle = '#4ac94a';
-        ctx.fillRect(playerX, playerY, playerSize, playerSize);
-        ctx.fillStyle = '#1a3f1a';
-        ctx.fillRect(playerX + 6, playerY + 6, 6, 6);
-        ctx.fillRect(playerX + playerSize - 12, playerY + 6, 6, 6);
-        ctx.fillRect(playerX + 6, playerY + playerSize - 10, playerSize - 12, 4);
+        if (customSprite?.compositedImage) {
+            const frame = playerFrames[frameIndex];
+            drawSubSprite(ctx, customSprite.compositedImage, {
+                x: playerX,
+                y: playerY,
+                width: playerSize,
+                height: playerSize,
+                sourceX: (frame.col - 1) * 32,
+                sourceY: (frame.row - 1) * 32,
+                sourceWidth: 32,
+                sourceHeight: 32,
+            });
+            frameIndex = (frameIndex + 1) % playerFrames.length;
+        } else {
+            // Fallback to rectangle if sprite not loaded
+            ctx.fillStyle = '#4ac94a';
+            ctx.fillRect(playerX, playerY, playerSize, playerSize);
+            ctx.fillStyle = '#1a3f1a';
+            ctx.fillRect(playerX + 6, playerY + 6, 6, 6);
+            ctx.fillRect(playerX + playerSize - 12, playerY + 6, 6, 6);
+            ctx.fillRect(playerX + 6, playerY + playerSize - 10, playerSize - 12, 4);
+        }
 
         // Labels
         ctx.fillStyle = 'rgba(0,0,0,0.6)';
