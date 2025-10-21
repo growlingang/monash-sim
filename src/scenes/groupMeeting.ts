@@ -318,8 +318,8 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
     const header = document.createElement('div');
     header.className = 'meeting__header';
     header.innerHTML = `
-        <h2>Learning & Teaching Building — Group Room</h2>
-        <p>Walk around (WASD) and press E to talk to NPCs.</p>
+        <h2 style="color:#3a2817;">Learning & Teaching Building — Group Room</h2>
+        <p style="color:#5a4a35;">Walk around (WASD) and press E to talk to NPCs.</p>
     `;
 
     const statsBar = createStatsBar(store.getState());
@@ -351,6 +351,7 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
     const hint = document.createElement('div');
     hint.className = 'meeting__hint';
     hint.textContent = 'Talk to all 5 teammates to continue';
+    hint.style.color = '#3a2817';
     const nextBtn = document.createElement('button');
     nextBtn.className = 'meeting__next';
     nextBtn.textContent = 'Continue';
