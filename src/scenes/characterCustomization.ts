@@ -6,8 +6,8 @@ import type { PlayerSprite } from '../sprites/playerSprite';
 const PREVIEW_SIZE = {
   width: 256,
   height: 256,
-  frameW: 64,
-  frameH: 64,
+  frameW: 32,
+  frameH: 32,
 };
 
 export class CharacterCustomizer {
