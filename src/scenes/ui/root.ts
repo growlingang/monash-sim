@@ -13,6 +13,7 @@ import { renderEveningActivity } from '../eveningActivity';
 import { renderRecap } from '../recap';
 import { renderTilesetTest } from '../tilesetTest';
 import { renderCampusLTB } from '../campusLTB.ts';
+import { renderLTBinside } from '../LTBinside.ts';
 import { renderGroupMeeting } from '../groupMeeting.ts';
 
 export const mountScene = (scene: SceneId, root: HTMLElement, store: GameStore) => {
@@ -44,6 +45,9 @@ export const mountScene = (scene: SceneId, root: HTMLElement, store: GameStore) 
             break;
         case 'campus-ltb':
             void renderCampusLTB(root, store);
+            break;
+        case 'ltb-inside':
+            void renderLTBinside(root, store);
             break;
         case 'group-meeting':
             void renderGroupMeeting(root, store);

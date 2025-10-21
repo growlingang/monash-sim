@@ -57,6 +57,7 @@ export const SCENE_IDS = [
     'evening-phone',
     'morning-commute',
     'campus-ltb',
+    'ltb-inside',
     'group-meeting',
     'evening-activity',
     'evening-commute',

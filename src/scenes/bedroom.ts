@@ -485,7 +485,7 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
     const tileY = Math.floor(y / TILE_SIZE);
 
     // Room boundaries - only walls block movement
-    if (tileX < 1 || tileX >= ROOM_WIDTH - 1 || tileY < 1 || tileY >= ROOM_HEIGHT - 2) {
+    if (tileX < 0.5 || tileX >= ROOM_WIDTH - 0.5 || tileY < 0.5 || tileY >= ROOM_HEIGHT - 2) {
       return false;
     }
 

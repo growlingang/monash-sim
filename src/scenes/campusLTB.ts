@@ -221,19 +221,11 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
 
         const state = store.getState();
         switch (hs.id) {
-            case 'entrance':
-                env = 'inside';
-                mapData = mapFrom(insidePattern);
-                // Place player near inside door (not on group-room tile)
-                playerX = 10 * TILE_SIZE; playerY = 10 * TILE_SIZE;
-                // Persist scene state so remounts keep us inside
-                (window as any).__ltb_state = { env, x: playerX, y: playerY };
-                setStatus('You entered LTB. Find the Group Room.');
-                // Small cooldown to avoid accidental double-interact
+            case 'entrance': {
                 interactionCooldownUntil = performance.now() + 250;
-                // Log the action (will remount, but our state persists)
-                store.setState(logActivity(state, { segment: 'campus-ltb', choiceId: 'enter-ltb', summary: 'Entered LTB building', deltas: {} }));
+                store.setState((prev) => transitionScene(prev, 'ltb-inside'));
                 break;
+            }
             case 'cafeteria': {
                 const canAfford = state.money >= 8;
                 const needsFood = state.hunger < 10;
@@ -400,18 +392,8 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
                 const bottom = (entrance.y + entrance.h) * TILE_SIZE;
                 const inEntrance = feetCenterX >= left && feetCenterX < right && feetCenterY >= top && feetCenterY < bottom;
                 if (inEntrance && performance.now() >= interactionCooldownUntil) {
-                    const state = store.getState();
-                    env = 'inside';
-                    mapData = mapFrom(insidePattern);
-                    // Place player near inside door (not on group-room tile)
-                    playerX = 9 * TILE_SIZE; playerY = 5 * TILE_SIZE;
-                    // Persist scene state so remounts keep us inside
-                    (window as any).__ltb_state = { env, x: playerX, y: playerY };
-                    setStatus('You entered LTB. Find the Group Room.');
-                    // Small cooldown to avoid accidental double-trigger
                     interactionCooldownUntil = performance.now() + 250;
-                    // Log the action (will remount, but our state persists)
-                    store.setState(logActivity(state, { segment: 'campus-ltb', choiceId: 'enter-ltb', summary: 'Entered LTB building', deltas: {} }));
+                    store.setState((prev) => transitionScene(prev, 'ltb-inside'));
                 }
             }
         }
