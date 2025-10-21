@@ -1268,6 +1268,7 @@ function renderNPCSelection(
   npcIds.forEach((npcId) => {
     const npc = NPC_DEFINITIONS[npcId];
     const rapport = state.rapport[npcId];
+    const classChoice = state.classReplies?.[npcId];
     
     const npcCard = document.createElement('div');
     npcCard.style.cssText = `
@@ -1324,11 +1325,117 @@ function renderNPCSelection(
     });
 
     npcCard.addEventListener('click', () => {
-      executeActivity('text', store, renderHomeScreen, npcId);
+      // If we have a class choice, show tailored DM options first
+      if (classChoice) {
+        renderTailoredDM(appTitle, content, store, renderHomeScreen, npcId, classChoice);
+      } else {
+        executeActivity('text', store, renderHomeScreen, npcId);
+      }
     });
 
     content.appendChild(npcCard);
   });
+}
+function renderTailoredDM(
+  appTitle: HTMLElement,
+  content: HTMLElement,
+  store: GameStore,
+  renderHomeScreen: () => void,
+  npcId: NpcId,
+  classChoice: 'friendly' | 'dismissive' | 'major'
+) {
+  appTitle.textContent = 'Draft Message';
+  content.innerHTML = '';
+
+  const state = store.getState();
+  const npc = NPC_DEFINITIONS[npcId];
+
+  const header = document.createElement('div');
+  header.style.cssText = 'margin-bottom: 12px;';
+  header.innerHTML = `<div style="font-size:11px; color:#d4a574;">Texting ${npc.name}</div>`;
+  content.appendChild(header);
+
+  // Build options based on how you spoke in class
+  const makeUpOptions: string[] = [
+    'Hey about earlier—I should’ve phrased that better. Want to sync?',
+    'I didn’t mean to be blunt in class. Can we align on next steps?',
+    'Sorry if I came off wrong—keen to make progress together.',
+  ];
+  const reinforceOptions: string[] = [
+    'Loved your point in class—want to build that into our plan?',
+    'Thanks for the teamwork today. I can draft the next bit.',
+    'Great energy earlier. Free later to refine roles?',
+  ];
+
+  let options: Array<{ label: string; rapportDelta: number }>; 
+  if (classChoice === 'dismissive') {
+    options = makeUpOptions.map((label) => ({ label, rapportDelta: 2 }));
+  } else if (classChoice === 'friendly') {
+    options = reinforceOptions.map((label) => ({ label, rapportDelta: 1 }));
+  } else {
+    // Major-linked: modest positive by default
+    options = [
+      { label: 'I can apply my major angle to our outline tonight—keen to help.', rapportDelta: 1 },
+      { label: 'Want me to write the first draft section from my major’s lens?', rapportDelta: 1 },
+      { label: 'I’ll prep notes tied to my major skills for us to review.', rapportDelta: 1 },
+    ];
+  }
+
+  const list = document.createElement('div');
+  list.style.cssText = 'display:flex; flex-direction:column; gap:16px; margin-top: 8px;';
+
+  options.forEach((opt) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.style.cssText = `
+      width: 100%; padding: 14px 16px; border: 3px solid #8b6f47; border-radius: 0;
+      background: #5a4a35; color: #fbe9cf; text-align: left; cursor: pointer;
+      font-family: 'Press Start 2P', monospace; font-size: 10px; line-height: 1.9;
+    `;
+    btn.textContent = opt.label;
+    btn.addEventListener('click', () => {
+      // Apply rapport and log
+      let nextState = store.getState();
+      const deltas: any = { rapport: { [npcId]: opt.rapportDelta }, time: 15 };
+      nextState = applyDeltas(nextState, deltas);
+      nextState = logActivity(nextState, {
+        segment: 'bedroom',
+        choiceId: `text-${npcId}`,
+        summary: `Texted ${npc.name}: ${opt.label}`,
+        deltas,
+      });
+      store.setState(nextState);
+
+      // Close phone and show tailored text cutscene reflecting the drafted message
+      closePhone();
+      const frames = getEveningActivityCutscene('text', npcId);
+      if (frames.length) {
+        frames[0] = { ...frames[0], subtext: `You text: “${opt.label}”` };
+      }
+      createCutscene(document.body, {
+        frames,
+        canSkip: true,
+        onComplete: () => {
+          // Transition to recap like the standard text activity
+          store.setState((prev) => ({ ...prev, currentScene: 'recap' }));
+        },
+      });
+    });
+    list.appendChild(btn);
+  });
+
+  const back = document.createElement('button');
+  back.type = 'button';
+  back.style.cssText = `
+    margin-top: 12px; padding: 8px; border: 3px solid #8b6f47; border-radius: 0;
+    background: #6a9e6a; color: #fbe9cf; cursor: pointer; font-size: 9px;
+    font-family: 'Press Start 2P', monospace;
+  `;
+  back.textContent = 'Back';
+  back.addEventListener('click', () => renderNPCSelection(appTitle, content, store, renderHomeScreen));
+
+  content.appendChild(list);
+  content.appendChild(back);
 }
 
 function executeActivity(
