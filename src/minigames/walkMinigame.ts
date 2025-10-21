@@ -13,8 +13,8 @@ const VISIBLE_LANES = 19; // Number of lanes visible on screen at once
 const CANVAS_WIDTH = 480; // 15 tiles wide (portrait mode, matching driveMinigame)
 const CANVAS_HEIGHT = 640; // 20 tiles tall (portrait mode, matching driveMinigame)
 const PLAYER_SIZE = 32;
-const VEHICLE_WIDTH = 30; // Scaled down to fit in lanes (when rotated, this becomes height)
-const VEHICLE_HEIGHT = 54; // Scaled down proportionally (when rotated, this becomes width)
+const VEHICLE_WIDTH = 54; // Width of the sideways car
+const VEHICLE_HEIGHT = 30; // Height of the sideways car (as requested)
 
 // Sprite loader helper
 const loadSprite = (src: string): Promise<HTMLImageElement> => {
@@ -67,14 +67,20 @@ export const walkMinigame: Minigame = {
       let blueCarSprite: HTMLImageElement;
       let greenCarSprite: HTMLImageElement;
       let whiteCarSprite: HTMLImageElement;
+      let flippedBlueCarSprite: HTMLImageElement;
+      let flippedGreenCarSprite: HTMLImageElement;
+      let flippedWhiteCarSprite: HTMLImageElement;
       let roadTile: HTMLImageElement;
       let grassTile: HTMLImageElement;
 
       try {
-        [blueCarSprite, greenCarSprite, whiteCarSprite, roadTile, grassTile] = await Promise.all([
-          loadSprite('/sprites/cargame/blue_car.png'),
-          loadSprite('/sprites/cargame/green_car.png'),
-          loadSprite('/sprites/cargame/white_car.png'),
+        [blueCarSprite, greenCarSprite, whiteCarSprite, flippedBlueCarSprite, flippedGreenCarSprite, flippedWhiteCarSprite, roadTile, grassTile] = await Promise.all([
+          loadSprite('/sprites/walkgame/blue_sideways_car.png'),
+          loadSprite('/sprites/walkgame/green_sideways_car.png'),
+          loadSprite('/sprites/walkgame/white_sideways_car.png'),
+          loadSprite('/sprites/walkgame/flipped_blue_sideways_car.png'),
+          loadSprite('/sprites/walkgame/flipped_green_sideways_car.png'),
+          loadSprite('/sprites/walkgame/flipped_white_sideways_car.png'),
           loadSprite('/sprites/cargame/road.png'),
           loadSprite('/sprites/cargame/normal_grass.png'),
         ]);
@@ -142,7 +148,7 @@ export const walkMinigame: Minigame = {
       // Convert absolute lane to screen Y position (handles fractional camera offset for smooth scrolling)
       const getScreenY = (absoluteLane: number): number => {
         const relativeLane = absoluteLane - cameraOffset;
-        return relativeLane * TILE_SIZE + 32 + (TILE_SIZE - VEHICLE_WIDTH) / 2;
+        return relativeLane * TILE_SIZE + 32 + (TILE_SIZE - VEHICLE_HEIGHT) / 2;
       };
 
 
@@ -195,7 +201,7 @@ export const walkMinigame: Minigame = {
             const color = colors[Math.floor(Math.random() * colors.length)];
             
             vehicles.push({
-              x: direction > 0 ? -VEHICLE_HEIGHT : CANVAS_WIDTH + VEHICLE_HEIGHT,
+              x: direction > 0 ? -VEHICLE_WIDTH : CANVAS_WIDTH + VEHICLE_WIDTH,
               lane: absoluteLane,
               speed,
               color,
@@ -223,7 +229,7 @@ export const walkMinigame: Minigame = {
               const color = colors[Math.floor(Math.random() * colors.length)];
               
               vehicles.push({
-                x: direction > 0 ? -VEHICLE_HEIGHT : CANVAS_WIDTH + VEHICLE_HEIGHT,
+                x: direction > 0 ? -VEHICLE_WIDTH : CANVAS_WIDTH + VEHICLE_WIDTH,
                 lane: absoluteLane,
                 speed,
                 color,
@@ -303,7 +309,7 @@ export const walkMinigame: Minigame = {
           const vehicle = vehicles[i];
           
           // Check if there's a vehicle ahead in the same lane (avoid car-to-car collision)
-          const MIN_CAR_DISTANCE = VEHICLE_HEIGHT * 2; // Minimum spacing between cars
+          const MIN_CAR_DISTANCE = VEHICLE_WIDTH * 2; // Minimum spacing between cars
           let shouldSlowDown = false;
           
           for (const otherVehicle of vehicles) {
@@ -330,11 +336,9 @@ export const walkMinigame: Minigame = {
 
           // Check if vehicle is in visible range (with buffer for smooth scrolling)
           if (vehicle.lane >= Math.floor(cameraOffset) - 1 && vehicle.lane < Math.floor(cameraOffset) + VISIBLE_LANES + 1) {
-            // Check collision with player (rotated dimensions)
+            // Check collision with player (sideways car dimensions)
             const vehicleScreenY = getScreenY(vehicle.lane);
-            const rotatedWidth = VEHICLE_HEIGHT; // After 90 degree rotation, height becomes width
-            const rotatedHeight = VEHICLE_WIDTH; // After 90 degree rotation, width becomes height
-            if (checkCollision(vehicle.x, vehicleScreenY, rotatedWidth, rotatedHeight)) {
+            if (checkCollision(vehicle.x, vehicleScreenY, VEHICLE_WIDTH, VEHICLE_HEIGHT)) {
             cleanup();
             // Still made it to campus, just injured
             resolve({ success: false, completed: true });
@@ -343,8 +347,7 @@ export const walkMinigame: Minigame = {
           }
 
           // Remove off-screen vehicles (horizontally or outside visible lane range)
-          const rotatedWidth = VEHICLE_HEIGHT;
-          if (vehicle.x < -rotatedWidth * 2 || vehicle.x > CANVAS_WIDTH + rotatedWidth * 2) {
+          if (vehicle.x < -VEHICLE_WIDTH * 2 || vehicle.x > CANVAS_WIDTH + VEHICLE_WIDTH * 2) {
             vehicles.splice(i, 1);
           }
           // Also remove vehicles that are no longer in visible lane range (with larger buffer)
@@ -417,32 +420,36 @@ export const walkMinigame: Minigame = {
           const y = getScreenY(vehicle.lane);
           
           let carSprite: HTMLImageElement;
-          switch (vehicle.color) {
-            case 'blue':
-              carSprite = blueCarSprite;
-              break;
-            case 'green':
-              carSprite = greenCarSprite;
-              break;
-            case 'white':
-              carSprite = whiteCarSprite;
-              break;
+          if (vehicle.speed > 0) {
+            // Coming from left, use flipped sprites
+            switch (vehicle.color) {
+              case 'blue':
+                carSprite = flippedBlueCarSprite;
+                break;
+              case 'green':
+                carSprite = flippedGreenCarSprite;
+                break;
+              case 'white':
+                carSprite = flippedWhiteCarSprite;
+                break;
+            }
+          } else {
+            // Coming from right, use regular sideways sprites
+            switch (vehicle.color) {
+              case 'blue':
+                carSprite = blueCarSprite;
+                break;
+              case 'green':
+                carSprite = greenCarSprite;
+                break;
+              case 'white':
+                carSprite = whiteCarSprite;
+                break;
+            }
           }
           
-          // Rotate car based on direction
-          ctx.save();
-          if (vehicle.speed > 0) {
-            // Coming from left, rotate 90 degrees anticlockwise (-π/2)
-            ctx.translate(vehicle.x + VEHICLE_HEIGHT / 2, y + VEHICLE_WIDTH / 2);
-            ctx.rotate(-Math.PI / 2);
-            ctx.drawImage(carSprite, -VEHICLE_WIDTH / 2, -VEHICLE_HEIGHT / 2, VEHICLE_WIDTH, VEHICLE_HEIGHT);
-          } else {
-            // Coming from right, rotate 90 degrees clockwise (π/2)
-            ctx.translate(vehicle.x + VEHICLE_HEIGHT / 2, y + VEHICLE_WIDTH / 2);
-            ctx.rotate(Math.PI / 2);
-            ctx.drawImage(carSprite, -VEHICLE_WIDTH / 2, -VEHICLE_HEIGHT / 2, VEHICLE_WIDTH, VEHICLE_HEIGHT);
-          }
-          ctx.restore();
+          // Draw car sprite (no transformations needed since we have separate sprites)
+          ctx.drawImage(carSprite, vehicle.x, y, VEHICLE_WIDTH, VEHICLE_HEIGHT);
         });
 
         // Draw player
