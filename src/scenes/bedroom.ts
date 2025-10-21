@@ -394,9 +394,20 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
   };
 
   // Player state
-  let playerX = 5 * TILE_SIZE;
-  let playerY = 9 * TILE_SIZE;
-  const playerSize = TILE_SIZE;
+  // Player state
+  // Player sprite occupies 2x tile height by default; compute size first so
+  // we can position the player centered in the room.
+  const playerSize = TILE_SIZE * 2;
+  // Tile-centered spawn: place the player's center on the room's center tile.
+  // For ROOM_WIDTH=20 and ROOM_HEIGHT=12 this will pick tile (10, 6) (0-indexed).
+  const spawnTileX = Math.floor(ROOM_WIDTH / 2);
+  const spawnTileY = Math.floor(ROOM_HEIGHT / 2);
+  const spawnCenterX = spawnTileX * TILE_SIZE + TILE_SIZE / 2;
+  const spawnCenterY = spawnTileY * TILE_SIZE + TILE_SIZE / 2;
+  // Subtract half the player size so the player's top-left coordinates align
+  // such that the player's center sits directly over the tile center.
+  let playerX = spawnCenterX - (playerSize / 2);
+  let playerY = spawnCenterY - (playerSize / 2);
   let lastTime = performance.now();
   let gameActive = true;
   let phoneOpen = false;

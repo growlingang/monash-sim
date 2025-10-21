@@ -4,8 +4,8 @@ import { EQUIPMENT } from '../sprites/playerSprite';
 import type { PlayerSprite } from '../sprites/playerSprite';
 
 const PREVIEW_SIZE = {
-  width: 256,
-  height: 256,
+  width: 64,
+  height: 64,
   frameW: 32,
   frameH: 32,
 };
