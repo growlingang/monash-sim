@@ -1,4 +1,5 @@
 
+import { playBackgroundMusic, stopBackgroundMusic } from '../utils/audioManager';
 import type { GameStore } from '../core/store';
 import { createStatsBar } from '../ui/statsBar';
 import { NPC_DEFINITIONS } from '../data/npcs';
@@ -90,6 +91,8 @@ const waitForAdvance = (bubble: HTMLElement, hintText = 'Click to continue'): Pr
 };
 
 export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) => {
+    // Play group meeting ambience
+    await playBackgroundMusic('/audio/ambience/College_Class_Walla_Loop.mp3', { loop: true, volume: 0.7 });
     root.innerHTML = '';
 
 
@@ -1171,6 +1174,9 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
         if (animFrame) cancelAnimationFrame(animFrame);
         document.removeEventListener('keydown', handleKeyDown);
         document.removeEventListener('keyup', handleKeyUp);
+        // Stop ambience and restore default background music
+        stopBackgroundMusic();
+        playBackgroundMusic('/audio/music/background.mp3', { loop: true, volume: 0.6, autoplay: true });
     };
     (window as any).__gm_cleanup = cleanup;
 };

@@ -1,3 +1,5 @@
+
+import { playBackgroundMusic, stopBackgroundMusic } from '../utils/audioManager';
 import { buildCompositeSprite, loadPlayerImages } from '../sprites/playerSpriteOptimizer';
 import { EQUIPMENT } from '../sprites/playerSprite';
 import type { PlayerSprite } from '../sprites/playerSprite';
@@ -26,6 +28,8 @@ export class CharacterCustomizer {
   };
 
   constructor(container: HTMLElement, initialPlayer: PlayerSprite) {
+    // Play character customisation music
+    playBackgroundMusic('/audio/music/music_charactercustomisation.mp3', { loop: true, volume: 0.7 });
     // Deep clone the player to avoid modifying the original
     this.player = JSON.parse(JSON.stringify(initialPlayer));
 
@@ -410,6 +414,8 @@ export class CharacterCustomizer {
   }
 
   public cleanup() {
-    // Nothing to cleanup anymore since we're not animating
+    // Stop character customisation music and restore default background music
+    stopBackgroundMusic();
+    playBackgroundMusic('/audio/music/background.mp3', { loop: true, volume: 0.6, autoplay: true });
   }
 }

@@ -1,3 +1,5 @@
+
+import { playBackgroundMusic, stopBackgroundMusic } from '../utils/audioManager';
 import type { Minigame, MinigameConfig, MinigameResult } from './types';
 
 // Grid system: 32x32 tiles
@@ -30,6 +32,8 @@ const loadSprite = (src: string): Promise<HTMLImageElement> => {
 
 export const driveMinigame: Minigame = {
   mount: async (container: HTMLElement, config: MinigameConfig): Promise<MinigameResult> => {
+    // Play drive minigame music
+    await playBackgroundMusic('/audio/music/music_driveminigame.mp3', { loop: true, volume: 0.7 });
     return new Promise(async (resolve) => {
       container.innerHTML = '';
       
@@ -150,6 +154,9 @@ export const driveMinigame: Minigame = {
         document.removeEventListener('keydown', handleKeyDown);
         document.removeEventListener('keyup', handleKeyUp);
         gameActive = false;
+        // Stop drive minigame music and restore default background music
+        stopBackgroundMusic();
+        playBackgroundMusic('/audio/music/background.mp3', { loop: true, volume: 0.6, autoplay: true });
       };
 
       const spawnTraffic = () => {
