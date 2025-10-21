@@ -146,9 +146,9 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
     ];
 
     // Player state (restored from window if present)
-    let playerX = 9 * TILE_SIZE;
-    let playerY = 9 * TILE_SIZE;
-    const playerSize = TILE_SIZE - 6; // slight inset for nicer collision
+    let playerX = 10 * TILE_SIZE;
+    let playerY = 10 * TILE_SIZE;
+    const playerSize = TILE_SIZE * 2; // slight inset for nicer collision
     let running = true;
     let last = performance.now();
     const keys: Record<string, boolean> = {};
@@ -210,7 +210,7 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
                 env = 'inside';
                 mapData = mapFrom(insidePattern);
                 // Place player near inside door (not on group-room tile)
-                playerX = 9 * TILE_SIZE; playerY = 5 * TILE_SIZE;
+                playerX = 10 * TILE_SIZE; playerY = 10 * TILE_SIZE;
                 // Persist scene state so remounts keep us inside
                 (window as any).__ltb_state = { env, x: playerX, y: playerY };
                 setStatus('You entered LTB. Find the Group Room.');
