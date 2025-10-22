@@ -94,11 +94,13 @@ const waitForAdvance = (bubble: HTMLElement, hintText = 'Click to continue'): Pr
 
 export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) => {
     // Only set up music to play on movement (to satisfy autoplay policy)
-    let musicStarted = false;
+    // Persist start flag across re-renders to avoid restarting the ambience on state updates
+    let musicStarted = Boolean((window as any).__gm_musicStarted);
     const startMeetingMusic = () => {
         if (!musicStarted) {
             playBackgroundMusic('/audio/ambience/College_Class_Walla_Loop.mp3', { loop: true, volume: 0.4 });
             musicStarted = true;
+            (window as any).__gm_musicStarted = true;
         }
     };
     root.innerHTML = '';
@@ -1514,9 +1516,13 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
         if (animFrame) cancelAnimationFrame(animFrame);
         document.removeEventListener('keydown', handleKeyDown);
         document.removeEventListener('keyup', handleKeyUp);
-        // Stop ambience and restore default background music
-        stopBackgroundMusic();
-        playBackgroundMusic('/audio/music/background.mp3', { loop: true, volume: 0.6, autoplay: true });
+        // Only alter background music if we are actually leaving this scene.
+        // During state-only re-renders of the same scene, preserve current music and position.
+        const isLeavingScene = store.getState().currentScene !== 'group-meeting';
+        if (isLeavingScene) {
+            stopBackgroundMusic();
+            playBackgroundMusic('/audio/music/background.mp3', { loop: true, volume: 0.6, autoplay: true });
+        }
     };
     (window as any).__gm_cleanup = cleanup;
 };
