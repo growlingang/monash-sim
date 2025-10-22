@@ -500,10 +500,17 @@ const renderPhoneContent = (store: GameStore) => {
         const customizer = new CharacterCustomizer(content, playerData);
 
         const handleUpdate = ((e: CustomEvent) => {
+          // Apply saved character changes
           store.setState((prev) => ({
             ...prev,
             playerSprite: e.detail.player,
           }));
+          // Exit customizer and restore original music immediately after saving
+          if (currentAppCleanup) {
+            currentAppCleanup();
+            currentAppCleanup = null;
+          }
+          renderHomeScreen();
         }) as EventListener;
 
         window.addEventListener('character-updated', handleUpdate);
