@@ -1,4 +1,9 @@
 import type { MinigameResult, MinigameConfig } from './types';
+import { Tileset } from '../utils/tilesetLoader';
+import { drawSubSprite } from '../utils/spriteLoader';
+import { ANIMATION_FRAMES } from '../sprites/animationFrames';
+import { buildCompositeSprite } from '../sprites/playerSpriteOptimizer';
+import { DEFAULT_PLAYER } from '../sprites/playerSprite';
 
 // Task definitions for PTV/Monash travel assignment
 interface Task {
@@ -101,8 +106,46 @@ export const createAssignmentMinigame = (): {
 } => {
     return {
         mount: async (container: HTMLElement, _config: MinigameConfig): Promise<MinigameResult> => {
-            return new Promise((resolve) => {
+            return new Promise(async (resolve) => {
                 container.innerHTML = '';
+
+                // Load road tileset for floor
+                let roadTileset: Tileset;
+                try {
+                    roadTileset = new Tileset({
+                        imagePath: '/sprites/cargame/road.png',
+                        tileWidth: 32,
+                        tileHeight: 32,
+                        columns: 1,
+                        rows: 1,
+                    });
+                    await roadTileset.load();
+                } catch (error) {
+                    console.error('Failed to load road tileset:', error);
+                    resolve({ success: false, completed: false });
+                    return;
+                }
+
+                // Load paper sprite for tasks
+                let paperSprite: HTMLImageElement | null = null;
+                try {
+                    paperSprite = new Image();
+                    paperSprite.src = '/sprites/paper.png';
+                    await new Promise<void>((res, rej) => {
+                        paperSprite!.onload = () => res();
+                        paperSprite!.onerror = () => rej();
+                    });
+                } catch (error) {
+                    console.warn('Failed to load paper sprite, using fallback:', error);
+                }
+
+                // Get player sprite from config and build composite sprite (64x64 for larger size)
+                const playerData = (_config as any).playerSprite || DEFAULT_PLAYER;
+                try {
+                    await buildCompositeSprite(playerData, 64, 64);
+                } catch (error) {
+                    console.warn('Failed to build player sprite:', error);
+                }
 
                 // Add styles matching the group meeting scene
                 const style = document.createElement('style');
@@ -500,6 +543,15 @@ export const createAssignmentMinigame = (): {
                 document.addEventListener('keydown', handleKeyDown);
                 document.addEventListener('keyup', handleKeyUp);
 
+                // Player animation state
+                let frameIndex = 0;
+                let currentAnimation: keyof typeof ANIMATION_FRAMES = 'idle_forward';
+                let playerFrames = ANIMATION_FRAMES[currentAnimation];
+                let lastDirection: 'forward' | 'backward' | 'left' | 'right' = 'forward';
+                let frameTimer = 0;
+                const FRAME_DURATION = 0.15; // seconds per frame
+                let lastTime = performance.now();
+
                 // Helper functions
                 const updateProgress = () => {
                     const percent = (state.completedCount / state.tasks.length) * 100;
@@ -774,19 +826,48 @@ export const createAssignmentMinigame = (): {
 
                 // Game loop
                 let animFrame: number;
-                const loop = () => {
+                const loop = (currentTime: number) => {
+                    const deltaTime = (currentTime - lastTime) / 1000;
+                    lastTime = currentTime;
+
                     if (!state.activeTask) {
                         const speed = 3;
                         let dx = 0, dy = 0;
-                        if (keys.has('w') || keys.has('arrowup')) dy -= speed;
-                        if (keys.has('s') || keys.has('arrowdown')) dy += speed;
-                        if (keys.has('a') || keys.has('arrowleft')) dx -= speed;
-                        if (keys.has('d') || keys.has('arrowright')) dx += speed;
+                        let moving = false;
+                        
+                        if (keys.has('w') || keys.has('arrowup')) { dy -= speed; moving = true; lastDirection = 'backward'; }
+                        if (keys.has('s') || keys.has('arrowdown')) { dy += speed; moving = true; lastDirection = 'forward'; }
+                        if (keys.has('a') || keys.has('arrowleft')) { dx -= speed; moving = true; lastDirection = 'left'; }
+                        if (keys.has('d') || keys.has('arrowright')) { dx += speed; moving = true; lastDirection = 'right'; }
 
                         const newX = Math.max(30, Math.min(770, state.playerX + dx));
                         const newY = Math.max(30, Math.min(570, state.playerY + dy));
                         state.playerX = newX;
                         state.playerY = newY;
+
+                        // Update player animation
+                        if (moving) {
+                            const animKey = `walk_${lastDirection}` as keyof typeof ANIMATION_FRAMES;
+                            if (currentAnimation !== animKey) {
+                                currentAnimation = animKey;
+                                playerFrames = ANIMATION_FRAMES[currentAnimation];
+                                frameIndex = 0;
+                                frameTimer = 0;
+                            }
+                            frameTimer += deltaTime;
+                            if (frameTimer >= FRAME_DURATION) {
+                                frameIndex = (frameIndex + 1) % playerFrames.length;
+                                frameTimer = 0;
+                            }
+                        } else {
+                            const animKey = `idle_${lastDirection}` as keyof typeof ANIMATION_FRAMES;
+                            if (currentAnimation !== animKey) {
+                                currentAnimation = animKey;
+                                playerFrames = ANIMATION_FRAMES[currentAnimation];
+                                frameIndex = 0;
+                                frameTimer = 0;
+                            }
+                        }
 
                         // Update status
                         let nearestTask: Task | null = null;
@@ -816,102 +897,131 @@ export const createAssignmentMinigame = (): {
                     ctx.fillStyle = bgGradient;
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                    // Grid floor
-                    ctx.strokeStyle = 'rgba(100, 116, 139, 0.2)';
-                    ctx.lineWidth = 1;
-                    for (let x = 0; x <= canvas.width; x += 40) {
-                        ctx.beginPath();
-                        ctx.moveTo(x, 0);
-                        ctx.lineTo(x, canvas.height);
-                        ctx.stroke();
-                    }
-                    for (let y = 0; y <= canvas.height; y += 40) {
-                        ctx.beginPath();
-                        ctx.moveTo(0, y);
-                        ctx.lineTo(canvas.width, y);
-                        ctx.stroke();
+                    // Draw floor with road tiles
+                    const tileSize = 40; // Tile size for rendering
+                    for (let y = 0; y <= canvas.height; y += tileSize) {
+                        for (let x = 0; x <= canvas.width; x += tileSize) {
+                            roadTileset.drawTile(ctx, 0, x, y, tileSize / 32);
+                        }
                     }
 
-                    // Draw tasks
+                    // Draw tasks with paper sprite
                     state.tasks.forEach(task => {
                         ctx.save();
 
-                        // Glow for incomplete tasks
-                        if (!task.completed) {
-                            ctx.shadowColor = 'rgba(110, 231, 183, 0.6)';
-                            ctx.shadowBlur = 20;
-                        }
-
-                        // Task station
-                        const gradient = ctx.createRadialGradient(task.x, task.y, 10, task.x, task.y, 40);
-                        if (task.completed) {
-                            gradient.addColorStop(0, '#10b981');
-                            gradient.addColorStop(1, '#064e3b');
+                        if (paperSprite && paperSprite.complete) {
+                            // Draw paper sprite
+                            const paperSize = task.completed ? 50 : 60;
+                            const paperX = task.x - paperSize / 2;
+                            const paperY = task.y - paperSize / 2;
+                            
+                            // Glow for incomplete tasks
+                            if (!task.completed) {
+                                ctx.shadowColor = 'rgba(110, 231, 183, 0.6)';
+                                ctx.shadowBlur = 20;
+                            }
+                            
+                            // Draw paper
+                            ctx.drawImage(paperSprite, paperX, paperY, paperSize, paperSize);
+                            ctx.shadowBlur = 0;
+                            
+                            // Draw checkmark on completed tasks
+                            if (task.completed) {
+                                ctx.fillStyle = '#10b981';
+                                ctx.font = 'bold 24px sans-serif';
+                                ctx.textAlign = 'center';
+                                ctx.textBaseline = 'middle';
+                                ctx.fillText('✓', task.x, task.y);
+                            }
                         } else {
-                            gradient.addColorStop(0, '#6ee7b7');
-                            gradient.addColorStop(1, '#0d9488');
+                            // Fallback to circles if paper sprite fails
+                            if (!task.completed) {
+                                ctx.shadowColor = 'rgba(110, 231, 183, 0.6)';
+                                ctx.shadowBlur = 20;
+                            }
+
+                            const gradient = ctx.createRadialGradient(task.x, task.y, 10, task.x, task.y, 40);
+                            if (task.completed) {
+                                gradient.addColorStop(0, '#10b981');
+                                gradient.addColorStop(1, '#064e3b');
+                            } else {
+                                gradient.addColorStop(0, '#6ee7b7');
+                                gradient.addColorStop(1, '#0d9488');
+                            }
+                            ctx.fillStyle = gradient;
+                            ctx.beginPath();
+                            ctx.arc(task.x, task.y, 35, 0, Math.PI * 2);
+                            ctx.fill();
+
+                            ctx.shadowBlur = 0;
+                            ctx.strokeStyle = task.completed ? '#10b981' : '#6ee7b7';
+                            ctx.lineWidth = 3;
+                            ctx.stroke();
+
+                            ctx.fillStyle = '#0f172a';
+                            ctx.font = 'bold 24px sans-serif';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(task.completed ? '✓' : '?', task.x, task.y);
                         }
-                        ctx.fillStyle = gradient;
-                        ctx.beginPath();
-                        ctx.arc(task.x, task.y, 35, 0, Math.PI * 2);
-                        ctx.fill();
-
-                        ctx.shadowBlur = 0;
-
-                        // Border
-                        ctx.strokeStyle = task.completed ? '#10b981' : '#6ee7b7';
-                        ctx.lineWidth = 3;
-                        ctx.stroke();
-
-                        // Icon
-                        ctx.fillStyle = '#0f172a';
-                        ctx.font = 'bold 24px sans-serif';
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText(task.completed ? '✓' : '?', task.x, task.y);
 
                         // Label
                         ctx.fillStyle = task.completed ? '#94a3b8' : '#f1f5f9';
                         ctx.font = 'bold 12px sans-serif';
+                        ctx.textAlign = 'center';
                         ctx.fillText(task.name, task.x, task.y + 50);
 
                         ctx.restore();
                     });
 
-                    // Draw player
+                    // Draw player with custom sprite
                     ctx.save();
-                    ctx.shadowColor = 'rgba(245, 158, 11, 0.6)';
-                    ctx.shadowBlur = 15;
+                    if (playerData.compositedImage) {
+                        const frame = playerFrames[frameIndex];
+                        drawSubSprite(ctx, playerData.compositedImage, {
+                            sourceX: (frame.col - 1) * 32,
+                            sourceY: (frame.row - 1) * 32,
+                            sourceWidth: 32,
+                            sourceHeight: 32,
+                            x: state.playerX - 16,
+                            y: state.playerY - 16,
+                            width: 32,
+                            height: 32,
+                        });
+                    } else {
+                        // Fallback to circle
+                        ctx.shadowColor = 'rgba(245, 158, 11, 0.6)';
+                        ctx.shadowBlur = 15;
 
-                    const playerGradient = ctx.createRadialGradient(
-                        state.playerX, state.playerY - 2, 5,
-                        state.playerX, state.playerY, 16
-                    );
-                    playerGradient.addColorStop(0, '#fbbf24');
-                    playerGradient.addColorStop(1, '#f59e0b');
-                    ctx.fillStyle = playerGradient;
-                    ctx.beginPath();
-                    ctx.arc(state.playerX, state.playerY, 16, 0, Math.PI * 2);
-                    ctx.fill();
+                        const playerGradient = ctx.createRadialGradient(
+                            state.playerX, state.playerY - 2, 5,
+                            state.playerX, state.playerY, 16
+                        );
+                        playerGradient.addColorStop(0, '#fbbf24');
+                        playerGradient.addColorStop(1, '#f59e0b');
+                        ctx.fillStyle = playerGradient;
+                        ctx.beginPath();
+                        ctx.arc(state.playerX, state.playerY, 16, 0, Math.PI * 2);
+                        ctx.fill();
 
-                    ctx.shadowBlur = 0;
-                    ctx.strokeStyle = '#ffffff';
-                    ctx.lineWidth = 3;
-                    ctx.stroke();
+                        ctx.shadowBlur = 0;
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 3;
+                        ctx.stroke();
 
-                    // YOU label
-                    ctx.fillStyle = '#1e293b';
-                    ctx.font = 'bold 11px sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText('YOU', state.playerX, state.playerY);
+                        ctx.fillStyle = '#1e293b';
+                        ctx.font = 'bold 11px sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('YOU', state.playerX, state.playerY);
+                    }
 
                     ctx.restore();
 
                     animFrame = requestAnimationFrame(loop);
                 };
 
-                loop();
+                loop(performance.now());
 
                 const cleanup = () => {
                     if (animFrame) cancelAnimationFrame(animFrame);

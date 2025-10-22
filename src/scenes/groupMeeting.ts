@@ -1103,7 +1103,8 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
                     networking: state.stats.N,
                     aura: state.stats.A,
                     skills: state.stats.S
-                }
+                },
+                playerSprite: state.playerSprite
             });
 
             // After completing assignment, apply rewards and continue
