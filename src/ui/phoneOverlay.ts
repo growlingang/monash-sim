@@ -293,7 +293,7 @@ const renderPhoneContent = (store: GameStore) => {
 
     switch (app) {
       case 'maps':
-        const isEveningCommute = currentState.currentScene === 'evening-commute';
+        const isEveningCommute = currentState.currentScene === 'evening-commute' || currentState.currentScene === 'campus-ltb';
           appTitle.textContent = isEveningCommute ? 'Maps - Evening Transport' : 'Maps - Morning Transport';
 
           
@@ -366,28 +366,34 @@ const renderPhoneContent = (store: GameStore) => {
             
             if (walkBtn) {
               walkBtn.addEventListener('click', () => {
-                (window as any).__selectedTransport = 'walk';
                 closePhone();
-                // Trigger scene refresh to launch minigame
-                store.setState((prev) => ({ ...prev }));
+                store.setState((prev) => {
+                  const next = { ...prev, currentScene: 'evening-commute' as const };
+                  (window as any).__selectedTransport = 'walk';
+                  return next;
+                });
               });
             }
             
             if (busBtn && currentState.money >= 5) {
               busBtn.addEventListener('click', () => {
-                (window as any).__selectedTransport = 'bus';
                 closePhone();
-                // Trigger scene refresh to launch minigame
-                store.setState((prev) => ({ ...prev }));
+                store.setState((prev) => {
+                  const next = { ...prev, currentScene: 'evening-commute' as const };
+                  (window as any).__selectedTransport = 'bus';
+                  return next;
+                });
               });
             }
             
             if (driveBtn && currentState.money >= 12) {
               driveBtn.addEventListener('click', () => {
-                (window as any).__selectedTransport = 'drive';
                 closePhone();
-                // Trigger scene refresh to launch minigame
-                store.setState((prev) => ({ ...prev }));
+                store.setState((prev) => {
+                  const next = { ...prev, currentScene: 'evening-commute' as const };
+                  (window as any).__selectedTransport = 'drive';
+                  return next;
+                });
               });
             }
           }, 0);
