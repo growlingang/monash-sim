@@ -124,6 +124,15 @@ export const initPhoneOverlay = (store: GameStore) => {
   // Listen for 'P' key to toggle phone
   document.addEventListener('keydown', (e) => {
     if (e.key.toLowerCase() === 'p') {
+      // Don't open phone if user is typing in an input field or textarea
+      const activeElement = document.activeElement;
+      if (activeElement && (
+        activeElement.tagName === 'INPUT' || 
+        activeElement.tagName === 'TEXTAREA' ||
+        activeElement.hasAttribute('contenteditable')
+      )) {
+        return; // Ignore the 'p' key when typing in input fields
+      }
       togglePhone(store);
     }
   });

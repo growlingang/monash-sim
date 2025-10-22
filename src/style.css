@@ -497,6 +497,8 @@ body {
 .onboarding__text-group {
   position: relative;
   width: min(520px, 90vw);
+  min-height: 200px;
+  max-height: 200px;
   padding: clamp(1.8rem, 3.5vw, 2.4rem) clamp(1.6rem, 3vw, 2.2rem);
   display: flex;
   flex-direction: column;
@@ -504,6 +506,7 @@ body {
   gap: clamp(1rem, 2.4vw, 1.6rem);
   text-align: center;
   box-sizing: border-box;
+  overflow: visible;
 }
 
 .onboarding__text-bg {

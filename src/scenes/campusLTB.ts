@@ -163,7 +163,7 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
     ];
 
     // Player state (restored from window if present)
-    const playerSize = TILE_SIZE - 6; // slight inset for nicer collision
+    const playerSize = TILE_SIZE * 2; // Match bedroom size (2 tiles tall)
     // Default spawn: bottom of 3rd left column (col index 2) of the second last row
     const spawnCol = 2;
     const spawnRow = MAP_HEIGHT - 2; // second last row (0-based)
