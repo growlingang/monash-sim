@@ -1,10 +1,18 @@
-# Monash Sim - University Life Simulator
+<div align="center">
 
-A narrative-driven simulation game that immerses players in the daily life of a Monash University student. Balance academics, social relationships, resource management, and complete group assignments while navigating the challenges of university life.
+![Monash Sim Banner](public/images/banner.png)
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat&logo=vite&logoColor=white)
 ![Canvas API](https://img.shields.io/badge/Canvas_API-E34F26?style=flat&logo=html5&logoColor=white)
+
+**Built by Team GG (S1-CS-22)**
+
+[Bonsen Wakjira](https://www.linkedin.com/in/bonsen-wakjira/) • [Zahir Hassan](https://www.linkedin.com/in/zahirhassan-cs/) • [Jia Wen Ooi](https://www.linkedin.com/in/jiawenooi22/) • [Anika Ojha](https://www.linkedin.com/in/anikaojha/) • [Jiun How](https://www.linkedin.com/in/jiuneehow/)
+
+</div>
+
+---
 
 ## 🎮 Features
 
