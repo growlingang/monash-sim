@@ -122,12 +122,14 @@ export const renderLTBinside = async (root: HTMLElement, store: GameStore) => {
 
   // Hotspots overlay (separate from roomData). Each hotspot is defined by tile coordinates and a target scene.
   const centerX = Math.floor(ROOM_WIDTH / 2);
-  const topHotspotY = 1; // second row (0-indexed)
   const bottomHotspotY = ROOM_HEIGHT - 2; // second-last row
 
-  type Hotspot = { x: number; y: number; scene: SceneId };
+  type Hotspot = { x: number; y: number; scene: SceneId; h?: number };
+  // Make both hotspots normal tile-based hotspots (no visual offset or special logic)
+  // Add a tiny top hotspot at row 2 (y=1) that transitions to group-meeting with custom pixel height
+  const topHotspotY = 1; // second row (0-based)
   const hotspots: Hotspot[] = [
-    { x: centerX, y: topHotspotY, scene: 'group-meeting' },
+    { x: centerX, y: topHotspotY, scene: 'group-meeting', h: TILE_SIZE * 1.05 },
     { x: centerX, y: bottomHotspotY, scene: 'campus-ltb' },
   ];
 
@@ -289,29 +291,18 @@ export const renderLTBinside = async (root: HTMLElement, store: GameStore) => {
     return true;
   };
 
-  // Helper: check hotspot under player.
-  // Use the same feet-center test as `campusLTB` for the top hotspot (group-meeting):
-  // check the horizontal center and the middle of bottom 4px. For other hotspots use bbox overlap.
+  // Helper: check hotspot under player using feet-center detection (middle of bottom 4px)
   const hotspotUnderPlayer = (px: number, py: number) => {
-    const boxLeft = px;
-    const boxTop = py;
-    const boxRight = px + playerSize;
-    const boxBottom = py + playerSize;
+    // px,py are top-left of player sprite
+    const feetCenterX = px + playerSize / 2;
+    const feetCenterY = py + playerSize - 2; // middle of bottom 4px
     return hotspots.find(h => {
-  const left = h.x * TILE_SIZE;
-  // If the hotspot has a visual offset (group-meeting), use the same offset for logical checks
-  const top = h.scene === 'group-meeting' ? (h.y * TILE_SIZE + 6) : (h.y * TILE_SIZE);
-  const right = left + TILE_SIZE;
-  const bottom = top + TILE_SIZE;
-      if (h.scene === 'group-meeting') {
-        // feet-center test like campusLTB entrance: middle of bottom 4px
-        // Use the visual offset so logic follows the outline
-        const feetCenterX = px + playerSize / 2;
-        const feetCenterY = py + playerSize - 2; // middle of bottom 4px
-        return feetCenterX >= left && feetCenterX < right && feetCenterY >= top && feetCenterY < bottom;
-      }
-      // bounding-box overlap for other hotspots
-      return boxLeft < right && boxRight > left && boxTop < bottom && boxBottom > top;
+      const left = h.x * TILE_SIZE;
+      const top = h.y * TILE_SIZE;
+      const hh = typeof h.h === 'number' ? h.h : TILE_SIZE;
+      const right = left + TILE_SIZE;
+      const bottom = top + hh;
+      return feetCenterX >= left && feetCenterX < right && feetCenterY >= top && feetCenterY < bottom;
     });
   };
 
@@ -323,13 +314,10 @@ export const renderLTBinside = async (root: HTMLElement, store: GameStore) => {
     if (hs.scene === 'campus-ltb') {
       const spawnX = hs.x * TILE_SIZE + (TILE_SIZE - playerSize) / 2;
       const spawnY = hs.y * TILE_SIZE + (TILE_SIZE - playerSize) / 2;
-  (window as any).__ltb_state = { env: 'outside', x: spawnX, y: spawnY };
-  (window as any).__suppressHotspotOnce = true;
-    } else if (hs.scene === 'group-meeting') {
-      // Clear saved LTB state when entering group meeting
-      delete (window as any).__ltb_state;
+      (window as any).__ltb_state = { env: 'outside', x: spawnX, y: spawnY };
     }
-    store.setState(prev => transitionScene(prev, hs.scene));
+  if (hs.scene === 'group-meeting') (window as any).__justArrivedFromLTB = true;
+  store.setState(prev => transitionScene(prev, hs.scene));
     cleanup();
   };
 
@@ -370,25 +358,9 @@ export const renderLTBinside = async (root: HTMLElement, store: GameStore) => {
     if (playerFrames.length > 1 && frameTimer >= FRAME_DURATION) { frameIndex = (frameIndex + 1) % playerFrames.length; frameTimer = 0; }
 
     // auto-transition if standing on any hotspot (redundant with handleInteraction)
-    // Use bounding-box overlap for all hotspots (uniform behavior)
-    // auto-trigger if standing on any hotspot
-    // For group-meeting (top hotspot) check feet-center; for others use bbox overlap.
-    const hsFeet = hotspots.find(h => {
-      const left = h.x * TILE_SIZE;
-      const top = h.scene === 'group-meeting' ? (h.y * TILE_SIZE + 6) : (h.y * TILE_SIZE);
-      const right = left + TILE_SIZE;
-      const bottom = top + TILE_SIZE;
-      if (h.scene === 'group-meeting') {
-        const feetCenterX = playerX + playerSize / 2;
-        const feetCenterY = playerY + playerSize - 2;
-        return feetCenterX >= left && feetCenterX < right && feetCenterY >= top && feetCenterY < bottom;
-      }
-      const pxLeft = playerX;
-      const pxTop = playerY;
-      const pxRight = pxLeft + playerSize;
-      const pxBottom = pxTop + playerSize;
-      return pxLeft < right && pxRight > left && pxTop < bottom && pxBottom > top;
-    });
+    // Use bounding-box overlap for all hotspots; respect optional per-hotspot pixel height `h`.
+  // Use feet-center detection for auto-trigger as well
+  const hsFeet = hotspotUnderPlayer(playerX, playerY);
     if (hsFeet) {
       console.debug('[LTBinside] hotspot auto-trigger:', hsFeet.scene, 'at', hsFeet.x, hsFeet.y);
       if (hsFeet.scene === 'campus-ltb') {
@@ -398,7 +370,8 @@ export const renderLTBinside = async (root: HTMLElement, store: GameStore) => {
       } else if (hsFeet.scene === 'group-meeting') {
         delete (window as any).__ltb_state;
       }
-      store.setState(prev => transitionScene(prev, hsFeet.scene));
+  if (hsFeet.scene === 'group-meeting') (window as any).__justArrivedFromLTB = true;
+  store.setState(prev => transitionScene(prev, hsFeet.scene));
       cleanup();
     }
   };
@@ -437,9 +410,9 @@ export const renderLTBinside = async (root: HTMLElement, store: GameStore) => {
     ctx.fillStyle = 'rgba(255, 223, 0, 0.85)'; // bright yellow
     for (const h of hotspots) {
       const hx = h.x * TILE_SIZE;
-      // Shift the visual box for the top/group-meeting hotspot slightly lower (~6px)
-      const hy = h.scene === 'group-meeting' ? (h.y * TILE_SIZE + 6) : (h.y * TILE_SIZE);
-      ctx.fillRect(hx, hy, TILE_SIZE, TILE_SIZE);
+      const hy = h.y * TILE_SIZE;
+      const hh = typeof h.h === 'number' ? h.h : TILE_SIZE;
+      ctx.fillRect(hx, hy, TILE_SIZE, hh);
     }
     ctx.restore();
 
