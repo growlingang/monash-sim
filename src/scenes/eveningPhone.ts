@@ -1,7 +1,7 @@
 import type { GameStore } from '../core/store';
-import { createPhoneOverlay, openPhone, closePhone } from '../ui/phoneOverlay';
+import { openPhone } from '../ui/phoneOverlay';
 
-export const renderEveningPhone = (root: HTMLElement, store: GameStore) => {
+export const renderEveningPhone = (_root: HTMLElement, store: GameStore) => {
   // Evening phone is just the phone overlay system
   // which already has the Activities app when in bedroom scene
   openPhone(store);

@@ -163,7 +163,7 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
     ];
 
     // Player state (restored from window if present)
-    const playerSize = TILE_SIZE - 6; // slight inset for nicer collision
+    const playerSize = TILE_SIZE * 2; // Match bedroom size (2 tiles tall)
     // Default spawn: bottom of 3rd left column (col index 2) of the second last row
     const spawnCol = 2;
     const spawnRow = MAP_HEIGHT - 2; // second last row (0-based)
@@ -179,6 +179,8 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
     let currentAnimation: keyof typeof ANIMATION_FRAMES = 'idle_forward';
     let playerFrames = ANIMATION_FRAMES[currentAnimation];
     let lastDirection: 'forward' | 'backward' | 'left' | 'right' = 'forward';
+    let frameTimer = 0;
+    const FRAME_DURATION = 0.15; // seconds per frame (match bedroom)
     
     // Get custom sprite from game state
     let customSprite = store.getState().playerSprite;
@@ -380,8 +382,16 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
             currentAnimation = desiredAnimation;
             playerFrames = ANIMATION_FRAMES[currentAnimation];
             frameIndex = 0;
+            frameTimer = 0;
         }
         lastDirection = newDirection;
+
+        // Animation frame timing (match bedroom speed)
+        frameTimer += dt;
+        if (playerFrames.length > 1 && frameTimer >= FRAME_DURATION) {
+            frameIndex = (frameIndex + 1) % playerFrames.length;
+            frameTimer = 0;
+        }
 
         // Auto-enter if the center of the player's feet overlaps the entrance hotspot (outside only)
         if (env === 'outside') {
@@ -444,11 +454,12 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
         // Emphasize the entrance hotspot when outside
         if (env === 'outside') {
             const entrance = hsList.find(h => h.id === 'entrance');
-            if (entrance) {
-                ctx.strokeStyle = 'rgba(251,191,36,0.9)'; // amber
-                ctx.lineWidth = 2;
-                ctx.strokeRect(entrance.x * TILE_SIZE + 1, entrance.y * TILE_SIZE + 1, entrance.w * TILE_SIZE - 2, entrance.h * TILE_SIZE - 2);
-                ctx.lineWidth = 1;
+        if (entrance) {
+            ctx.strokeStyle = 'rgba(251,191,36,0.9)'; // amber
+            ctx.lineWidth = 2;
+            // Shift the emphasis box slightly lower (approx 6 pixels) to match visual alignment
+            ctx.strokeRect(entrance.x * TILE_SIZE + 1, entrance.y * TILE_SIZE + 1 + 6, entrance.w * TILE_SIZE - 2, entrance.h * TILE_SIZE - 2);
+            ctx.lineWidth = 1;
             }
         }
 
@@ -465,7 +476,7 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
                 sourceWidth: 32,
                 sourceHeight: 32,
             });
-            frameIndex = (frameIndex + 1) % playerFrames.length;
+            // frameIndex is now advanced in update() with proper timing
         } else {
             // Fallback to rectangle if sprite not loaded
             ctx.fillStyle = '#4ac94a';

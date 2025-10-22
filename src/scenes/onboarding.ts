@@ -50,7 +50,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     id: 'support-location',
     background: bg3,
     portrait: sirJohnPortrait,
-    message: () => `Should you need me, come find me in front of the\nReligious Centre!`,
+    message: () => `Press P to open your phone and access helpful tools\nthroughout your day!`,
   },
   {
     id: 'map-question',

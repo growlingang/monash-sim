@@ -1,18 +1,34 @@
 
 import { playBackgroundMusic, stopBackgroundMusic } from '../utils/audioManager';
 import type { Minigame, MinigameConfig, MinigameResult } from './types';
+import { drawSubSprite } from '../utils/spriteLoader';
+import { ANIMATION_FRAMES } from '../sprites/animationFrames';
+import { buildCompositeSprite } from '../sprites/playerSpriteOptimizer';
+import { DEFAULT_PLAYER } from '../sprites/playerSprite';
 
 const CANVAS_WIDTH = 640;
 const CANVAS_HEIGHT = 400;
 const BALANCE_BAR_WIDTH = 120;
-const PLAYER_WIDTH = 32;
-const PLAYER_HEIGHT = 48;
+const PLAYER_SIZE = 64; // Match other scenes
 const TIME_LIMIT = 25; // seconds
 
 export const busMinigame: Minigame = {
   mount: async (container: HTMLElement, config: MinigameConfig): Promise<MinigameResult> => {
     // Play bus minigame music
     await playBackgroundMusic('/audio/ambience/Melbourne_Bus_Loop.mp3', { loop: true, volume: 0.7 });
+    
+    // Get player sprite from config and build it
+    let customSprite = (config as any).playerSprite || DEFAULT_PLAYER;
+    
+    // Build composite sprite
+    try {
+      await buildCompositeSprite(customSprite, 32, 32);
+    } catch (error) {
+      console.warn('Failed to build player sprite, using default:', error);
+      customSprite = DEFAULT_PLAYER;
+      await buildCompositeSprite(customSprite, 32, 32);
+    }
+    
     return new Promise((resolve) => {
       container.innerHTML = '';
       
@@ -48,6 +64,13 @@ export const busMinigame: Minigame = {
         return;
       }
 
+      // Player animation state
+      let frameIndex = 0;
+      let currentAnimation: keyof typeof ANIMATION_FRAMES = 'idle_forward';
+      let playerFrames = ANIMATION_FRAMES[currentAnimation];
+      let frameTimer = 0;
+      const FRAME_DURATION = 0.15;
+
       // Random bus delay (10% chance the bus is 2-5 minutes late)
       const busDelayChance = Math.random();
       const busIsLate = busDelayChance < 0.1;
@@ -66,6 +89,9 @@ export const busMinigame: Minigame = {
       let gameActive = true;
       let lastTime = performance.now();
       let wobblePhase = 0;
+      let turbulenceTimer = 0;
+      let turbulenceForce = 0;
+      let nextTurbulenceIn = 2 + Math.random() * 3; // Random interval between turbulence
       
       // Calculate safe zone based on stats
       const aura = config.playerStats.aura;
@@ -80,8 +106,9 @@ export const busMinigame: Minigame = {
       }
       safeZone = Math.max(10, safeZone); // Minimum safe zone
 
-      // Wobble frequency (bus shaking)
-      const wobbleFrequency = aura >= 6 ? 1.5 : 2.5;
+      // Turbulence settings based on mobility
+      const turbulenceStrength = mobility <= 4 ? 0.8 : mobility >= 7 ? 0.4 : 0.6;
+      const turbulenceFrequency = mobility <= 4 ? 2.5 : mobility >= 7 ? 4.5 : 3.5; // seconds between turbulence
 
       // Input handling
       const keys: Record<string, boolean> = {};
@@ -122,18 +149,41 @@ export const busMinigame: Minigame = {
           return;
         }
 
-        // Bus wobble (external force pushing player)
-        wobblePhase += deltaTime * wobbleFrequency;
-        const wobble = Math.sin(wobblePhase) * 0.3 * deltaTime;
+        // Turbulence system - random strong forces that require counter-balancing
+        turbulenceTimer += deltaTime;
+        if (turbulenceTimer >= nextTurbulenceIn) {
+          // Trigger turbulence
+          turbulenceForce = (Math.random() - 0.5) * 2 * turbulenceStrength; // Random direction
+          turbulenceTimer = 0;
+          nextTurbulenceIn = turbulenceFrequency + Math.random() * 2; // Next turbulence time varies
+        }
+
+        // Apply turbulence force (decays over time)
+        if (Math.abs(turbulenceForce) > 0.01) {
+          balance += turbulenceForce * deltaTime * 3; // Strong push
+          turbulenceForce *= 0.85; // Decay quickly
+        }
+
+        // Subtle constant wobble (much weaker than turbulence)
+        wobblePhase += deltaTime * 2;
+        const wobble = Math.sin(wobblePhase) * 0.08 * deltaTime;
         balance += wobble;
 
-        // Player input
-        const balanceSpeed = 0.8 * deltaTime;
+        // Player input - stronger counter-force
+        const balanceSpeed = 1.2 * deltaTime;
+        let moving = false;
         if (keys['arrowleft'] || keys['a']) {
           balance -= balanceSpeed;
+          moving = true;
         }
         if (keys['arrowright'] || keys['d']) {
           balance += balanceSpeed;
+          moving = true;
+        }
+
+        // Passive drift towards center (very slight)
+        if (!moving && Math.abs(turbulenceForce) < 0.1) {
+          balance *= 0.98;
         }
 
         // Clamp balance
@@ -151,6 +201,27 @@ export const busMinigame: Minigame = {
             penaltyReason: busIsLate ? `Bus arrived ${busDelayMinutes} min late` : undefined,
           });
           return;
+        }
+
+        // Update animation
+        frameTimer += deltaTime;
+        if (playerFrames.length > 1 && frameTimer >= FRAME_DURATION) {
+          frameIndex = (frameIndex + 1) % playerFrames.length;
+          frameTimer = 0;
+        }
+
+        // Set animation based on balance
+        let desiredAnimation: keyof typeof ANIMATION_FRAMES;
+        if (Math.abs(balance) > 0.3) {
+          desiredAnimation = balance > 0 ? 'idle_right' : 'idle_left';
+        } else {
+          desiredAnimation = 'idle_forward';
+        }
+        if (desiredAnimation !== currentAnimation) {
+          currentAnimation = desiredAnimation;
+          playerFrames = ANIMATION_FRAMES[currentAnimation];
+          frameIndex = 0;
+          frameTimer = 0;
         }
       };
 
@@ -290,95 +361,46 @@ export const busMinigame: Minigame = {
         ctx.fillStyle = Math.abs(balance * (BALANCE_BAR_WIDTH / 2)) > safeZone / 2 ? '#c94444' : '#4ac94a';
         ctx.fillRect(indicatorX - 3, barY - 5, 6, 30);
 
-        // Draw player
-        const playerX = CANVAS_WIDTH / 2 - PLAYER_WIDTH / 2 + balance * 40;
+        // Draw player with custom sprite
+        const playerX = CANVAS_WIDTH / 2 - PLAYER_SIZE / 2 + balance * 40;
         const playerY = CANVAS_HEIGHT - 150;
         
-        // Player body (tilting based on balance)
         ctx.save();
-        ctx.translate(playerX + PLAYER_WIDTH / 2, playerY + PLAYER_HEIGHT);
-        ctx.rotate(balance * 0.3);
+        ctx.translate(playerX + PLAYER_SIZE / 2, playerY + PLAYER_SIZE / 2);
+        ctx.rotate(balance * 0.3); // Tilt based on balance
         
-        // Legs
-        ctx.fillStyle = '#2a4d6e';
-        ctx.fillRect(-PLAYER_WIDTH / 2 + 4, -16, 10, 16);
-        ctx.fillRect(-PLAYER_WIDTH / 2 + 18, -16, 10, 16);
-        
-        // Shoes
-        ctx.fillStyle = '#1a1a1a';
-        ctx.fillRect(-PLAYER_WIDTH / 2 + 2, -4, 12, 4);
-        ctx.fillRect(-PLAYER_WIDTH / 2 + 16, -4, 12, 4);
-        
-        // Torso
-        ctx.fillStyle = '#5a9abd';
-        ctx.fillRect(-PLAYER_WIDTH / 2, -PLAYER_HEIGHT + 12, PLAYER_WIDTH, 32);
-        
-        // Arms (swaying for balance)
-        const armSwing = balance * 15;
-        ctx.fillStyle = '#d4a574';
-        // Left arm
-        ctx.fillRect(-PLAYER_WIDTH / 2 - 6, -PLAYER_HEIGHT + 14 - armSwing, 6, 20);
-        // Right arm
-        ctx.fillRect(PLAYER_WIDTH / 2, -PLAYER_HEIGHT + 14 + armSwing, 6, 20);
-        
-        // Hands
-        ctx.fillStyle = '#c49464';
-        ctx.beginPath();
-        ctx.arc(-PLAYER_WIDTH / 2 - 3, -PLAYER_HEIGHT + 34 - armSwing, 4, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(PLAYER_WIDTH / 2 + 3, -PLAYER_HEIGHT + 34 + armSwing, 4, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Neck
-        ctx.fillStyle = '#d4a574';
-        ctx.fillRect(-PLAYER_WIDTH / 2 + 10, -PLAYER_HEIGHT + 10, 12, 6);
-        
-        // Head
-        ctx.fillStyle = '#f5d5a8';
-        ctx.fillRect(-PLAYER_WIDTH / 2 + 6, -PLAYER_HEIGHT, 20, 16);
-        
-        // Hair
-        ctx.fillStyle = '#3d2817';
-        ctx.fillRect(-PLAYER_WIDTH / 2 + 6, -PLAYER_HEIGHT, 20, 6);
-        ctx.fillRect(-PLAYER_WIDTH / 2 + 4, -PLAYER_HEIGHT + 2, 4, 8);
-        ctx.fillRect(-PLAYER_WIDTH / 2 + 22, -PLAYER_HEIGHT + 2, 4, 8);
-        
-        // Eyes (worried expression)
-        ctx.fillStyle = '#2d2d2d';
-        if (Math.abs(balance) > 0.6) {
-          // Wide eyes when losing balance
-          ctx.fillRect(-PLAYER_WIDTH / 2 + 9, -PLAYER_HEIGHT + 7, 3, 5);
-          ctx.fillRect(-PLAYER_WIDTH / 2 + 20, -PLAYER_HEIGHT + 7, 3, 5);
+        if (customSprite?.compositedImage) {
+          const frame = playerFrames[frameIndex];
+          drawSubSprite(ctx, customSprite.compositedImage, {
+            x: -PLAYER_SIZE / 2,
+            y: -PLAYER_SIZE / 2,
+            width: PLAYER_SIZE,
+            height: PLAYER_SIZE,
+            sourceX: (frame.col - 1) * 32,
+            sourceY: (frame.row - 1) * 32,
+            sourceWidth: 32,
+            sourceHeight: 32,
+          });
         } else {
-          // Normal eyes
-          ctx.fillRect(-PLAYER_WIDTH / 2 + 9, -PLAYER_HEIGHT + 8, 3, 3);
-          ctx.fillRect(-PLAYER_WIDTH / 2 + 20, -PLAYER_HEIGHT + 8, 3, 3);
+          // Fallback rectangle
+          ctx.fillStyle = '#4ac94a';
+          ctx.fillRect(-PLAYER_SIZE / 2, -PLAYER_SIZE / 2, PLAYER_SIZE, PLAYER_SIZE);
         }
-        
-        // Mouth (changes based on balance)
-        ctx.fillStyle = '#2d2d2d';
-        if (Math.abs(balance) > 0.7) {
-          // Worried/scared mouth
-          ctx.beginPath();
-          ctx.ellipse(0, -PLAYER_HEIGHT + 13, 4, 2, 0, 0, Math.PI * 2);
-          ctx.fill();
-        } else if (Math.abs(balance) > 0.4) {
-          // Concerned line
-          ctx.fillRect(-PLAYER_WIDTH / 2 + 10, -PLAYER_HEIGHT + 13, 12, 2);
-        } else {
-          // Slight smile
-          ctx.fillRect(-PLAYER_WIDTH / 2 + 10, -PLAYER_HEIGHT + 13, 10, 2);
-          ctx.fillRect(-PLAYER_WIDTH / 2 + 11, -PLAYER_HEIGHT + 14, 8, 1);
-        }
-        
-        // Backpack (student detail)
-        ctx.fillStyle = '#8b4513';
-        ctx.fillRect(-PLAYER_WIDTH / 2 - 2, -PLAYER_HEIGHT + 16, 6, 16);
-        ctx.fillStyle = '#a0522d';
-        ctx.fillRect(-PLAYER_WIDTH / 2 - 1, -PLAYER_HEIGHT + 20, 4, 2);
         
         ctx.restore();
+
+        // Turbulence warning indicator
+        if (Math.abs(turbulenceForce) > 0.2) {
+          ctx.fillStyle = 'rgba(255, 100, 100, 0.3)';
+          ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+          
+          // Warning text
+          ctx.fillStyle = '#ff6666';
+          ctx.font = 'bold 24px monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText('TURBULENCE!', CANVAS_WIDTH / 2, 80);
+          ctx.textAlign = 'left';
+        }
 
         // Update header
         header.innerHTML = `

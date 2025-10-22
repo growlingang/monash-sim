@@ -9,93 +9,8 @@ import { getEveningActivityCutscene } from '../data/eveningCutscenes';
 import { getAudioSettings, setVolume, toggleMute, startBackgroundMusic } from '../utils/audioManager';
 import { DEFAULT_PLAYER } from '../sprites/playerSprite';
 import { CharacterCustomizer } from '../scenes/characterCustomization';
-import type { GameAction } from '../core/actions';
 
 type PhoneApp = 'home' | 'maps' | 'notes' | 'messages' | 'save' | 'settings' | 'activities' | 'character';
-
-// Phone overlay styles
-const PHONE_STYLES = `
-  .character-customizer {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1rem;
-    background: #c9a876;
-    height: 100%;
-    overflow-y: auto;
-  }
-
-  .customizer-tabs {
-    display: flex;
-    gap: 0.5rem;
-  }
-
-  .customizer-tabs button {
-    flex: 1;
-    padding: 0.5rem;
-    border: none;
-    background: #8b6f47;
-    color: #e8d5b5;
-    cursor: pointer;
-  }
-
-  .customizer-tabs button.active {
-    background: #3a2817;
-    color: #e8d5b5;
-  }
-
-  .customizer-options {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.5rem;
-  }
-
-  .customizer-options button {
-    padding: 0.5rem;
-    border: 1px solid #8b6f47;
-    background: #e8d5b5;
-    color: #3a2817;
-    cursor: pointer;
-  }
-
-  .customizer-options button.active {
-    border-color: #3a2817;
-    background: #8b6f47;
-    color: #e8d5b5;
-  }
-
-  .customizer-nav {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-  }
-
-  .customizer-nav button {
-    flex: 1;
-    padding: 0.5rem;
-    border: none;
-    background: #3a2817;
-    color: #e8d5b5;
-    cursor: pointer;
-  }
-
-  .customizer-apply {
-    width: 100%;
-    padding: 0.75rem;
-    border: none;
-    background: #4a7c1b;
-    color: #e8d5b5;
-    cursor: pointer;
-    font-weight: bold;
-  }
-
-  .preview-canvas {
-    background: #e8d5b5;
-    border: 2px solid #8b6f47;
-    border-radius: 4px;
-    margin: 0 auto;
-  }
-`;
 
 let overlayContainer: HTMLElement | null = null;
 let isPhoneOpen = false;
@@ -124,6 +39,15 @@ export const initPhoneOverlay = (store: GameStore) => {
   // Listen for 'P' key to toggle phone
   document.addEventListener('keydown', (e) => {
     if (e.key.toLowerCase() === 'p') {
+      // Don't open phone if user is typing in an input field or textarea
+      const activeElement = document.activeElement;
+      if (activeElement && (
+        activeElement.tagName === 'INPUT' || 
+        activeElement.tagName === 'TEXTAREA' ||
+        activeElement.hasAttribute('contenteditable')
+      )) {
+        return; // Ignore the 'p' key when typing in input fields
+      }
       togglePhone(store);
     }
   });
@@ -1080,45 +1004,6 @@ function renderActivitiesApp(
       color: #d4a574;
       font-size: 9px;
       line-height: 1.6;
-    // Style tag for character customization
-    const style = document.createElement('style');
-    style.textContent = PHONE_STYLES;
-    document.head.appendChild(style);
-
-    function renderCharacterApp() {
-      const container = document.createElement('div');
-      container.className = 'character-customizer-container';
-      appContent.appendChild(container);
-
-      // Set up customizer
-      const customizer = new CharacterCustomizer(container, store.getState().player);
-
-      // Listen for changes
-      const handleUpdate = ((e: CustomEvent) => {
-        // Update player in game state
-        store.dispatch({
-          type: 'UPDATE_PLAYER',
-          payload: e.detail.player
-        });
-      }) as EventListener;
-
-      window.addEventListener('character-updated', handleUpdate);
-
-      // Clean up when switching apps
-      return () => {
-        window.removeEventListener('character-updated', handleUpdate);
-        customizer.cleanup();
-        style.remove();
-      };
-    }
-
-    let cleanup: (() => void) | null = null;
-
-    switch (app) {
-      case 'character':
-        appTitle.textContent = 'Character';
-        cleanup = renderCharacterApp();
-        break;
     `;
 
     const activityReqs = document.createElement('div');
@@ -1182,7 +1067,7 @@ function renderActivitiesApp(
           renderNPCSelection(appTitle, content, store, renderHomeScreen);
         } else {
           // Execute activity
-          executeActivity(activity.id as any, store, renderHomeScreen);
+          executeActivity(activity.id as any, store);
         }
       });
     }
@@ -1329,7 +1214,7 @@ function renderNPCSelection(
       if (classChoice) {
         renderTailoredDM(appTitle, content, store, renderHomeScreen, npcId, classChoice);
       } else {
-        executeActivity('text', store, renderHomeScreen, npcId);
+        executeActivity('text', store, npcId);
       }
     });
 
@@ -1347,7 +1232,6 @@ function renderTailoredDM(
   appTitle.textContent = 'Draft Message';
   content.innerHTML = '';
 
-  const state = store.getState();
   const npc = NPC_DEFINITIONS[npcId];
 
   const header = document.createElement('div');
@@ -1464,7 +1348,6 @@ function renderTailoredDM(
 function executeActivity(
   activityId: 'eat' | 'rest' | 'text' | 'doomscroll',
   store: GameStore,
-  renderHomeScreen: () => void,
   targetNpc?: NpcId
 ) {
   const state = store.getState();

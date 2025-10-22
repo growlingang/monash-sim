@@ -1,4 +1,8 @@
 import type { Minigame, MinigameConfig, MinigameResult } from './types';
+import { drawSubSprite } from '../utils/spriteLoader';
+import { ANIMATION_FRAMES } from '../sprites/animationFrames';
+import { buildCompositeSprite } from '../sprites/playerSpriteOptimizer';
+import { DEFAULT_PLAYER } from '../sprites/playerSprite';
 
 interface Vehicle {
   x: number;
@@ -12,7 +16,7 @@ const TOTAL_LANES = 50; // Total lanes to cross before reaching campus
 const VISIBLE_LANES = 19; // Number of lanes visible on screen at once
 const CANVAS_WIDTH = 480; // 15 tiles wide (portrait mode, matching driveMinigame)
 const CANVAS_HEIGHT = 640; // 20 tiles tall (portrait mode, matching driveMinigame)
-const PLAYER_SIZE = 32;
+const PLAYER_SIZE = TILE_SIZE * 2; // Match bedroom sprite size (2 tiles tall)
 const VEHICLE_WIDTH = 54; // Width of the sideways car
 const VEHICLE_HEIGHT = 28; // Height of the sideways car (as requested)
 
@@ -90,6 +94,18 @@ export const walkMinigame: Minigame = {
         return;
       }
 
+      // Get player sprite from config (passed from store)
+      let customSprite = (config as any).playerSprite || DEFAULT_PLAYER;
+      
+      // Build composite sprite
+      try {
+        await buildCompositeSprite(customSprite, 32, 32);
+      } catch (error) {
+        console.warn('Failed to build player sprite, using default:', error);
+        customSprite = DEFAULT_PLAYER;
+        await buildCompositeSprite(customSprite, 32, 32);
+      }
+
       // Game state
       let playerX = CANVAS_WIDTH / 2 - PLAYER_SIZE / 2; // Center horizontally
       let playerAbsoluteLane = TOTAL_LANES - 1; // Start in the last lane (bottom)
@@ -103,6 +119,14 @@ export const walkMinigame: Minigame = {
       let lastTime = performance.now();
       let spawnTimer = 0;
       let elapsedTime = 0; // Track time since game start
+
+      // Player animation state
+      let frameIndex = 0;
+      let currentAnimation: keyof typeof ANIMATION_FRAMES = 'idle_forward';
+      let playerFrames = ANIMATION_FRAMES[currentAnimation];
+      let lastDirection: 'forward' | 'backward' | 'left' | 'right' = 'forward';
+      let frameTimer = 0;
+      const FRAME_DURATION = 0.15; // seconds per frame
 
       // Calculate spawn rate based on mobility stat
       const mobility = config.playerStats.mobility;
@@ -244,18 +268,27 @@ export const walkMinigame: Minigame = {
         // Player movement
         const moveSpeed = 150 * deltaTime; // pixels per second
         
+        let moving = false;
+        let newDirection = lastDirection;
+        
         // Horizontal movement (smooth, not lane-restricted)
         if (keys['arrowleft'] || keys['a']) {
           playerX = Math.max(0, playerX - moveSpeed);
+          moving = true;
+          newDirection = 'left';
         }
         if (keys['arrowright'] || keys['d']) {
           playerX = Math.min(CANVAS_WIDTH - PLAYER_SIZE, playerX + moveSpeed);
+          moving = true;
+          newDirection = 'right';
         }
 
         // Vertical movement - one press = one lane (absolute lane tracking)
         if (keysPressed['arrowup'] || keysPressed['w']) {
           if (playerAbsoluteLane > 0) {
             playerAbsoluteLane--;
+            moving = true;
+            newDirection = 'backward';
             
             // Calculate player's position relative to target camera (use target for smoother feel)
             const relativeLane = playerAbsoluteLane - targetCameraOffset;
@@ -276,6 +309,8 @@ export const walkMinigame: Minigame = {
         if (keysPressed['arrowdown'] || keysPressed['s']) {
           if (playerAbsoluteLane < TOTAL_LANES - 1) {
             playerAbsoluteLane++;
+            moving = true;
+            newDirection = 'forward';
             
             // Calculate player's position relative to target camera
             const relativeLane = playerAbsoluteLane - targetCameraOffset;
@@ -295,6 +330,34 @@ export const walkMinigame: Minigame = {
         } else {
           const relativeLane = playerAbsoluteLane - cameraOffset;
           playerScreenY = relativeLane * TILE_SIZE + 32 + (TILE_SIZE - PLAYER_SIZE) / 2;
+        }
+
+        // Animation switching
+        let desiredAnimation: keyof typeof ANIMATION_FRAMES;
+        if (moving) {
+          if (newDirection === 'forward') desiredAnimation = 'walk_forward';
+          else if (newDirection === 'backward') desiredAnimation = 'walk_backward';
+          else if (newDirection === 'left') desiredAnimation = 'walk_left';
+          else desiredAnimation = 'walk_right';
+        } else {
+          if (lastDirection === 'forward') desiredAnimation = 'idle_forward';
+          else if (lastDirection === 'backward') desiredAnimation = 'idle_backward';
+          else if (lastDirection === 'left') desiredAnimation = 'idle_left';
+          else desiredAnimation = 'idle_right';
+        }
+        if (desiredAnimation !== currentAnimation) {
+          currentAnimation = desiredAnimation;
+          playerFrames = ANIMATION_FRAMES[currentAnimation];
+          frameIndex = 0;
+          frameTimer = 0;
+        }
+        lastDirection = newDirection;
+
+        // Animation frame timing
+        frameTimer += deltaTime;
+        if (playerFrames.length > 1 && frameTimer >= FRAME_DURATION) {
+          frameIndex = (frameIndex + 1) % playerFrames.length;
+          frameTimer = 0;
         }
 
         // Check if reached campus
@@ -453,14 +516,29 @@ export const walkMinigame: Minigame = {
         });
 
         // Draw player
-        ctx.fillStyle = '#4ac94a';
-        ctx.fillRect(playerX, playerScreenY, PLAYER_SIZE, PLAYER_SIZE);
-        
-        // Player face
-        ctx.fillStyle = '#2d5016';
-        ctx.fillRect(playerX + 8, playerScreenY + 8, 6, 6);
-        ctx.fillRect(playerX + 18, playerScreenY + 8, 6, 6);
-        ctx.fillRect(playerX + 8, playerScreenY + 18, 16, 4);
+        if (customSprite?.compositedImage) {
+          const frame = playerFrames[frameIndex];
+          drawSubSprite(ctx, customSprite.compositedImage, {
+            x: playerX,
+            y: playerScreenY,
+            width: PLAYER_SIZE,
+            height: PLAYER_SIZE,
+            sourceX: (frame.col - 1) * 32,
+            sourceY: (frame.row - 1) * 32,
+            sourceWidth: 32,
+            sourceHeight: 32,
+          });
+        } else {
+          // Fallback to rectangle if sprite not loaded
+          ctx.fillStyle = '#4ac94a';
+          ctx.fillRect(playerX, playerScreenY, PLAYER_SIZE, PLAYER_SIZE);
+          
+          // Player face
+          ctx.fillStyle = '#2d5016';
+          ctx.fillRect(playerX + 8, playerScreenY + 8, 6, 6);
+          ctx.fillRect(playerX + 18, playerScreenY + 8, 6, 6);
+          ctx.fillRect(playerX + 8, playerScreenY + 18, 16, 4);
+        }
 
         // Update header
         const lanesRemaining = playerAbsoluteLane + 1; // +1 because lane 0 is still one to cross

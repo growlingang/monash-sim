@@ -6,7 +6,6 @@ import { buildCompositeSprite } from '../sprites/playerSpriteOptimizer';
 import { ANIMATION_FRAMES } from '../sprites/animationFrames';
 import { Tileset } from '../utils/tilesetLoader';
 import { createPhoneOverlay } from '../ui/phoneOverlay';
-import { custom } from 'zod';
 import { DEFAULT_PLAYER } from '../sprites/playerSprite';
 
 const TILE_SIZE = 32;
@@ -38,7 +37,7 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
   const statusBar = document.createElement('div');
   statusBar.className = 'bedroom__status';
   statusBar.style.cssText = 'margin-top: 10px; font-family: "Press Start 2P", monospace; font-size: 10px; color: #fbe9cf; background: #8b6f47; padding: 8px; border: 3px solid #5a4a35;';
-  statusBar.innerHTML = 'P = Phone | T = Tilesets';
+  statusBar.innerHTML = 'P = Phone';
 
   container.appendChild(header);
   container.appendChild(statsBar);
@@ -50,7 +49,6 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
   if (!ctx) return;
 
   // Load sprites
-  let playerSprite: HTMLImageElement | null = null;
   let plantSprite: HTMLImageElement | null = null;
   let entrywaySprite: HTMLImageElement | null = null;
   let openWindowSprite: HTMLImageElement | null = null;
@@ -351,14 +349,11 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
     // Check surrounding tiles to understand the wall's 3D context
     const isLeftSideWall = x === 0;
     const isRightSideWall = x === roomData[y].length - 1;
-    const isTopWall = y === 0;
     const isBottomWall = y === roomData.length - 1;
     const hasWallAbove = y > 0 && roomData[y - 1][x] === 1;
     const hasWallBelow = y < roomData.length - 1 && roomData[y + 1][x] === 1;
     const hasWallLeft = x > 0 && roomData[y][x - 1] === 1;
     const hasWallRight = x < roomData[y].length - 1 && roomData[y][x + 1] === 1;
-    const hasWallDiagonalUpLeft = y > 0 && x > 0 && roomData[y - 1][x - 1] === 1;
-    const hasWallDiagonalUpRight = y > 0 && x < roomData[y].length - 1 && roomData[y - 1][x + 1] === 1;
     const hasWallDiagonalDownLeft = y < roomData.length - 1 && x > 0 && roomData[y + 1][x - 1] === 1;
     const hasWallDiagonalDownRight = y < roomData.length - 1 && x < roomData[y].length - 1 && roomData[y + 1][x + 1] === 1;
     // Determine wall type based on 3D context
@@ -471,7 +466,7 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
   let currentAnimation: keyof typeof ANIMATION_FRAMES = 'idle_forward';
   let playerFrames = ANIMATION_FRAMES[currentAnimation];
   let lastDirection: 'forward' | 'backward' | 'left' | 'right' = 'forward';
-  let wasMoving = false;
+  // wasMoving removed — not needed for current logic
   // Animation frame timing
   let frameTimer = 0;
   const FRAME_DURATION = 0.15; // seconds per frame (e.g., 0.15s = ~6.7 FPS)
@@ -514,10 +509,7 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
     }
 
     // Test shortcut: Press T to open tileset test scene
-    if (key === 't') {
-      cleanup();
-      store.setState((prev) => ({ ...prev, currentScene: 'tileset-test' }));
-    }
+  // removed T shortcut for tileset testing per user request
   };
 
   const handleKeyUp = (e: KeyboardEvent) => {
@@ -532,6 +524,10 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
     document.removeEventListener('keydown', handleKeyDown);
     document.removeEventListener('keyup', handleKeyUp);
   };
+
+  // Expose cleanup so external scene manager can call it when switching scenes.
+  // This also prevents the compiler from marking `cleanup` as unused.
+  (root as any).__sceneCleanup = cleanup;
 
   // Collision detection
   const isWalkable = (x: number, y: number): boolean => {
@@ -624,8 +620,7 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
       frameIndex = 0;
       frameTimer = 0;
     }
-    lastDirection = newDirection;
-    wasMoving = moving;
+  lastDirection = newDirection;
 
     // Animation frame timing
     frameTimer += deltaTime;
