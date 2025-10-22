@@ -105,6 +105,14 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
     if (!customSprite) customSprite = DEFAULT_PLAYER;
     await buildCompositeSprite(customSprite, 64, 64);
 
+    // Animation state for player
+    let currentAnimation: keyof typeof ANIMATION_FRAMES = 'idle_forward';
+    let playerFrames = ANIMATION_FRAMES[currentAnimation];
+    let frameIndex = 0;
+    let lastDirection: 'forward' | 'backward' | 'left' | 'right' = 'forward';
+    let frameTimer = 0;
+    const FRAME_DURATION = 0.15; // seconds per frame
+
     // Prevent multiple instances - cleanup any existing state
     if ((window as any).__gm_cleanup) {
         (window as any).__gm_cleanup();
@@ -1109,11 +1117,10 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
         }
     };
 
-    // Draw player helper using composite sprite at playerSize
+    // Draw player helper using composite sprite at playerSize, with animation
     const drawPlayerAt = (px: number, py: number) => {
         if (customSprite?.compositedImage) {
-            // composite sprite frames are 32x32 source; scale to playerSize
-            const frame = ANIMATION_FRAMES['idle_forward'][0];
+            const frame = playerFrames[frameIndex];
             drawSubSprite(ctx, customSprite.compositedImage, {
                 x: px - playerSize / 2,
                 y: py - playerSize / 2,
@@ -1129,69 +1136,116 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
 
     // Game loop
     let animFrame: number;
-    const loop = () => {
-        // Update player position
-    if (!meetingState.activeDialogue) {
+    let lastTime = performance.now();
+    const loop = (now?: number) => {
+        const currentTime = now ?? performance.now();
+        const deltaTime = (currentTime - lastTime) / 1000;
+        lastTime = currentTime;
+
+        // Update player position and animation
+        if (!meetingState.activeDialogue) {
             const speed = 2;
             let dx = 0, dy = 0;
-            if (keys.has('w') || keys.has('arrowup')) dy -= speed;
-            if (keys.has('s') || keys.has('arrowdown')) dy += speed;
-            if (keys.has('a') || keys.has('arrowleft')) dx -= speed;
-            if (keys.has('d') || keys.has('arrowright')) dx += speed;
+            let moving = false;
+            let newDirection = lastDirection;
+            if (keys.has('w') || keys.has('arrowup')) {
+                dy -= speed;
+                newDirection = 'backward';
+                moving = true;
+            } else if (keys.has('s') || keys.has('arrowdown')) {
+                dy += speed;
+                newDirection = 'forward';
+                moving = true;
+            }
+            if (keys.has('a') || keys.has('arrowleft')) {
+                dx -= speed;
+                newDirection = 'left';
+                moving = true;
+            } else if (keys.has('d') || keys.has('arrowright')) {
+                dx += speed;
+                newDirection = 'right';
+                moving = true;
+            }
 
-                        const newX = meetingState.playerX + dx;
-                        const newY = meetingState.playerY + dy;
-                        // Foot-based collision check like LTBinside: bottom 4px, middle ~50% width
-                        const isWalkableFeet = (cx: number, cy: number): boolean => {
-                                // cx/cy are the player's center coordinates
-                                const footHeight = 4;
-                                const footWidth = Math.max(8, Math.floor(playerSize * 0.5));
-                                const footOffsetX = Math.floor((playerSize - footWidth) / 2);
-                                // top-left of sprite
-                                const topLeftY = cy - (playerSize / 2);
-                                const topLeftX = cx - (playerSize / 2);
-                                const footTop = topLeftY + (playerSize - footHeight);
-                                const footBottom = topLeftY + playerSize - 1;
-                                const footLeft = topLeftX + footOffsetX;
-                                const footRight = footLeft + footWidth - 1;
+            const newX = meetingState.playerX + dx;
+            const newY = meetingState.playerY + dy;
+            // Foot-based collision check like LTBinside: bottom 4px, middle ~50% width
+            const isWalkableFeet = (cx: number, cy: number): boolean => {
+                const footHeight = 4;
+                const footWidth = Math.max(8, Math.floor(playerSize * 0.5));
+                const footOffsetX = Math.floor((playerSize - footWidth) / 2);
+                const topLeftY = cy - (playerSize / 2);
+                const topLeftX = cx - (playerSize / 2);
+                const footTop = topLeftY + (playerSize - footHeight);
+                const footBottom = topLeftY + playerSize - 1;
+                const footLeft = topLeftX + footOffsetX;
+                const footRight = footLeft + footWidth - 1;
 
-                                const leftTile = Math.floor(footLeft / TILE_SIZE);
-                                const rightTile = Math.floor(footRight / TILE_SIZE);
-                                const topTile = Math.floor(footTop / TILE_SIZE);
-                                const bottomTile = Math.floor(footBottom / TILE_SIZE);
+                const leftTile = Math.floor(footLeft / TILE_SIZE);
+                const rightTile = Math.floor(footRight / TILE_SIZE);
+                const topTile = Math.floor(footTop / TILE_SIZE);
+                const bottomTile = Math.floor(footBottom / TILE_SIZE);
 
-                                if (leftTile < 0 || rightTile >= ROOM_WIDTH || topTile < 0 || bottomTile >= ROOM_HEIGHT) return false;
+                if (leftTile < 0 || rightTile >= ROOM_WIDTH || topTile < 0 || bottomTile >= ROOM_HEIGHT) return false;
 
-                                for (let ty = topTile; ty <= bottomTile; ty++) {
-                                    for (let tx = leftTile; tx <= rightTile; tx++) {
-                                        const val = roomData[ty][tx];
-                                        if (val === 1) return false;
-                                    }
-                                }
-                                return true;
-                        };
+                for (let ty = topTile; ty <= bottomTile; ty++) {
+                    for (let tx = leftTile; tx <= rightTile; tx++) {
+                        const val = roomData[ty][tx];
+                        if (val === 1) return false;
+                    }
+                }
+                return true;
+            };
 
-                        // Allow stepping into hotspot tiles by checking feet-centered overlap
-                        const feetHotspotUnder = (() => {
-                            const cx = newX; // candidate center x
-                            const cy = newY; // candidate center y
-                            const feetCenterX = cx;
-                            const feetCenterY = cy + playerSize / 2 - 2;
-                            for (const h of hotspots) {
-                                const left = h.x * TILE_SIZE;
-                                const top = h.y * TILE_SIZE;
-                                const right = left + TILE_SIZE;
-                                const bottom = top + TILE_SIZE;
-                                if (feetCenterX >= left && feetCenterX < right && feetCenterY >= top && feetCenterY < bottom) return h;
-                            }
-                            return null;
-                        })();
+            // Allow stepping into hotspot tiles by checking feet-centered overlap
+            const feetHotspotUnder = (() => {
+                const cx = newX;
+                const cy = newY;
+                const feetCenterX = cx;
+                const feetCenterY = cy + playerSize / 2 - 2;
+                for (const h of hotspots) {
+                    const left = h.x * TILE_SIZE;
+                    const top = h.y * TILE_SIZE;
+                    const right = left + TILE_SIZE;
+                    const bottom = top + TILE_SIZE;
+                    if (feetCenterX >= left && feetCenterX < right && feetCenterY >= top && feetCenterY < bottom) return h;
+                }
+                return null;
+            })();
 
-                        if ((isWalkable(newX, newY) && isWalkableFeet(newX, newY)) || Boolean(feetHotspotUnder)) {
-                                meetingState.playerX = newX;
-                                meetingState.playerY = newY;
-                                persistState();
-                        }
+            if ((isWalkable(newX, newY) && isWalkableFeet(newX, newY)) || Boolean(feetHotspotUnder)) {
+                meetingState.playerX = newX;
+                meetingState.playerY = newY;
+                persistState();
+            }
+
+            // Animation switching
+            let desiredAnimation: keyof typeof ANIMATION_FRAMES;
+            if (moving) {
+                if (newDirection === 'forward') desiredAnimation = 'walk_forward';
+                else if (newDirection === 'backward') desiredAnimation = 'walk_backward';
+                else if (newDirection === 'left') desiredAnimation = 'walk_left';
+                else desiredAnimation = 'walk_right';
+            } else {
+                if (lastDirection === 'forward') desiredAnimation = 'idle_forward';
+                else if (lastDirection === 'backward') desiredAnimation = 'idle_backward';
+                else if (lastDirection === 'left') desiredAnimation = 'idle_left';
+                else desiredAnimation = 'idle_right';
+            }
+            if (desiredAnimation !== currentAnimation) {
+                currentAnimation = desiredAnimation;
+                playerFrames = ANIMATION_FRAMES[currentAnimation];
+                frameIndex = 0;
+                frameTimer = 0;
+            }
+            lastDirection = newDirection;
+
+            // Animation frame timing
+            frameTimer += deltaTime;
+            if (playerFrames.length > 1 && frameTimer >= FRAME_DURATION) {
+                frameIndex = (frameIndex + 1) % playerFrames.length;
+                frameTimer = 0;
+            }
 
             // Update status with nearest NPC
             let nearestNpc: NpcState | null = null;
@@ -1212,40 +1266,36 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
                 status.textContent = `Talked to ${meetingState.talkedCount}/5 teammates`;
             }
             // Auto-enter hotspots: use feet-center detection (player center coordinates) so spawn doesn't immediate-retrigger exit
-            const feetCenterX = meetingState.playerX; // playerX is center x
-            const feetCenterY = meetingState.playerY + playerSize / 2 - 2; // middle of bottom 4px
+            const feetCenterX = meetingState.playerX;
+            const feetCenterY = meetingState.playerY + playerSize / 2 - 2;
             for (const h of hotspots) {
                 const left = h.x * TILE_SIZE;
                 const top = h.y * TILE_SIZE;
                 const right = left + TILE_SIZE;
                 const bottom = top + TILE_SIZE;
                 if (feetCenterX >= left && feetCenterX < right && feetCenterY >= top && feetCenterY < bottom) {
-                    // If player just arrived from LTB, consume the flag and skip immediate re-trigger
                     if ((window as any).__justArrivedFromLTB) {
                         delete (window as any).__justArrivedFromLTB;
                         break;
                     }
-                    // persist spawn so LTB can place player outside
                     (window as any).__ltb_state = { env: 'outside', x: h.x * TILE_SIZE + (TILE_SIZE - playerSize) / 2, y: h.y * TILE_SIZE + (TILE_SIZE - playerSize) / 2 };
-                    // cleanup and transition
                     if ((window as any).__gm_cleanup) (window as any).__gm_cleanup();
                     store.setState(prev => transitionScene(prev, h.scene as any));
-                    return; // exit loop/frame since scene is changing
+                    return;
                 }
             }
         }
 
         // Render with enhanced visuals
-    // Tile-based room background (walls + hardwood)
-    renderRoomWithSmartTiles(ctx);
+        renderRoomWithSmartTiles(ctx);
 
-    // Draw hotspot overlays (bright yellow)
-    ctx.save();
-    ctx.fillStyle = 'rgba(255, 223, 0, 0.85)';
-    for (const h of hotspots) {
-        ctx.fillRect(h.x * TILE_SIZE, h.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-    }
-    ctx.restore();
+        // Draw hotspot overlays (bright yellow)
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 223, 0, 0.85)';
+        for (const h of hotspots) {
+            ctx.fillRect(h.x * TILE_SIZE, h.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        }
+        ctx.restore();
 
         // Whiteboard at top with shadow and 3D effect
         ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
@@ -1253,11 +1303,9 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 4;
 
-        // Whiteboard frame
         ctx.fillStyle = '#cbd5e1';
         ctx.fillRect(155, 15, 330, 60);
 
-        // Whiteboard surface
         const boardGradient = ctx.createLinearGradient(160, 20, 160, 70);
         boardGradient.addColorStop(0, '#f8fafc');
         boardGradient.addColorStop(1, '#e2e8f0');
@@ -1282,13 +1330,11 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
             ctx.fillText('Due: Day 7, 11:59 PM', 320, 60);
         }
 
-        // Table with 3D shadow and wood texture
         ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
         ctx.shadowBlur = 20;
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 8;
 
-        // Table top gradient
         const tableGradient = ctx.createLinearGradient(200, 140, 200, 220);
         tableGradient.addColorStop(0, '#6b4423');
         tableGradient.addColorStop(0.5, '#5f4b32');
@@ -1299,12 +1345,10 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
         ctx.shadowBlur = 0;
         ctx.shadowOffsetY = 0;
 
-        // Table border/edge
         ctx.strokeStyle = '#3a2817';
         ctx.lineWidth = 5;
         ctx.strokeRect(200, 140, 240, 80);
 
-        // Wood grain lines
         ctx.strokeStyle = 'rgba(58, 40, 23, 0.3)';
         ctx.lineWidth = 2;
         for (let i = 0; i < 4; i++) {
@@ -1314,70 +1358,46 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
             ctx.stroke();
         }
 
-        // NPCs with sprites or fallback to circles
         meetingState.npcs.forEach(npc => {
             const talked = npc.talked;
             const img = imageCache.get(npc.npcId);
-            const maxSpriteSize = 48; // Maximum display size for sprites
-
+            const maxSpriteSize = 48;
             if (img && img.complete && img.naturalWidth > 0) {
-                // RENDER SPRITE with original aspect ratio
                 ctx.save();
-
-                // Calculate dimensions maintaining aspect ratio
                 const aspectRatio = img.naturalWidth / img.naturalHeight;
                 let drawWidth, drawHeight;
-
                 if (aspectRatio > 1) {
-                    // Wider than tall
                     drawWidth = maxSpriteSize;
                     drawHeight = maxSpriteSize / aspectRatio;
                 } else {
-                    // Taller than wide or square
                     drawHeight = maxSpriteSize;
                     drawWidth = maxSpriteSize * aspectRatio;
                 }
-
-                // Shadow
                 ctx.shadowColor = talked ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.5)';
                 ctx.shadowBlur = talked ? 8 : 15;
                 ctx.shadowOffsetX = 0;
                 ctx.shadowOffsetY = 4;
-
-                // Glow for active NPCs
                 if (!talked) {
                     ctx.shadowColor = 'rgba(14, 165, 233, 0.8)';
                     ctx.shadowBlur = 20;
                 }
-
-                // Draw sprite centered on NPC position with correct aspect ratio
                 ctx.drawImage(img, npc.x - drawWidth / 2, npc.y - drawHeight / 2, drawWidth, drawHeight);
-
                 ctx.shadowBlur = 0;
                 ctx.shadowOffsetY = 0;
-
-                // Gray overlay if already talked (maintains aspect ratio)
                 if (talked) {
                     ctx.fillStyle = 'rgba(100, 100, 100, 0.5)';
                     ctx.fillRect(npc.x - drawWidth / 2, npc.y - drawHeight / 2, drawWidth, drawHeight);
                 }
-
                 ctx.restore();
             } else {
-                // FALLBACK: Render circle if sprite not loaded
-                // Shadow
                 ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
                 ctx.shadowBlur = 8;
                 ctx.shadowOffsetX = 0;
                 ctx.shadowOffsetY = 4;
-
-                // Glow for active NPCs
                 if (!talked) {
                     ctx.shadowColor = 'rgba(14, 165, 233, 0.6)';
                     ctx.shadowBlur = 15;
                 }
-
-                // Avatar gradient
                 const avatarGradient = ctx.createRadialGradient(npc.x, npc.y - 2, 4, npc.x, npc.y, 16);
                 if (talked) {
                     avatarGradient.addColorStop(0, '#94a3b8');
@@ -1390,24 +1410,17 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
                 ctx.beginPath();
                 ctx.arc(npc.x, npc.y, 16, 0, Math.PI * 2);
                 ctx.fill();
-
                 ctx.shadowBlur = 0;
                 ctx.shadowOffsetY = 0;
-
-                // Border
                 ctx.strokeStyle = talked ? '#e2e8f0' : '#ffffff';
                 ctx.lineWidth = 3;
                 ctx.stroke();
-
-                // Inner highlight
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
                 ctx.arc(npc.x, npc.y - 3, 12, Math.PI * 1.2, Math.PI * 1.8);
                 ctx.stroke();
             }
-
-            // Label with shadow (for both sprite and circle)
             const def = NPC_DEFINITIONS[npc.npcId];
             ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
             ctx.shadowBlur = 4;
@@ -1421,22 +1434,10 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
             ctx.shadowOffsetY = 0;
         });
 
-
-        // Draw player with size consistent with bedroom/LTBinside
+        // Draw player with animation
         if (customSprite?.compositedImage) {
             drawPlayerAt(meetingState.playerX, meetingState.playerY);
-            // YOU label with shadow
-            // ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-            // ctx.shadowBlur = 4;
-            // ctx.shadowOffsetY = 1;
-            // ctx.fillStyle = '#1e293b';
-            // ctx.font = 'bold 10px sans-serif';
-            // ctx.textAlign = 'center';
-            // ctx.fillText('YOU', meetingState.playerX, meetingState.playerY + (playerSize / 2) + 8);
-            // ctx.shadowBlur = 0;
-            // ctx.shadowOffsetY = 0;
         } else {
-            // Fallback: draw a proportional circle
             ctx.shadowColor = 'rgba(245, 158, 11, 0.6)';
             ctx.shadowBlur = 20;
             ctx.shadowOffsetX = 0;
