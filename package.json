@@ -1,15 +1,32 @@
 {
   "name": "monash-sim",
-  "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "A narrative-driven university life simulation game built with TypeScript and Canvas API",
   "type": "module",
+  "private": true,
+  "author": "Your Name",
+  "license": "MIT",
+  "keywords": [
+    "game",
+    "simulation",
+    "typescript",
+    "canvas",
+    "narrative",
+    "university",
+    "life-sim"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/monash-sim.git"
+  },
   "engines": {
     "node": ">=18.0.0"
   },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit"
   },
   "devDependencies": {
     "typescript": "~5.9.3",

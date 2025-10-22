@@ -1,0 +1,40 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Source code
+*.ts text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+
+# Images
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.aseprite binary
+
+# Audio
+*.mp3 binary
+*.wav binary
+*.ogg binary
+
+# Fonts
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+
+# Archives
+*.zip binary
+*.tar.gz binary
+
+# Exclude files from exporting
+.gitattributes export-ignore
+.gitignore export-ignore
+.vercelignore export-ignore
+docs/development/ export-ignore

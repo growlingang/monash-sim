@@ -1,11 +1,13 @@
 {
-  "name": "Monash Uni Life Sim",
-  "short_name": "MonashSim",
+  "name": "Monash Sim - University Life Simulator",
+  "short_name": "Monash Sim",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
-  "description": "A small Monash university life simulation prototype.",
+  "description": "A narrative-driven simulation game that immerses you in the daily life of a Monash University student. Manage stats, build relationships, and navigate university challenges.",
+  "orientation": "any",
+  "categories": ["games", "education"],
   "icons": [
     {
       "src": "/monashsimicon.png?v=2",
