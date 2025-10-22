@@ -16,7 +16,7 @@ const TOTAL_LANES = 50; // Total lanes to cross before reaching campus
 const VISIBLE_LANES = 19; // Number of lanes visible on screen at once
 const CANVAS_WIDTH = 480; // 15 tiles wide (portrait mode, matching driveMinigame)
 const CANVAS_HEIGHT = 640; // 20 tiles tall (portrait mode, matching driveMinigame)
-const PLAYER_SIZE = 32;
+const PLAYER_SIZE = TILE_SIZE * 2; // Match bedroom sprite size (2 tiles tall)
 const VEHICLE_WIDTH = 54; // Width of the sideways car
 const VEHICLE_HEIGHT = 28; // Height of the sideways car (as requested)
 
