@@ -379,7 +379,8 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
     const playerSize = TILE_SIZE * 2; // use same 2-tile-tall player as LTBinside/bedroom
     // To have the feet centered on the tile row, the player's y (center) should be tileY * TILE_SIZE + TILE_SIZE - (footHeight/2)
     const footHeight = 4;
-    const defaultSpawnX = defaultSpawnTileX * TILE_SIZE + TILE_SIZE / 2;
+    // Center horizontally on the canvas while keeping the same spawn row
+    const defaultSpawnX = (ROOM_WIDTH * TILE_SIZE) / 2;
     const defaultSpawnY = defaultSpawnTileY * TILE_SIZE + TILE_SIZE - (footHeight / 2) - (playerSize - TILE_SIZE) / 2;
 
     // Hotspots overlay (like LTBinside) - single tile below spawn to go back outside
@@ -1054,10 +1055,10 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
                 store.setState(next);
             }
 
-            // Cleanup and transition
+            // Cleanup and transition to campus LTB after assignment
             delete (window as any).__gm_state;
             delete (window as any).__gm_cleanup;
-            store.setState((prev) => transitionScene(prev, 'evening-commute'));
+            store.setState((prev) => transitionScene(prev, 'campus-ltb'));
         }
     };
 
