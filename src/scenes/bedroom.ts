@@ -6,7 +6,6 @@ import { buildCompositeSprite } from '../sprites/playerSpriteOptimizer';
 import { ANIMATION_FRAMES } from '../sprites/animationFrames';
 import { Tileset } from '../utils/tilesetLoader';
 import { createPhoneOverlay } from '../ui/phoneOverlay';
-import { custom } from 'zod';
 import { DEFAULT_PLAYER } from '../sprites/playerSprite';
 
 const TILE_SIZE = 32;
@@ -50,12 +49,12 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
   if (!ctx) return;
 
   // Load sprites
-  let playerSprite: HTMLImageElement | null = null;
   let plantSprite: HTMLImageElement | null = null;
   let entrywaySprite: HTMLImageElement | null = null;
   let openWindowSprite: HTMLImageElement | null = null;
   let bedSprite: HTMLImageElement | null = null;
   let diningtableSprite: HTMLImageElement | null = null;
+  let bedside_tableSprite: HTMLImageElement | null = null;
   let wardrobeSprite: HTMLImageElement | null = null;
   let drumkitSprite: HTMLImageElement | null = null;
   let posterSprite: HTMLImageElement | null = null;
@@ -63,7 +62,38 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
   let pumpkinSprite: HTMLImageElement | null = null;
   let redcouchSprite_faceleft: HTMLImageElement | null = null;
   let redcouchSprite_faceright: HTMLImageElement | null = null;
-  let carpetSprite  : HTMLImageElement | null = null;
+  let carpetSprite: HTMLImageElement | null = null;
+  let acousticGuitarSprite: HTMLImageElement | null = null;
+  let bigShelfSprite: HTMLImageElement | null = null;
+  let countertopSprite: HTMLImageElement | null = null;
+  let deskchairBackSprite: HTMLImageElement | null = null;
+  let deskchairFrontSprite: HTMLImageElement | null = null;
+  let desktopSprite: HTMLImageElement | null = null;
+  let doonaSprite: HTMLImageElement | null = null;
+  let electricGuitarSprite: HTMLImageElement | null = null;
+  let keyboardSprite: HTMLImageElement | null = null;
+  let lowwardrobeSprite: HTMLImageElement | null = null;
+  let monitorSprite: HTMLImageElement | null = null;
+  let posterSprite2: HTMLImageElement | null = null;
+  // Load new tile sprites
+  try { acousticGuitarSprite = await loadSprite('/sprites/tiles/acoustic_guitar.png'); } catch (e) { console.warn('Failed to load acoustic_guitar.png', e); }
+  try { bigShelfSprite = await loadSprite('/sprites/tiles/big_shelf.png'); } catch (e) { console.warn('Failed to load big_shelf.png', e); }
+  try { countertopSprite = await loadSprite('/sprites/tiles/countertop.png'); } catch (e) { console.warn('Failed to load countertop.png', e); }
+  try { deskchairBackSprite = await loadSprite('/sprites/tiles/deskchair_facingback.png'); } catch (e) { console.warn('Failed to load deskchair_facingback.png', e); }
+  try { deskchairFrontSprite = await loadSprite('/sprites/tiles/deskchair_facingfront.png'); } catch (e) { console.warn('Failed to load deskchair_facingfront.png', e); }
+  try { desktopSprite = await loadSprite('/sprites/tiles/desktop.png'); } catch (e) { console.warn('Failed to load desktop.png', e); }
+  try { doonaSprite = await loadSprite('/sprites/tiles/doona.png'); } catch (e) { console.warn('Failed to load doona.png', e); }
+  try { drumkitSprite = await loadSprite('/sprites/tiles/drumkit.png'); } catch (e) { console.warn('Failed to load drumkit.png', e); }
+  try { electricGuitarSprite = await loadSprite('/sprites/tiles/electric_guitar.png'); } catch (e) { console.warn('Failed to load electric_guitar.png', e); }
+  try { keyboardSprite = await loadSprite('/sprites/tiles/keyboard.png'); } catch (e) { console.warn('Failed to load keyboard.png', e); }
+  try { lowwardrobeSprite = await loadSprite('/sprites/tiles/lowwardrobe.png'); } catch (e) { console.warn('Failed to load lowwardrobe.png', e); }
+  try { monitorSprite = await loadSprite('/sprites/tiles/monitor.png'); } catch (e) { console.warn('Failed to load monitor.png', e); }
+  try { posterSprite2 = await loadSprite('/sprites/tiles/poster_1.png'); } catch (e) { console.warn('Failed to load poster_1.png', e); }
+  try { pumpkinSprite = await loadSprite('/sprites/tiles/pumpkin.png'); } catch (e) { console.warn('Failed to load pumpkin.png', e); }
+  try { redcouchSprite_faceleft = await loadSprite('/sprites/tiles/redcouch_faceleft.png'); } catch (e) { console.warn('Failed to load redcouch_faceleft.png', e); }
+  try { redcouchSprite_faceright = await loadSprite('/sprites/tiles/redcouch_faceright.png'); } catch (e) { console.warn('Failed to load redcouch_faceright.png', e); }
+  try { carpetSprite = await loadSprite('/sprites/tiles/carpet.png'); } catch (e) { console.warn('Failed to load carpet.png', e); }
+  try { bedside_tableSprite = await loadSprite('/sprites/tiles/bedside_table.png'); } catch (e) { console.warn('Failed to load bedside_table.png', e); }
   
   try {
     playerSprite = await loadSprite('/sprites/player/player-idle.png');
@@ -122,6 +152,13 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
     console.log('✅ Entryway sprite loaded successfully!');
   } catch (error) {
     console.warn('⚠️ Failed to load entryway sprite, using rectangle fallback', error);
+  }
+
+  try {
+    bedside_tableSprite = await loadSprite('/sprites/tiles/bedside_table.png');
+    console.log('✅ Bedside Table sprite loaded successfully!');
+  } catch (error) {
+    console.warn('⚠️ Failed to load Bedside Table sprite, using rectangle fallback', error);
   }
 
   // Load or create room tileset
@@ -312,14 +349,11 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
     // Check surrounding tiles to understand the wall's 3D context
     const isLeftSideWall = x === 0;
     const isRightSideWall = x === roomData[y].length - 1;
-    const isTopWall = y === 0;
     const isBottomWall = y === roomData.length - 1;
     const hasWallAbove = y > 0 && roomData[y - 1][x] === 1;
     const hasWallBelow = y < roomData.length - 1 && roomData[y + 1][x] === 1;
     const hasWallLeft = x > 0 && roomData[y][x - 1] === 1;
     const hasWallRight = x < roomData[y].length - 1 && roomData[y][x + 1] === 1;
-    const hasWallDiagonalUpLeft = y > 0 && x > 0 && roomData[y - 1][x - 1] === 1;
-    const hasWallDiagonalUpRight = y > 0 && x < roomData[y].length - 1 && roomData[y - 1][x + 1] === 1;
     const hasWallDiagonalDownLeft = y < roomData.length - 1 && x > 0 && roomData[y + 1][x - 1] === 1;
     const hasWallDiagonalDownRight = y < roomData.length - 1 && x < roomData[y].length - 1 && roomData[y + 1][x + 1] === 1;
     // Determine wall type based on 3D context
@@ -624,8 +658,6 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
         width: openWindowSprite.width,
         height: openWindowSprite.height,
       });
-    }
-    if (openWindowSprite) {
       drawSprite(ctx, openWindowSprite, {
         x: 12 * TILE_SIZE,
         y: 0.4 * TILE_SIZE,
@@ -634,6 +666,16 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
       });
     }
     // Draw plant as cute decor item (top-left corner) - keeping original pixel size
+
+    if (carpetSprite) {
+      drawSprite(ctx, carpetSprite, {
+        x: 8.6 * TILE_SIZE,
+        y: 2.7 * TILE_SIZE,
+        width: carpetSprite.width,
+        height: carpetSprite.height,
+      });
+    }
+
     if (plantSprite) {
       drawSprite(ctx, plantSprite, {
         x: 5 * TILE_SIZE,
@@ -642,15 +684,38 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
         height: plantSprite.height,
       });
     }
+    if (pumpkinSprite) {
+      drawSprite(ctx, pumpkinSprite, {
+        x: 6 * TILE_SIZE,
+        y: 2 * TILE_SIZE,
+        width: pumpkinSprite.width,
+        height: pumpkinSprite.height,
+      });
+    }
     if (diningtableSprite) {
       drawSprite(ctx, diningtableSprite, {
-        x: 15 * TILE_SIZE,
-        y: 8 * TILE_SIZE,
+        x: 12.1 * TILE_SIZE,
+        y: 1.7 * TILE_SIZE,
         width: diningtableSprite.width,
         height: diningtableSprite.height,
       });
     }
-
+    if (desktopSprite) {
+      drawSprite(ctx, desktopSprite, {
+        x: 12.5 * TILE_SIZE,
+        y: 0.98 * TILE_SIZE,
+        width: desktopSprite.width,
+        height: desktopSprite.height,
+      });
+    }
+    if (deskchairBackSprite) {
+      drawSprite(ctx, deskchairBackSprite, {
+        x: 12.5 * TILE_SIZE,
+        y: 2 * TILE_SIZE,
+        width: deskchairBackSprite.width,
+        height: deskchairBackSprite.height,
+      });
+    }
     if (bedSprite) {
       drawSprite(ctx, bedSprite, {
         x: 9 * TILE_SIZE,
@@ -659,6 +724,99 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
         height: bedSprite.height,
       });
     }
+    if (bedside_tableSprite) {
+      drawSprite(ctx, bedside_tableSprite, {
+        x: 8 * TILE_SIZE,
+        y: 1.7 * TILE_SIZE,
+        width: bedside_tableSprite.width,
+        height: bedside_tableSprite.height,
+      });
+    }
+    if (bedside_tableSprite) {
+      drawSprite(ctx, bedside_tableSprite, {
+        x: 11 * TILE_SIZE,
+        y: 1.7 * TILE_SIZE,
+        width: bedside_tableSprite.width,
+        height: bedside_tableSprite.height,
+      });
+    }
+    // New sprites
+    if (posterSprite2) {
+      drawSprite(ctx, posterSprite2, {
+        x: 15.5* TILE_SIZE,
+        y: 0.8 * TILE_SIZE,
+        width: posterSprite2.width,
+        height: posterSprite2.height,
+      });
+    }
+    if (acousticGuitarSprite) {
+      drawSprite(ctx, acousticGuitarSprite, {
+        x: 15 * TILE_SIZE,
+        y: 1 * TILE_SIZE,
+        width: acousticGuitarSprite.width,
+        height: acousticGuitarSprite.height,
+      });
+    }
+    // if (bigShelfSprite) {
+    //   drawSprite(ctx, bigShelfSprite, {
+    //     x: 10 * TILE_SIZE,
+    //     y: 6 * TILE_SIZE,
+    //     width: bigShelfSprite.width,
+    //     height: bigShelfSprite.height,
+    //   });
+    // }
+    if (countertopSprite) {
+      drawSprite(ctx, countertopSprite, {
+        x: 17.2 * TILE_SIZE,
+        y: 1.5 * TILE_SIZE,
+        width: countertopSprite.width,
+        height: countertopSprite.height,
+      });
+    }
+    if (doonaSprite) {
+      drawSprite(ctx, doonaSprite, {
+        x: 9 * TILE_SIZE,
+        y: 2 * TILE_SIZE,
+        width: doonaSprite.width,
+        height: doonaSprite.height,
+      });
+    }
+
+    if (electricGuitarSprite) {
+      drawSprite(ctx, electricGuitarSprite, {
+        x: 16 * TILE_SIZE,
+        y: 1 * TILE_SIZE,
+        width: electricGuitarSprite.width,
+        height: electricGuitarSprite.height,
+      });
+    }
+    
+    if (lowwardrobeSprite) {
+      drawSprite(ctx, lowwardrobeSprite, {
+        x: 1 * TILE_SIZE,
+        y: 1 * TILE_SIZE,
+        width: lowwardrobeSprite.width,
+        height: lowwardrobeSprite.height,
+      });
+    }
+    
+    if (redcouchSprite_faceright) {
+      drawSprite(ctx, redcouchSprite_faceright, {
+        x: 13 * TILE_SIZE,
+        y: 3 * TILE_SIZE,
+        width: redcouchSprite_faceright.width,
+        height: redcouchSprite_faceright.height,
+      });
+    }
+    if (redcouchSprite_faceleft) {
+      drawSprite(ctx, redcouchSprite_faceleft, {
+        x: 15 * TILE_SIZE,
+        y: 3 * TILE_SIZE,
+        width: redcouchSprite_faceleft.width,
+        height: redcouchSprite_faceleft.height,
+      });
+    }
+    
     // Draw player
     if (customSprite) {
       drawPlayer();
