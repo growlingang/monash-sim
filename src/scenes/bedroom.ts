@@ -141,6 +141,13 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
   }
 
   try {
+    carpetSprite = await loadSprite('/sprites/tiles/carpet.png');
+    console.log('✅ Carpet sprite loaded successfully!');
+  } catch (error) {
+    console.warn('⚠️ Failed to load carpet sprite, using rectangle fallback', error);
+  }
+
+  try {
     openWindowSprite = await loadSprite('/sprites/tiles/openWindow.png');
     console.log('✅ Window sprite loaded successfully!');
   } catch (error) {
@@ -667,15 +674,6 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
     }
     // Draw plant as cute decor item (top-left corner) - keeping original pixel size
 
-    if (carpetSprite) {
-      drawSprite(ctx, carpetSprite, {
-        x: 8.6 * TILE_SIZE,
-        y: 2.7 * TILE_SIZE,
-        width: carpetSprite.width,
-        height: carpetSprite.height,
-      });
-    }
-
     if (plantSprite) {
       drawSprite(ctx, plantSprite, {
         x: 5 * TILE_SIZE,
@@ -714,6 +712,14 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
         y: 2 * TILE_SIZE,
         width: deskchairBackSprite.width,
         height: deskchairBackSprite.height,
+      });
+    }
+    if (carpetSprite) {
+      drawSprite(ctx, carpetSprite, {
+        x: 8.6 * TILE_SIZE,
+        y: 2.7 * TILE_SIZE,
+        width: carpetSprite.width,
+        height: carpetSprite.height,
       });
     }
     if (bedSprite) {
