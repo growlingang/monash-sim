@@ -7,6 +7,7 @@ import { drawSubSprite } from '../utils/spriteLoader';
 import { ANIMATION_FRAMES } from '../sprites/animationFrames';
 import { buildCompositeSprite } from '../sprites/playerSpriteOptimizer';
 import { DEFAULT_PLAYER } from '../sprites/playerSprite';
+import { createPhoneOverlay } from '../ui/phoneOverlay';
 
 const TILE_SIZE = 32;
 const MAP_WIDTH = 20;
@@ -36,7 +37,7 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
     header.style.cssText = 'margin-bottom: 10px; text-align: center; width: 100%;';
     header.innerHTML = `
     <h2>Learning & Teaching Building (LTB)</h2>
-    <p>Use Arrow Keys or WASD to move. Press E to interact. Explore outside, then enter LTB to meet your team.</p>
+    <p>Use Arrow Keys or WASD to move. Press E to interact. Press P to open phone. Explore outside, then enter LTB to meet your team.</p>
   `;
 
     const statsBar = createStatsBar(store.getState());
@@ -173,6 +174,7 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
     let last = performance.now();
     const keys: Record<string, boolean> = {};
     let interactionCooldownUntil = 0;
+    let phoneOpen = false;
     
     // Animation state
     let frameIndex = 0;
@@ -276,6 +278,10 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
         const k = e.key.toLowerCase();
         keys[k] = true;
         if (k === 'e') handleInteraction();
+        if (k === 'p' && !phoneOpen) {
+            phoneOpen = true;
+            createPhoneOverlay(root, store, () => { phoneOpen = false; });
+        }
     };
     const onKeyUp = (e: KeyboardEvent) => { keys[e.key.toLowerCase()] = false; };
     document.addEventListener('keydown', onKeyDown);
