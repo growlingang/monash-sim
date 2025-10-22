@@ -16,7 +16,7 @@ const TOTAL_LANES = 50; // Total lanes to cross before reaching campus
 const VISIBLE_LANES = 19; // Number of lanes visible on screen at once
 const CANVAS_WIDTH = 480; // 15 tiles wide (portrait mode, matching driveMinigame)
 const CANVAS_HEIGHT = 640; // 20 tiles tall (portrait mode, matching driveMinigame)
-const PLAYER_SIZE = TILE_SIZE * 2; // Match bedroom sprite size (2 tiles tall)
+const PLAYER_SIZE = TILE_SIZE; // Make player 1 tile tall (smaller)
 const VEHICLE_WIDTH = 54; // Width of the sideways car
 const VEHICLE_HEIGHT = 28; // Height of the sideways car (as requested)
 
@@ -97,23 +97,23 @@ export const walkMinigame: Minigame = {
       // Get player sprite from config (passed from store)
       let customSprite = (config as any).playerSprite || DEFAULT_PLAYER;
       
-      // Build composite sprite
+      // Build composite sprite (smaller size)
       try {
-        await buildCompositeSprite(customSprite, 32, 32);
+        await buildCompositeSprite(customSprite, PLAYER_SIZE, PLAYER_SIZE);
       } catch (error) {
         console.warn('Failed to build player sprite, using default:', error);
         customSprite = DEFAULT_PLAYER;
-        await buildCompositeSprite(customSprite, 32, 32);
+        await buildCompositeSprite(customSprite, PLAYER_SIZE, PLAYER_SIZE);
       }
 
       // Game state
-      let playerX = CANVAS_WIDTH / 2 - PLAYER_SIZE / 2; // Center horizontally
+  let playerX = CANVAS_WIDTH / 2 - PLAYER_SIZE / 2; // Center horizontally
       let playerAbsoluteLane = TOTAL_LANES - 1; // Start in the last lane (bottom)
       let cameraOffset = TOTAL_LANES - VISIBLE_LANES; // Camera shows bottom portion initially
       let targetCameraOffset = TOTAL_LANES - VISIBLE_LANES; // Target for smooth scrolling
       const CAMERA_SCROLL_SPEED = 3.0; // How fast camera pans (higher = faster)
       // Player's screen position (always tries to stay near bottom of visible area)
-      let playerScreenY = (VISIBLE_LANES - 1) * TILE_SIZE + 32 + (TILE_SIZE - PLAYER_SIZE) / 2;
+  let playerScreenY = (VISIBLE_LANES - 1) * TILE_SIZE + 32 + (TILE_SIZE - PLAYER_SIZE) / 2;
       const vehicles: Vehicle[] = [];
       let gameActive = true;
       let lastTime = performance.now();
@@ -523,10 +523,10 @@ export const walkMinigame: Minigame = {
             y: playerScreenY,
             width: PLAYER_SIZE,
             height: PLAYER_SIZE,
-            sourceX: (frame.col - 1) * 32,
-            sourceY: (frame.row - 1) * 32,
-            sourceWidth: 32,
-            sourceHeight: 32,
+            sourceX: (frame.col - 1) * PLAYER_SIZE,
+            sourceY: (frame.row - 1) * PLAYER_SIZE,
+            sourceWidth: PLAYER_SIZE,
+            sourceHeight: PLAYER_SIZE,
           });
         } else {
           // Fallback to rectangle if sprite not loaded
