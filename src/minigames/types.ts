@@ -13,6 +13,7 @@ export interface MinigameConfig {
     aura: number;
     skills: number;
   };
+  playerSprite?: any; // Optional player sprite data
 }
 
 export type MinigameCleanup = () => void;
