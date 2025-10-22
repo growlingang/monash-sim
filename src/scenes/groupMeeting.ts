@@ -91,9 +91,16 @@ const waitForAdvance = (bubble: HTMLElement, hintText = 'Click to continue'): Pr
     });
 };
 
+
 export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) => {
-    // Play group meeting ambience
-    await playBackgroundMusic('/audio/ambience/College_Class_Walla_Loop.mp3', { loop: true, volume: 0.7 });
+    // Only set up music to play on movement (to satisfy autoplay policy)
+    let musicStarted = false;
+    const startMeetingMusic = () => {
+        if (!musicStarted) {
+            playBackgroundMusic('/audio/ambience/College_Class_Walla_Loop.mp3', { loop: true, volume: 0.4 });
+            musicStarted = true;
+        }
+    };
     root.innerHTML = '';
 
 
@@ -469,9 +476,14 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
 
     // Input handling
     const keys = new Set<string>();
+    const movementKeys = new Set(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright']);
     const handleKeyDown = (e: KeyboardEvent) => {
-        keys.add(e.key.toLowerCase());
-        if (e.key.toLowerCase() === 'e' && !meetingState.activeDialogue) {
+        const key = e.key.toLowerCase();
+        keys.add(key);
+        if (movementKeys.has(key)) {
+            startMeetingMusic();
+        }
+        if (key === 'e' && !meetingState.activeDialogue) {
             tryInteract();
         }
     };
