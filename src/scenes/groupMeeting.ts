@@ -1123,7 +1123,23 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
                                 return true;
                         };
 
-                        if (isWalkable(newX, newY) && isWalkableFeet(newX, newY)) {
+                        // Allow stepping into hotspot tiles by checking feet-centered overlap
+                        const feetHotspotUnder = (() => {
+                            const cx = newX; // candidate center x
+                            const cy = newY; // candidate center y
+                            const feetCenterX = cx;
+                            const feetCenterY = cy + playerSize / 2 - 2;
+                            for (const h of hotspots) {
+                                const left = h.x * TILE_SIZE;
+                                const top = h.y * TILE_SIZE;
+                                const right = left + TILE_SIZE;
+                                const bottom = top + TILE_SIZE;
+                                if (feetCenterX >= left && feetCenterX < right && feetCenterY >= top && feetCenterY < bottom) return h;
+                            }
+                            return null;
+                        })();
+
+                        if ((isWalkable(newX, newY) && isWalkableFeet(newX, newY)) || Boolean(feetHotspotUnder)) {
                                 meetingState.playerX = newX;
                                 meetingState.playerY = newY;
                                 persistState();
@@ -1147,19 +1163,20 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
             } else if (meetingState.talkedCount < 5) {
                 status.textContent = `Talked to ${meetingState.talkedCount}/5 teammates`;
             }
-            // Auto-enter hotspots: if player's bbox overlaps any hotspot, transition immediately
+            // Auto-enter hotspots: use feet-center detection (player center coordinates) so spawn doesn't immediate-retrigger exit
+            const feetCenterX = meetingState.playerX; // playerX is center x
+            const feetCenterY = meetingState.playerY + playerSize / 2 - 2; // middle of bottom 4px
             for (const h of hotspots) {
                 const left = h.x * TILE_SIZE;
-                // move collision zone 1px upward for earlier detection
-                const top = h.y * TILE_SIZE - 1;
+                const top = h.y * TILE_SIZE;
                 const right = left + TILE_SIZE;
                 const bottom = top + TILE_SIZE;
-                const pxLeft = meetingState.playerX - playerSize / 2;
-                const pxTop = meetingState.playerY - playerSize / 2;
-                const pxRight = pxLeft + playerSize;
-                const pxBottom = pxTop + playerSize;
-                // use inclusive comparisons so any edge-touch counts as collision
-                if (pxLeft <= right && pxRight >= left && pxTop <= bottom && pxBottom >= top) {
+                if (feetCenterX >= left && feetCenterX < right && feetCenterY >= top && feetCenterY < bottom) {
+                    // If player just arrived from LTB, consume the flag and skip immediate re-trigger
+                    if ((window as any).__justArrivedFromLTB) {
+                        delete (window as any).__justArrivedFromLTB;
+                        break;
+                    }
                     // persist spawn so LTB can place player outside
                     (window as any).__ltb_state = { env: 'outside', x: h.x * TILE_SIZE + (TILE_SIZE - playerSize) / 2, y: h.y * TILE_SIZE + (TILE_SIZE - playerSize) / 2 };
                     // cleanup and transition
