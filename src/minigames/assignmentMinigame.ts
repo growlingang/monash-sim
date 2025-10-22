@@ -428,8 +428,8 @@ export const createAssignmentMinigame = (): {
                         {
                             id: 'zone_quiz',
                             name: 'Fare Zones',
-                            x: 150,
-                            y: 150,
+                            x: 200,
+                            y: 180,
                             completed: false,
                             type: 'quiz',
                             description: 'Learn about PTV fare zones'
@@ -437,8 +437,8 @@ export const createAssignmentMinigame = (): {
                         {
                             id: 'route_quiz',
                             name: 'Bus Routes',
-                            x: 650,
-                            y: 150,
+                            x: 600,
+                            y: 180,
                             completed: false,
                             type: 'quiz',
                             description: 'Test your knowledge of bus routes'
@@ -446,8 +446,8 @@ export const createAssignmentMinigame = (): {
                         {
                             id: 'timetable_quiz',
                             name: 'Timetables',
-                            x: 150,
-                            y: 450,
+                            x: 200,
+                            y: 420,
                             completed: false,
                             type: 'quiz',
                             description: 'Understand train timetables'
@@ -455,8 +455,8 @@ export const createAssignmentMinigame = (): {
                         {
                             id: 'myki_quiz',
                             name: 'Myki Card',
-                            x: 650,
-                            y: 450,
+                            x: 600,
+                            y: 420,
                             completed: false,
                             type: 'quiz',
                             description: 'Learn about myki cards'
