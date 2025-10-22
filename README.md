@@ -8,7 +8,7 @@
 
 **Built by Team GG (S1-CS-22)**
 
-[Bonsen Wakjira](https://www.linkedin.com/in/bonsen-wakjira/) • [Zahir Hassan](https://www.linkedin.com/in/zahirhassan-cs/) • [Jia Wen Ooi](https://www.linkedin.com/in/jiawenooi22/) • [Anika Ojha](https://www.linkedin.com/in/anikaojha/) • [Jiun How](https://www.linkedin.com/in/jiuneehow/)
+[Bonsen Wakjira](https://www.linkedin.com/in/bonsen-wakjira/) • [Jia Wen Ooi](https://www.linkedin.com/in/jiawenooi22/) • [Jiun How](https://www.linkedin.com/in/jiuneehow/) • [Anika Ojha](https://www.linkedin.com/in/anikaojha/) • [Zahir Hassan](https://www.linkedin.com/in/zahirhassan-cs/) 
 
 </div>
 
