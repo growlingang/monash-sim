@@ -653,8 +653,55 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
         const npc = NPC_DEFINITIONS[npcId];
         const npcState = meetingState.npcs.find(n => n.npcId === npcId)!;
 
-        if (npcState.talked) {
-            status.textContent = `${npc.name} is done chatting.`;
+        // If the assignment was completed earlier, NPCs just celebrate — lightweight interaction
+        const assignmentCompleted = store.getState().activityLog.some(a => a.choiceId === 'assignment-complete');
+        if (assignmentCompleted) {
+            // If this NPC already marked as talked, show a short note and return
+            if (npcState.talked) {
+                status.textContent = `${npc.name} is still celebrating.`;
+                return;
+            }
+
+            clearDialogue();
+            const bubble = document.createElement('div');
+            bubble.className = 'meeting__bubble';
+            const speaker = document.createElement('span');
+            speaker.className = 'speaker';
+            speaker.textContent = npc.name;
+            const text = document.createElement('span');
+            // Small celebratory variants
+            const cheers = [
+                "Nice work — you smashed it!",
+                "Great job team — that went well!",
+                "Legendary effort — celebrations all round!",
+                "Woo! Assignment done — drinks on me (metaphorically).",
+            ];
+            text.textContent = cheers[Math.floor(Math.random() * cheers.length)];
+            bubble.appendChild(speaker);
+            bubble.appendChild(text);
+            dialogueLayer.appendChild(bubble);
+
+            await waitForAdvance(bubble);
+
+            // Grant +1 to each MONASH stat (M,O,N,A,S) once per NPC
+            const state = store.getState();
+            const deltas: any = { stats: { M: 1, O: 1, N: 1, A: 1, S: 1 } };
+            let next = applyDeltas(state, deltas);
+            next = logActivity(next, {
+                segment: 'group-meeting',
+                choiceId: `assignment-celebration-${npcId}`,
+                summary: `${npc.name} celebrated assignment completion (+MONASH)`,
+                deltas,
+            });
+            // Mark NPC as talked and persist
+            const npcStateRef = meetingState.npcs.find(n => n.npcId === npcId)!;
+            npcStateRef.talked = true;
+            meetingState.talkedCount++;
+            meetingState.activeDialogue = null;
+            persistState();
+
+            store.setState(next);
+            clearDialogue();
             return;
         }
 
