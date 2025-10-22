@@ -6,7 +6,6 @@ import { buildCompositeSprite } from '../sprites/playerSpriteOptimizer';
 import { ANIMATION_FRAMES } from '../sprites/animationFrames';
 import { Tileset } from '../utils/tilesetLoader';
 import { createPhoneOverlay } from '../ui/phoneOverlay';
-import { custom } from 'zod';
 import { DEFAULT_PLAYER } from '../sprites/playerSprite';
 
 const TILE_SIZE = 32;
@@ -50,28 +49,12 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
   if (!ctx) return;
 
   // Load sprites
-  let playerSprite: HTMLImageElement | null = null;
   let plantSprite: HTMLImageElement | null = null;
   let entrywaySprite: HTMLImageElement | null = null;
   let openWindowSprite: HTMLImageElement | null = null;
   let bedSprite: HTMLImageElement | null = null;
   let diningtableSprite: HTMLImageElement | null = null;
-  let wardrobeSprite: HTMLImageElement | null = null;
-  let drumkitSprite: HTMLImageElement | null = null;
-  let posterSprite: HTMLImageElement | null = null;
-  let poster1Sprite: HTMLImageElement | null = null;
-  let pumpkinSprite: HTMLImageElement | null = null;
-  let redcouchSprite_faceleft: HTMLImageElement | null = null;
-  let redcouchSprite_faceright: HTMLImageElement | null = null;
-  let carpetSprite  : HTMLImageElement | null = null;
   
-  try {
-    playerSprite = await loadSprite('/sprites/player/player-idle.png');
-    console.log('✅ Player sprite loaded successfully!');
-  } catch (error) {
-    console.warn('⚠️ Failed to load player sprite, using rectangle fallback', error);
-  }
-
   // If there's a custom player sprite in the game state, try to build its composite
   let customSprite = store.getState().playerSprite;
 
@@ -312,14 +295,11 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
     // Check surrounding tiles to understand the wall's 3D context
     const isLeftSideWall = x === 0;
     const isRightSideWall = x === roomData[y].length - 1;
-    const isTopWall = y === 0;
     const isBottomWall = y === roomData.length - 1;
     const hasWallAbove = y > 0 && roomData[y - 1][x] === 1;
     const hasWallBelow = y < roomData.length - 1 && roomData[y + 1][x] === 1;
     const hasWallLeft = x > 0 && roomData[y][x - 1] === 1;
     const hasWallRight = x < roomData[y].length - 1 && roomData[y][x + 1] === 1;
-    const hasWallDiagonalUpLeft = y > 0 && x > 0 && roomData[y - 1][x - 1] === 1;
-    const hasWallDiagonalUpRight = y > 0 && x < roomData[y].length - 1 && roomData[y - 1][x + 1] === 1;
     const hasWallDiagonalDownLeft = y < roomData.length - 1 && x > 0 && roomData[y + 1][x - 1] === 1;
     const hasWallDiagonalDownRight = y < roomData.length - 1 && x < roomData[y].length - 1 && roomData[y + 1][x + 1] === 1;
     // Determine wall type based on 3D context
