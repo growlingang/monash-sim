@@ -494,7 +494,6 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
         ctx.font = '12px monospace';
         ctx.fillText(env === 'outside' ? 'Outside LTB' : 'Inside LTB', 12, 20);
         ctx.fillStyle = '#ccc';
-        ctx.fillText('Hotspots: Cafeteria, Library, Entrance', 12, 36);
         if (env === 'inside') ctx.fillText('Hotspot: Group Room', 12, 52);
     };
 
