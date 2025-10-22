@@ -1,5 +1,5 @@
 import type { LayerKey, PlayerSprite } from './playerSprite';
-import { imageCache, loadPlayerImages, loadLayer, SPRITE_GRID } from './playerSpriteOptimizer';
+import { imageCache, loadPlayerImages, SPRITE_GRID } from './playerSpriteOptimizer';
 
 /**
  * Build a fully composited sprite sheet for a player

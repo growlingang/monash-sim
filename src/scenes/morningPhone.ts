@@ -1,7 +1,7 @@
 import type { GameStore } from '../core/store';
 import { PHONE_CONTENT } from '../data/phone';
 import { applyDeltas, logActivity, formatMinutes } from '../core/gameState';
-import type { NpcId } from '../core/types';
+// import type { NpcId } from '../core/types';
 
 type PhoneTutorialApp = 'texts' | 'map' | 'notes' | 'social' | 'inventory';
 

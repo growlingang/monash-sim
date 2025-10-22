@@ -185,6 +185,12 @@ export const renderMainMenu = (root: HTMLElement, store: GameStore) => {
     });
   }
 
+  addMenuItem('settings', 'Settings', () => {
+    alert('Settings menu is under development! Stay tuned for future updates.');
+  }, {
+    subtitle: 'Adjust audio, gameplay and more',
+  });
+
   addMenuItem('quit', 'Exit', () => {
     if (confirm('Are you sure you want to quit?')) {
       window.close();

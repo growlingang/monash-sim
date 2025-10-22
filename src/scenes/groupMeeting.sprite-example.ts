@@ -1,6 +1,6 @@
 
-import type { GameStore } from '../core/store';
-import { createStatsBar } from '../ui/statsBar';
+// import type { GameStore } from '../core/store';
+// import { createStatsBar } from '../ui/statsBar';
 import { NPC_DEFINITIONS } from '../data/npcs';
 import type { NpcId } from '../core/types';
 import { drawSubSprite } from '../utils/spriteLoader';
