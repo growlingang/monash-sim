@@ -91,9 +91,18 @@ const waitForAdvance = (bubble: HTMLElement, hintText = 'Click to continue'): Pr
     });
 };
 
+
 export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) => {
-    // Play group meeting ambience
-    await playBackgroundMusic('/audio/ambience/College_Class_Walla_Loop.mp3', { loop: true, volume: 0.7 });
+    // Only set up music to play on movement (to satisfy autoplay policy)
+    // Persist start flag across re-renders to avoid restarting the ambience on state updates
+    let musicStarted = Boolean((window as any).__gm_musicStarted);
+    const startMeetingMusic = () => {
+        if (!musicStarted) {
+            playBackgroundMusic('/audio/ambience/College_Class_Walla_Loop.mp3', { loop: true, volume: 0.4 });
+            musicStarted = true;
+            (window as any).__gm_musicStarted = true;
+        }
+    };
     root.innerHTML = '';
 
 
@@ -469,9 +478,14 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
 
     // Input handling
     const keys = new Set<string>();
+    const movementKeys = new Set(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright']);
     const handleKeyDown = (e: KeyboardEvent) => {
-        keys.add(e.key.toLowerCase());
-        if (e.key.toLowerCase() === 'e' && !meetingState.activeDialogue) {
+        const key = e.key.toLowerCase();
+        keys.add(key);
+        if (movementKeys.has(key)) {
+            startMeetingMusic();
+        }
+        if (key === 'e' && !meetingState.activeDialogue) {
             tryInteract();
         }
     };
@@ -516,6 +530,10 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
                 wallTileset = new Tileset({ imagePath: c.toDataURL(), tileWidth: 32, tileHeight: 32, columns: 4, rows: 3 });
                 await wallTileset.load();
         }
+
+    // Decorative door overlay image (used for the hotspot)
+    const doorImg = new Image();
+    doorImg.src = '/sprites/tiles/door.png';
 
         // room layout: top 2 rows walls, side walls and hardwood interior, bottom 2 rows walls
         const roomData: (number | 'H')[][] = [
@@ -1289,13 +1307,18 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
         // Render with enhanced visuals
         renderRoomWithSmartTiles(ctx);
 
-        // Draw hotspot overlays (bright yellow)
-        ctx.save();
-        ctx.fillStyle = 'rgba(255, 223, 0, 0.85)';
-        for (const h of hotspots) {
-            ctx.fillRect(h.x * TILE_SIZE, h.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-        }
-        ctx.restore();
+        // Hotspots are intentionally invisible here; we still draw the decorative door image but do not render hotspot fills.
+    // Draw decorative door (natural resolution) aligned so image top == hotspot top
+    const hs = hotspots[0];
+    if (hs && doorImg.complete && doorImg.naturalWidth > 0) {
+        const tileX = hs.x * TILE_SIZE;
+        const tileY = hs.y * TILE_SIZE;
+        const imgW = doorImg.naturalWidth;
+        const imgH = doorImg.naturalHeight;
+        const drawX = tileX + (TILE_SIZE - imgW) / 2;
+        const drawY = tileY; // top-aligned with hotspot top
+        ctx.drawImage(doorImg, drawX, drawY, imgW, imgH);
+    }
 
         // Whiteboard at top with shadow and 3D effect
         ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
@@ -1493,9 +1516,13 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
         if (animFrame) cancelAnimationFrame(animFrame);
         document.removeEventListener('keydown', handleKeyDown);
         document.removeEventListener('keyup', handleKeyUp);
-        // Stop ambience and restore default background music
-        stopBackgroundMusic();
-        playBackgroundMusic('/audio/music/background.mp3', { loop: true, volume: 0.6, autoplay: true });
+        // Only alter background music if we are actually leaving this scene.
+        // During state-only re-renders of the same scene, preserve current music and position.
+        const isLeavingScene = store.getState().currentScene !== 'group-meeting';
+        if (isLeavingScene) {
+            stopBackgroundMusic();
+            playBackgroundMusic('/audio/music/background.mp3', { loop: true, volume: 0.6, autoplay: true });
+        }
     };
     (window as any).__gm_cleanup = cleanup;
 };

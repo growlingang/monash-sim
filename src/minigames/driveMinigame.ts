@@ -33,7 +33,7 @@ const loadSprite = (src: string): Promise<HTMLImageElement> => {
 export const driveMinigame: Minigame = {
   mount: async (container: HTMLElement, config: MinigameConfig): Promise<MinigameResult> => {
     // Play drive minigame music
-    await playBackgroundMusic('/audio/music/music_driveminigame.mp3', { loop: true, volume: 0.7 });
+    await playBackgroundMusic('/audio/music/music_driveminigame.mp3', { loop: true, volume: 0.3 });
     return new Promise(async (resolve) => {
       container.innerHTML = '';
       
