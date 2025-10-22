@@ -7,6 +7,7 @@ import { ANIMATION_FRAMES } from '../sprites/animationFrames';
 import { Tileset } from '../utils/tilesetLoader';
 import { createPhoneOverlay } from '../ui/phoneOverlay';
 import { DEFAULT_PLAYER } from '../sprites/playerSprite';
+import { loadSound, playSound } from '../utils/audioManager';
 
 const TILE_SIZE = 32;
 const ROOM_WIDTH = 20; // tiles
@@ -15,6 +16,19 @@ const CANVAS_WIDTH = ROOM_WIDTH * TILE_SIZE;
 const CANVAS_HEIGHT = ROOM_HEIGHT * TILE_SIZE;
 
 export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
+  // Preload walk sound effects
+  await loadSound('walk1', '/audio/sfx/walk_sound_1.mp3');
+  await loadSound('walk2', '/audio/sfx/walk_sound.mp3');
+  // Helper to alternate between walk sounds, with minimum gap
+  let lastWalkSound = 1;
+  let lastWalkSoundTime = 0;
+  function playWalkSound() {
+    const now = performance.now();
+    if (now - lastWalkSoundTime < 1500) return; // 1.5 seconds = 1500 ms
+    lastWalkSound = lastWalkSound === 1 ? 2 : 1;
+    playSound(lastWalkSound === 1 ? 'walk1' : 'walk2', 0.7);
+    lastWalkSoundTime = now;
+  }
   root.innerHTML = '';
 
   const container = document.createElement('div');
@@ -606,6 +620,9 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
     if (canMove) {
       playerX = newX;
       playerY = newY;
+      if (moving) {
+        playWalkSound();
+      }
     }
 
     // Animation switching
