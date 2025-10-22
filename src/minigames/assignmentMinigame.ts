@@ -139,10 +139,11 @@ export const createAssignmentMinigame = (): {
                     console.warn('Failed to load paper sprite, using fallback:', error);
                 }
 
-                // Get player sprite from config and build composite sprite (64x64 for larger size)
+                // Get player sprite from config and build composite sprite (64x64 to match bedroom)
                 const playerData = (_config as any).playerSprite || DEFAULT_PLAYER;
+                const playerSize = 64; // Match bedroom: TILE_SIZE * 2 = 32 * 2 = 64
                 try {
-                    await buildCompositeSprite(playerData, 64, 64);
+                    await buildCompositeSprite(playerData, playerSize, playerSize);
                 } catch (error) {
                     console.warn('Failed to build player sprite:', error);
                 }
@@ -905,13 +906,13 @@ export const createAssignmentMinigame = (): {
                         }
                     }
 
-                    // Draw tasks with paper sprite
+                    // Draw tasks with paper sprite (larger size: 64x64)
                     state.tasks.forEach(task => {
                         ctx.save();
 
                         if (paperSprite && paperSprite.complete) {
-                            // Draw paper sprite
-                            const paperSize = task.completed ? 50 : 60;
+                            // Draw paper sprite (larger)
+                            const paperSize = task.completed ? 60 : 70;
                             const paperX = task.x - paperSize / 2;
                             const paperY = task.y - paperSize / 2;
                             
@@ -925,10 +926,10 @@ export const createAssignmentMinigame = (): {
                             ctx.drawImage(paperSprite, paperX, paperY, paperSize, paperSize);
                             ctx.shadowBlur = 0;
                             
-                            // Draw checkmark on completed tasks
+                            // Draw checkmark on completed tasks (larger)
                             if (task.completed) {
                                 ctx.fillStyle = '#10b981';
-                                ctx.font = 'bold 24px sans-serif';
+                                ctx.font = 'bold 32px sans-serif';
                                 ctx.textAlign = 'center';
                                 ctx.textBaseline = 'middle';
                                 ctx.fillText('✓', task.x, task.y);
@@ -974,34 +975,35 @@ export const createAssignmentMinigame = (): {
                         ctx.restore();
                     });
 
-                    // Draw player with custom sprite
+                    // Draw player with custom sprite (64x64 to match bedroom exactly)
                     ctx.save();
                     if (playerData.compositedImage) {
                         const frame = playerFrames[frameIndex];
+                        const playerSize = 64;
                         drawSubSprite(ctx, playerData.compositedImage, {
+                            x: state.playerX - playerSize / 2,
+                            y: state.playerY - playerSize / 2,
+                            width: playerSize,
+                            height: playerSize,
                             sourceX: (frame.col - 1) * 32,
                             sourceY: (frame.row - 1) * 32,
                             sourceWidth: 32,
                             sourceHeight: 32,
-                            x: state.playerX - 16,
-                            y: state.playerY - 16,
-                            width: 32,
-                            height: 32,
                         });
                     } else {
                         // Fallback to circle
                         ctx.shadowColor = 'rgba(245, 158, 11, 0.6)';
-                        ctx.shadowBlur = 15;
+                        ctx.shadowBlur = 18;
 
                         const playerGradient = ctx.createRadialGradient(
-                            state.playerX, state.playerY - 2, 5,
-                            state.playerX, state.playerY, 16
+                            state.playerX, state.playerY - 3, 7,
+                            state.playerX, state.playerY, 24
                         );
                         playerGradient.addColorStop(0, '#fbbf24');
                         playerGradient.addColorStop(1, '#f59e0b');
                         ctx.fillStyle = playerGradient;
                         ctx.beginPath();
-                        ctx.arc(state.playerX, state.playerY, 16, 0, Math.PI * 2);
+                        ctx.arc(state.playerX, state.playerY, 24, 0, Math.PI * 2);
                         ctx.fill();
 
                         ctx.shadowBlur = 0;
@@ -1010,7 +1012,7 @@ export const createAssignmentMinigame = (): {
                         ctx.stroke();
 
                         ctx.fillStyle = '#1e293b';
-                        ctx.font = 'bold 11px sans-serif';
+                        ctx.font = 'bold 12px sans-serif';
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
                         ctx.fillText('YOU', state.playerX, state.playerY);
