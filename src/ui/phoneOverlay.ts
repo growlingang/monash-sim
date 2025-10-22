@@ -14,6 +14,7 @@ type PhoneApp = 'home' | 'maps' | 'notes' | 'messages' | 'save' | 'settings' | '
 
 let overlayContainer: HTMLElement | null = null;
 let isPhoneOpen = false;
+let currentAppCleanup: (() => void) | null = null;
 
 export const initPhoneOverlay = (store: GameStore) => {
   // Create overlay container
@@ -75,6 +76,11 @@ export const openPhone = (store: GameStore) => {
 
 export const closePhone = () => {
   if (!overlayContainer) return;
+
+  // Run active app cleanup if any (e.g., character customizer music restore)
+  if (currentAppCleanup) {
+    try { currentAppCleanup(); } finally { currentAppCleanup = null; }
+  }
 
   isPhoneOpen = false;
   overlayContainer.style.display = 'none';
@@ -153,6 +159,9 @@ const renderPhoneContent = (store: GameStore) => {
   overlayContainer.appendChild(phoneDevice);
 
   const renderHomeScreen = () => {
+    // Ensure any app-specific cleanup runs when returning home
+    if (currentAppCleanup) { currentAppCleanup(); currentAppCleanup = null; }
+
     appContent.innerHTML = '';
     appContent.style.cssText = `
       flex: 1;
@@ -235,6 +244,9 @@ const renderPhoneContent = (store: GameStore) => {
   };
 
   const renderApp = (app: PhoneApp) => {
+    // Clean up any previously opened app before switching
+    if (currentAppCleanup) { currentAppCleanup(); currentAppCleanup = null; }
+
     appContent.innerHTML = '';
     appContent.style.cssText = `
       flex: 1;
@@ -488,22 +500,31 @@ const renderPhoneContent = (store: GameStore) => {
         const customizer = new CharacterCustomizer(content, playerData);
 
         const handleUpdate = ((e: CustomEvent) => {
+          // Apply saved character changes
           store.setState((prev) => ({
             ...prev,
             playerSprite: e.detail.player,
           }));
+          // Exit customizer and restore original music immediately after saving
+          if (currentAppCleanup) {
+            currentAppCleanup();
+            currentAppCleanup = null;
+          }
+          renderHomeScreen();
         }) as EventListener;
 
         window.addEventListener('character-updated', handleUpdate);
 
         // ✅ Append content before return
         appContent.appendChild(content);
-
-        return () => {
+        // Track cleanup so leaving this app restores original music
+        currentAppCleanup = () => {
           window.removeEventListener('character-updated', handleUpdate);
           customizer.cleanup();
         };
 
+        // Prevent switch fallthrough; stay on Character app
+        break;
 
       case 'notes':
         appTitle.textContent = 'Notes - Tasks';
