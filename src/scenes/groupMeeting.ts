@@ -1379,15 +1379,15 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
         if (customSprite?.compositedImage) {
             drawPlayerAt(meetingState.playerX, meetingState.playerY);
             // YOU label with shadow
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-            ctx.shadowBlur = 4;
-            ctx.shadowOffsetY = 1;
-            ctx.fillStyle = '#1e293b';
-            ctx.font = 'bold 10px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText('YOU', meetingState.playerX, meetingState.playerY + (playerSize / 2) + 8);
-            ctx.shadowBlur = 0;
-            ctx.shadowOffsetY = 0;
+            // ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+            // ctx.shadowBlur = 4;
+            // ctx.shadowOffsetY = 1;
+            // ctx.fillStyle = '#1e293b';
+            // ctx.font = 'bold 10px sans-serif';
+            // ctx.textAlign = 'center';
+            // ctx.fillText('YOU', meetingState.playerX, meetingState.playerY + (playerSize / 2) + 8);
+            // ctx.shadowBlur = 0;
+            // ctx.shadowOffsetY = 0;
         } else {
             // Fallback: draw a proportional circle
             ctx.shadowColor = 'rgba(245, 158, 11, 0.6)';

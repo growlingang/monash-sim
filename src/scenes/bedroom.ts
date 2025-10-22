@@ -95,12 +95,12 @@ export const renderBedroom = async (root: HTMLElement, store: GameStore) => {
   try { carpetSprite = await loadSprite('/sprites/tiles/carpet.png'); } catch (e) { console.warn('Failed to load carpet.png', e); }
   try { bedside_tableSprite = await loadSprite('/sprites/tiles/bedside_table.png'); } catch (e) { console.warn('Failed to load bedside_table.png', e); }
   
-  try {
-    playerSprite = await loadSprite('/sprites/player/player-idle.png');
-    console.log('✅ Player sprite loaded successfully!');
-  } catch (error) {
-    console.warn('⚠️ Failed to load player sprite, using rectangle fallback', error);
-  }
+  // try {
+  //   playerSprite = await loadSprite('/sprites/player/player-idle.png');
+  //   console.log('✅ Player sprite loaded successfully!');
+  // } catch (error) {
+  //   console.warn('⚠️ Failed to load player sprite, using rectangle fallback', error);
+  // }
 
   // If there's a custom player sprite in the game state, try to build its composite
   let customSprite = store.getState().playerSprite;
