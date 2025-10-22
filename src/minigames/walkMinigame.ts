@@ -1,5 +1,6 @@
 import type { Minigame, MinigameConfig, MinigameResult } from './types';
 import { drawSubSprite } from '../utils/spriteLoader';
+import { playBackgroundMusic, stopBackgroundMusic } from '../utils/audioManager';
 import { ANIMATION_FRAMES } from '../sprites/animationFrames';
 import { buildCompositeSprite } from '../sprites/playerSpriteOptimizer';
 import { DEFAULT_PLAYER } from '../sprites/playerSprite';
@@ -32,6 +33,8 @@ const loadSprite = (src: string): Promise<HTMLImageElement> => {
 
 export const walkMinigame: Minigame = {
   mount: async (container: HTMLElement, config: MinigameConfig): Promise<MinigameResult> => {
+    // Play highway ambience when scene loads
+    playBackgroundMusic('/audio/ambience/Highway_loop.mp3', { loop: true, volume: 0.7 });
     return new Promise(async (resolve) => {
       container.innerHTML = '';
       
@@ -162,6 +165,8 @@ export const walkMinigame: Minigame = {
         document.removeEventListener('keydown', handleKeyDown);
         document.removeEventListener('keyup', handleKeyUp);
         gameActive = false;
+        // Stop highway ambience when leaving scene
+        stopBackgroundMusic();
       };
 
       // Helper function to get lane direction (alternating) - uses absolute lane
