@@ -43,7 +43,8 @@ const playMinigame = async (
             aura: state.stats.A,
             skills: state.stats.S,
         },
-    };
+        playerSprite: state.playerSprite, // Pass player sprite to minigames
+    } as any;
 
     let result;
     switch (option.id) {
