@@ -517,6 +517,10 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
                 await wallTileset.load();
         }
 
+    // Decorative door overlay image (used for the hotspot)
+    const doorImg = new Image();
+    doorImg.src = '/sprites/tiles/door.png';
+
         // room layout: top 2 rows walls, side walls and hardwood interior, bottom 2 rows walls
         const roomData: (number | 'H')[][] = [
                 [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
@@ -1289,13 +1293,18 @@ export const renderGroupMeeting = async (root: HTMLElement, store: GameStore) =>
         // Render with enhanced visuals
         renderRoomWithSmartTiles(ctx);
 
-        // Draw hotspot overlays (bright yellow)
-        ctx.save();
-        ctx.fillStyle = 'rgba(255, 223, 0, 0.85)';
-        for (const h of hotspots) {
-            ctx.fillRect(h.x * TILE_SIZE, h.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-        }
-        ctx.restore();
+        // Hotspots are intentionally invisible here; we still draw the decorative door image but do not render hotspot fills.
+    // Draw decorative door (natural resolution) aligned so image top == hotspot top
+    const hs = hotspots[0];
+    if (hs && doorImg.complete && doorImg.naturalWidth > 0) {
+        const tileX = hs.x * TILE_SIZE;
+        const tileY = hs.y * TILE_SIZE;
+        const imgW = doorImg.naturalWidth;
+        const imgH = doorImg.naturalHeight;
+        const drawX = tileX + (TILE_SIZE - imgW) / 2;
+        const drawY = tileY; // top-aligned with hotspot top
+        ctx.drawImage(doorImg, drawX, drawY, imgW, imgH);
+    }
 
         // Whiteboard at top with shadow and 3D effect
         ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';

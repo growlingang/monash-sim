@@ -96,6 +96,14 @@ export const renderLTBinside = async (root: HTMLElement, store: GameStore) => {
     await wallTileset.load();
   }
 
+  // Decorative door overlay for the top hotspot
+  const doorImg = new Image();
+  doorImg.src = '/sprites/tiles/door.png';
+
+  // Decorative front overlay for the bottom hotspot (keeps natural resolution)
+  const frontImg = new Image();
+  frontImg.src = '/sprites/tiles/front_ltb.png';
+
   // Define room layout using tile indices (copied from bedroom.ts)
   // Tile layout guide from your tileset:
   // Row 1: 0=Floor, 1=Wall, 2=Bed, 3=Desk, 4=Wardrobe, 5=Bookshelf, 6=Carpet, 7=Window
@@ -402,19 +410,48 @@ export const renderLTBinside = async (root: HTMLElement, store: GameStore) => {
 
   const render = () => {
     if (!ctx || !gameActive) return;
-    ctx.fillStyle = '#1a1a1a'; ctx.fillRect(0,0,CANVAS_WIDTH,CANVAS_HEIGHT);
-    renderRoomWithSmartTiles(ctx);
+  ctx.fillStyle = '#1a1a1a'; ctx.fillRect(0,0,CANVAS_WIDTH,CANVAS_HEIGHT);
+  renderRoomWithSmartTiles(ctx);
 
-    // Draw hotspot overlays (bright yellow, semi-transparent)
-    ctx.save();
-    ctx.fillStyle = 'rgba(255, 223, 0, 0.85)'; // bright yellow
-    for (const h of hotspots) {
-      const hx = h.x * TILE_SIZE;
-      const hy = h.y * TILE_SIZE;
-      const hh = typeof h.h === 'number' ? h.h : TILE_SIZE;
-      ctx.fillRect(hx, hy, TILE_SIZE, hh);
+    // Draw decorative door image over the top hotspot (if loaded) at natural resolution
+    const topHs = hotspots[0];
+    if (topHs && doorImg.complete && doorImg.naturalWidth > 0) {
+      const tileX = topHs.x * TILE_SIZE;
+      const tileY = topHs.y * TILE_SIZE;
+      const hh = typeof topHs.h === 'number' ? topHs.h : TILE_SIZE;
+      const hotspotBottom = tileY + hh;
+      const imgW = doorImg.naturalWidth;
+      const imgH = doorImg.naturalHeight;
+      // Center horizontally on the tile
+      const drawX = tileX + (TILE_SIZE - imgW) / 2;
+      // Align bottom of image with bottom of hotspot
+      const drawY = hotspotBottom - imgH;
+      ctx.drawImage(doorImg, drawX, drawY, imgW, imgH);
     }
-    ctx.restore();
+
+  // Draw decorative front image over the bottom hotspot (natural resolution)
+    const bottomHs = hotspots[1];
+  // Draw background strip just behind the front image so the front appears in front of it
+  const bottomRowsHeight = TILE_SIZE * 2;
+  const stripPadding = 28; // total narrower width (pixels)
+  const stripWidth = Math.max(0, CANVAS_WIDTH - stripPadding);
+  const stripX = Math.floor((CANVAS_WIDTH - stripWidth) / 2);
+  ctx.fillStyle = 'rgb(79,74,70)';
+  ctx.fillRect(stripX, CANVAS_HEIGHT - bottomRowsHeight, stripWidth, bottomRowsHeight);
+    if (bottomHs && frontImg.complete && frontImg.naturalWidth > 0) {
+      const tileX = bottomHs.x * TILE_SIZE;
+      const imgW = frontImg.naturalWidth;
+      const imgH = frontImg.naturalHeight;
+      // Center horizontally on the hotspot tile
+      const drawX = tileX + (TILE_SIZE - imgW) / 2;
+      // Align bottom of image with bottom of the canvas
+      const drawY = CANVAS_HEIGHT - imgH;
+      ctx.drawImage(frontImg, drawX, drawY, imgW, imgH);
+    }
+
+  
+
+  // Hotspots are intentionally invisible; no visual overlay is drawn here.
 
   // entryway sprite omitted in this simplified LTB interior
 

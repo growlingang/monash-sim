@@ -444,24 +444,7 @@ export const renderCampusLTB = async (root: HTMLElement, store: GameStore) => {
         // Render LTB building (centered on canvas)
         ctx.drawImage(ltbImage, ltbRectX, ltbRectY, ltbRectW, ltbRectH);
 
-        // Draw hotspot outlines (subtle)
-        const hsList = currentHotspots();
-        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-        hsList.forEach(h => {
-            ctx.strokeRect(h.x * TILE_SIZE + 0.5, h.y * TILE_SIZE + 0.5, h.w * TILE_SIZE - 1, h.h * TILE_SIZE - 1);
-        });
-
-        // Emphasize the entrance hotspot when outside
-        if (env === 'outside') {
-            const entrance = hsList.find(h => h.id === 'entrance');
-        if (entrance) {
-            ctx.strokeStyle = 'rgba(251,191,36,0.9)'; // amber
-            ctx.lineWidth = 2;
-            // Shift the emphasis box slightly lower (approx 6 pixels) to match visual alignment
-            ctx.strokeRect(entrance.x * TILE_SIZE + 1, entrance.y * TILE_SIZE + 1 + 6, entrance.w * TILE_SIZE - 2, entrance.h * TILE_SIZE - 2);
-            ctx.lineWidth = 1;
-            }
-        }
+    // Hotspots are intentionally invisible here; no visual outlines are drawn.
 
         // Draw player
         if (customSprite?.compositedImage) {
